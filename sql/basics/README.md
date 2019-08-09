@@ -1,6 +1,8 @@
 # Basics for SQL
 关于数据库的一些基础知识
 
+[TOC] 
+
 # 数据库的基本操作
 
 ## Database
@@ -525,6 +527,84 @@ FROM CUSTOMER_TBL;
 A synonym is merely another name for a table or a view. Synonyms are usually created so a user can avoid having to qualify another user’s table or view to access the table or view.
 
 ## Working with the System Catalog
+The system catalog is a collection of tables and views that contain important information about a database. A system catalog is available for each database. Information in the system catalog defines the structure of the database and also information on the data con- tained therein. For example, the data dictionary language (DDL) for all tables in the database is stored in the system catalog. See Figure 21.1 for an illustration of the system cata- log within the database.
+
+The system catalog is basically a group of objects that contain information that defines other objects in the database, the structure of the database itself, and various other significant information.
+
+### What Is Contained in the System Catalog?
+* User accounts and default settings
+* Privileges and other security information
+* Performance statistics
+* Object sizing
+* Object growth
+* Table structure and storage
+* Index structure and storage
+* Information on other database objects, such as views, synonyms, triggers, and stored procedures
+* Table constraints and referential integrity information
+* User sessions
+* Auditing information
+* Internal database settings
+* Locations of database files
+
+## Advanced SQL Topics
+
+### Cursors
+An SQL cursor is an area in database memory where the last SQL statement is stored. If the current SQL statement is a database query, a row from the query is also stored in memory. This row is the cursor’s current value or cur- rent row.
+
+A cursor is typically used to retrieve a subset of data from the database.
+
+```sql
+DECLARE CURSOR EMP_CURSOR IS
+SELECT * FROM EMPLOYEE_TBL
+{ OTHER PROGRAM STATEMENTS }
+```
+
+According to the ANSI standard, the following operations are used to access a cursor after it has been defined:
+* OPEN Opens a defined cursor
+When a cursor is opened, the specified cursor’s SELECT statement is executed and the results of the query are stored in a staging area in memory.
+
+* FETCH Fetches rows from a cursor into a program variable
+The contents of the cursor (results from the query) can be retrieved through the use of the FETCH statement after a cursor has been opened.
+```sql
+FETCH EMP_CURSOR INTO EMP_RECORD
+```
+
+* CLOSE Closes the cursor when operations against the cursor are complete
+
+## Stored Procedures and Functions
+Stored procedures are groupings of related SQL statements
+
+A stored procedure is a group of one or more SQL statements or functions that are stored in the database, compiled, and ready to be executed by a database user. A stored function is the same as a stored procedure, but a function is used to return a value.
+
+```sql
+CREATE PROCEDURE NEW_PRODUCT
+(PROD_ID IN VARCHAR2, PROD_DESC IN VARCHAR2, COST IN NUMBER)
+AS
+BEGIN
+  INSERT INTO PRODUCTS_TBL
+  VALUES (PROD_ID, PROD_DESC, COST);
+  COMMIT;
+END;
+
+CALL NEW_PRODUCT (‘9999’,’INDIAN CORN’,1.99);
+```
+
+## Triggers
+A trigger is a compiled SQL procedure in the database used to perform actions based on other actions that occur within the database. A trigger is a form of a stored pro- cedure that is executed when a specified DML action is performed on a table. The trigger can be executed before or after an INSERT, DELETE, or UPDATE statement. Triggers can also be used to check data integrity before an INSERT, DELETE, or UPDATE statement. Triggers can roll back transactions, and they can modify data in one table and read from another table in another database.
+
+```sql
+CREATE TRIGGER EMP_PAY_TRIG
+AFTER UPDATE ON EMPLOYEE_PAY_TBL
+FOR EACH ROW
+BEGIN
+  INSERT INTO EMPLOYEE_PAY_HISTORY
+  (EMP_ID, PREV_PAY_RATE, PAY_RATE, DATE_LAST_RAISE,
+   TRANSACTION_TYPE)
+  VALUES
+  (:NEW.EMP_ID, :OLD.PAY_RATE, :NEW.PAY_RATE,
+   :NEW.DATE_LAST_RAISE, ‘PAY CHANGE’);
+END;
+```
 
 ## 如何连接数据库
 `` mysql -u root -p``

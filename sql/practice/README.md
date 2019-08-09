@@ -57,26 +57,7 @@ where st.sid not in (
     from t1
 )
 
-select t2.sid,t2.cid
-from
-(select st.sid,t1.cid
-from st
-left join
-(select st.cid
-from st
-where st.sid=2) as t1
-on t1.cid=st.cid
-) as t2
-where t2.sid not in (
-    select t2.sid
-    from t2
-    where t2.cid is null
-)
+select sc.score, dense_rank() over (order by sc.score desc) as rank
+from sc
 
-
-
-
-group by t2.sid
-having count(t2.cid)=count(t1.cid
-)
 ```
