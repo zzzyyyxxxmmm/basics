@@ -7,7 +7,7 @@
 # MySQL体系结构和存储引擎
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/tree/master/image/mysql_arc.png" width="700" height="500">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/mysql_arc.png" width="700" height="500">
 </div>
 
 ### InnoDB
@@ -73,7 +73,7 @@ mysql -h192.168.0.101 -u david -p
 ## InnoDB架构
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/tree/master/image/innodb_arc.png" width="500" height="300">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/innodb_arc.png" width="500" height="300">
 </div>
 
 这个上面的矩形是内存块，用于：
@@ -97,5 +97,5 @@ mysql -h192.168.0.101 -u david -p
 对于数据库中页的修改操作，则首先修改在缓冲池中的页，然后再以一定的频率刷新到磁盘上。这里需要注意的是，页从缓冲池刷新回磁盘的操作并不是在每次页发生更新时触发，而是通过一种checkpoint的机制刷新回磁盘。因此内存的大小显著印象数据库读取效率
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/tree/master/image/db_buffer.png" width="500" height="300">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/db_buffer.png" width="500" height="300">
 </div>
