@@ -1,1 +1,4 @@
 *.go
+*.docx
+*.pdf
+.DS_Store

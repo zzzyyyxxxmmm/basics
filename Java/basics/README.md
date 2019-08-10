@@ -24,3 +24,22 @@ The morden car inherits from old car like the carriage pulled by a horse. It reu
 The purpose of inheritance is Code Reuse.
 
 ### SOLID
+
+* Single Responsibility Principle: one class should have one and only responsibility.
+* Open Closed Principle: Software components should be open for extension, but close for modification.
+* Liskov's substitution principle: Drived types must be completely substitutable for their base types.
+* Interface Segregation principle: Clients should not be forced to implement unneccessary methods which they will not use.
+* Dependency Injection Principle: Depend on abstraction, not concretions.
+
+## 使用回调有什么不好呢
+1.	强引用，可能导致内存泄漏。
+2.	多层回调的代码逻辑可读性差，调试时甚至使人抓狂。
+3.	直接用匿名内部类去实现很容易就出现多级缩进，长长的屏幕都看不完一行代码。
+4.	要跨线程必须要用Handler
+
+## 抽象类和接口
+general idea
+
+1.	使用： Extend multiple class and implement one interface
+2.	变量： interface: public static final var
+3.  方法： 抽象方法都不可以被直接声明。接口中的的方法必须是public，为啥不能和abstract class一样可以是protected的呢？接口本身创建出来的作用之一就是给外部实现然后调用的。 抽象类的普通方法可以实现。 在Java7中不可以实现，Java8中可以通过default method实现。Java8中的接口静态方法只能通过接口名调用. Java9支持私有方法和私有静态方法

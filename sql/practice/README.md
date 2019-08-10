@@ -60,4 +60,16 @@ where st.sid not in (
 select sc.score, dense_rank() over (order by sc.score desc) as rank
 from sc
 
+select sid 
+from st
+where sid not in(
+select sid 
+from (
+select st.sid,st.cid,t1.cid as ccid from st
+left join
+(select * from cc) as t1
+on st.cid=t1.cid
+) as t2
+where t2.ccid is null
+);
 ```
