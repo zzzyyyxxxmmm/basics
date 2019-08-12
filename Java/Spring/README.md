@@ -168,3 +168,120 @@ public CompactDisc sgtPeppers() {
 The @Bean annotation tells Spring that this method will return an object that should be registered as a bean in the Spring application context. 
 
 By default, the bean will be given an ID that is the same as the @Bean-annotated method’s name. In this case, the bean will be named compactDisc. If you’d rather it have a different name, you can either rename the method or prescribe a different name with the name attribute
+
+## Wiring beans with XML
+
+### Creating an XML configuration specification
+Create ApplicationContext in /resources 
+
+### Declaring a simple <bean>
+```xml
+<bean id="compactDisc" class="soundsystem.SgtPeppers" />
+```
+
+### Initializing a bean with constructor injection
+With specific regard to constructor injection, you have two basic options to choose from:
+* The<constructor-arg>element
+* Using the c-namespace introduced in Spring 3.0
+
+```xml
+<bean id="cdPlayer" class="soundsystem.CDPlayer">
+     <constructor-arg ref="compactDisc" />
+</bean>
+
+<bean id="cdPlayer" class="soundsystem.CDPlayer"
+      c:cd-ref="compactDisc" />
+```
+
+What if the parameters of constructor is some kinds of value like **string**?
+```xml
+<bean id="compactDisc"
+      class="soundsystem.BlankDisc">
+  <constructor-arg value="Sgt. Pepper's Lonely Hearts Club Band" />
+  <constructor-arg value="The Beatles" />
+</bean>
+
+<bean id="compactDisc"
+      class="soundsystem.BlankDisc"
+      c:_title="Sgt. Pepper's Lonely Hearts Club Band"
+      c:_artist="The Beatles" />
+      
+<bean id="compactDisc"
+    class="soundsystem.BlankDisc"
+    c:_0="Sgt. Pepper's Lonely Hearts Club Band"
+    c:_1="The Beatles" />
+
+<!-- 参数只有一个的情况下-->
+<bean id="compactDisc" class="soundsystem.BlankDisc"
+      c:_="Sgt. Pepper's Lonely Hearts Club Band" />
+```
+
+**Collections**
+
+```xml
+<bean id="compactDisc" class="soundsystem.BlankDisc">
+  <constructor-arg value="Sgt. Pepper's Lonely Hearts Club Band" />
+  <constructor-arg value="The Beatles" />
+  <constructor-arg><null/></constructor-arg>
+</bean>
+
+<bean id="compactDisc" class="soundsystem.BlankDisc">
+  <constructor-arg value="Sgt. Pepper's Lonely Hearts Club Band" />
+  <constructor-arg value="The Beatles" />
+  <constructor-arg>
+    <list>
+      <value>Sgt. Pepper's Lonely Hearts Club Band</value>
+      <value>With a Little Help from My Friends</value>
+      <value>Lucy in the Sky with Diamonds</value>
+      <value>Getting Better</value>
+      <value>Fixing a Hole</value>
+      <!-- ...other tracks omitted for brevity... -->
+    </list>
+  </constructor-arg>
+</bean>
+
+<constructor-arg>
+    <list>
+      <ref bean="sgtPeppers" />
+      <ref bean="whiteAlbum" />
+      <ref bean="hardDaysNight" />
+      <ref bean="revolver" />
+      ...
+    </list>
+```
+
+### Setting properties
+```xml
+<bean id="cdPlayer"
+      class="soundsystem.CDPlayer">
+  <property name="compactDisc" ref="compactDisc" />
+</bean>
+```
+如果里面是方法里面没提供constructor，只提供了set方法，那我们可以通过property注入
+
+```xml
+
+<bean id="cdPlayer"
+      class="soundsystem.CDPlayer"
+      p:compactDisc-ref="compactDisc" />
+```
+
+也可以自己独立创建一个Collection的bean
+```xml
+<util:list id="trackList">
+  <value>Sgt. Pepper's Lonely Hearts Club Band</value>
+  <value>With a Little Help from My Friends</value>
+  <value>Lucy in the Sky with Diamonds</value>
+  <value>Getting Better</value>
+  <value>Fixing a Hole</value>
+  <!-- ...other tracks omitted for brevity... -->
+</util:list>
+
+
+<bean id="compactDisc"
+      class="soundsystem.BlankDisc"
+      p:title="Sgt. Pepper's Lonely Hearts Club Band"
+      p:artist="The Beatles"
+      p:tracks-ref="trackList" />
+
+```
