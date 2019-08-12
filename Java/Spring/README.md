@@ -283,5 +283,288 @@ What if the parameters of constructor is some kinds of value like **string**?
       p:title="Sgt. Pepper's Lonely Hearts Club Band"
       p:artist="The Beatles"
       p:tracks-ref="trackList" />
+```
+
+## Importing and mixing configuration
+
+### Referencing XML configuration in JavaConfig
+Import 可以直接从其他config里导入相同的配置
+```java
+@Configuration
+@Import({CDPlayerConfig.class, CDConfig.class})
+public class SoundSystemConfig {
+}
+```
+
+从xml里导入
+```java
+@Configuration
+@Import(CDPlayerConfig.class)
+@ImportResource("classpath:cd-config.xml")
+public class SoundSystemConfig {
+}
+```
+
+### Referencing JavaConfig in XML configuration
+In XML, you can use the <import> element to split up the XML configuration. To import a JavaConfig class into an XML configuration, you declare it as a bean like this:
+
+```xml
+<bean class="soundsystem.CDConfig" />
+<bean id="cdPlayer"
+    class="soundsystem.CDPlayer"
+    c:cd-ref="compactDisc" />
+```
+
+# Advanced wiring
+
+## Environments and profile
+1. Spring中的Profile 是什么?
+Spring中的Profile功能其实早在Spring 3.1的版本就已经出来，它可以理解为我们在Spring容器中所定义的Bean的逻辑组名称，只有当这些Profile被激活的时候，才会将Profile中所对应的Bean注册到Spring容器中。举个更具体的例子，我们以前所定义的Bean，当Spring容器一启动的时候，就会一股脑的全部加载这些信息完成对Bean的创建；而使用了Profile之后，它会将Bean的定义进行更细粒度的划分，将这些定义的Bean划分为几个不同的组，当Spring容器加载配置信息的时候，首先查找激活的Profile，然后只会去加载被激活的组中所定义的Bean信息，而不被激活的Profile中所定义的Bean定义信息是不会加载用于创建Bean的。
+
+2. 为什么要使用Profile
+由于我们平时在开发中，通常会出现在开发的时候使用一个开发数据库，测试的时候使用一个测试的数据库，而实际部署的时候需要一个数据库。以前的做法是将这些信息写在一个配置文件中，当我把代码部署到测试的环境中，将配置文件改成测试环境；当测试完成，项目需要部署到现网了，又要将配置信息改成现网的，真的好烦。。。而使用了Profile之后，我们就可以分别定义3个配置文件，一个用于开发、一个用户测试、一个用户生产，其分别对应于3个Profile。当在实际运行的时候，只需给定一个参数来激活对应的Profile即可，那么容器就会只加载激活后的配置文件，这样就可以大大省去我们修改配置信息而带来的烦恼。
+
+### Configuring profile beans
+```java
+@Configuration
+public class DataSourceConfig {
+  @Bean(destroyMethod="shutdown")
+  @Profile("dev")       //Wired for “dev” profile
+  public DataSource embeddedDataSource() {
+      return new EmbeddedDatabaseBuilder()
+          .setType(EmbeddedDatabaseType.H2)
+          .addScript("classpath:schema.sql")
+          .addScript("classpath:test-data.sql")
+          .build();
+}
+  @Bean
+  @Profile("prod") //Wired for “prod” profile
+  public DataSource jndiDataSource() {
+    JndiObjectFactoryBean jndiObjectFactoryBean =
+        new JndiObjectFactoryBean();
+} }
+```
+
+```xml
+http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans.xsd"
+profile="dev">
+<jdbc:embedded-database id="dataSource">
+<jdbc:script location="classpath:schema.sql" />
+<jdbc:script location="classpath:test-data.sql" />
+</jdbc:embedded-database>
+
+
+<beans profile="dev">
+  <jdbc:embedded-database id="dataSource">
+    <jdbc:script location="classpath:schema.sql" />
+    <jdbc:script location="classpath:test-data.sql" />
+  </jdbc:embedded-database>
+</beans>
+```
+
+### Active Profile
+There are several ways to set these properties:
+1. As initialization parameters on DispatcherServlet  As context parameters of a web application
+2. As JNDI entries
+3. As environment variables
+4. As JVM system properties
+5. Using the @ActiveProfiles annotation on an integration test class
+
+## Conditional beans
+Suppose you want one or more beans to be configured if and only if some library is available in the application’s classpath. Or let’s say you want a bean to be created only if a certain other bean is also declared. Maybe you want a bean to be created if and only if a specific environment variable is set.
+Until Spring 4, it was difficult to achieve this level of conditional configuration, but Spring 4 introduced a new @Conditional annotation that can be applied to @Bean methods. If the prescribed condition evaluates to true, then the bean is created. Oth- erwise the bean is ignored.
+
+感觉用的不是特别多，暂时先不看
+
+## Addressing ambiguity in autowiring
+
+```java
+ @Autowired
+public void setDessert(Dessert dessert) {
+    this.dessert = dessert;
+}
+// In this example, Dessert is an interface and is implemented by three classes: Cake, Cookies, and IceCream:
+@Component
+public class Cake implements Dessert { ... }
+@Component
+public class Cookies implements Dessert { ... }
+@Component
+public class IceCream implements Dessert { ... }
+```
+Because all three implementations are annotated by @Component, 
+they’re all picked up during component-scanning and created as beans in the Spring application context. 
+Then, when Spring tries to autowire the Dessert parameter in setDessert(), it doesn’t have a single, unambiguous choice.
+
+### Designating a primary bean
+
+```java
+@Component
+@Primary
+public class IceCream implements Dessert { ... }
+
+//configuration
+@Bean
+@Primary
+public Dessert iceCream() {
+    return new IceCream();
+}
+
+//xml
+<bean id="iceCream"
+      class="com.desserteater.IceCream"
+      primary="true" />
+```
+
+### Qualifying autowired beans
+```java
+@Autowired
+@Qualifier("iceCream")
+public void setDessert(Dessert dessert) {
+    this.dessert = dessert;
+}
+```
+
+这样很明显的问题就是iceCream的ID改了之后，并不会refract这里，因此需要给component也加上Qualifier
+
+```java
+@Component
+@Qualifier("cold")
+public class IceCream implements Dessert { ... }
+```
+
+如果又有其他类用了@Qualifier("cold")呢，我们需要更精确：
+```java
+@Component
+@Qualifier("cold")
+@Qualifier("creamy")
+public class IceCream implements Dessert { ... }
+```
+
+但Java不允许重复的annotation那我们可以自己定义一个：
+
+```java
+@Target({ElementType.CONSTRUCTOR, ElementType.FIELD,
+         ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Qualifier
+public @interface Cold { }
+
+
+@Target({ElementType.CONSTRUCTOR, ElementType.FIELD,
+         ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Qualifier
+public @interface Creamy { }
+
+
+@Component
+@Cold
+@Creamy
+public class IceCream implements Dessert { ... }
 
 ```
+
+## Scoping beans
+By default, all beans created in the Spring application context are created as single- tons. That is to say, no matter how many times a given bean is injected into other beans, it’s always the same instance that is injected each time.
+
+Spring defines several scopes under which a bean can be created, including the following:
+* Singleton—One instance of the bean is created for the entire application.
+* Prototype—One instance of the bean is created every time the bean is injected
+into or retrieved from the Spring application context.
+* Session —In a web application, one instance of the bean is created for each session.
+* Request—In a web application, one instance of the bean is created for each
+request.
+
+```java
+@Component
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class Notepad { ... }
+
+
+//xml
+<bean id="notepad"
+class="com.myapp.Notepad"
+scope="prototype" />
+```
+
+## Runtime value injection
+
+### Injecting external values
+
+```java
+@Configuration
+@PropertySource("classpath:/com/soundsystem/app.properties")
+public class ExpressiveConfig {
+    @Autowired
+    Environment env;
+    @Bean
+    public BlankDisc disc() {
+        return new BlankDisc(
+        env.getProperty("disc.title"),
+        env.getProperty("disc.artist"));
+    }    
+}
+
+//placeholder
+
+//prerequisite
+
+
+<context:property-placeholder />
+<bean id="sgtPeppers"
+      class="soundsystem.BlankDisc"
+      c:_title="${disc.title}"
+      c:_artist="${disc.artist}" />
+
+
+
+@Bean
+public
+static PropertySourcesPlaceholderConfigurer placeholderConfigurer() {
+  return new PropertySourcesPlaceholderConfigurer();
+}
+
+public BlankDisc(
+      @Value("${disc.title}") String title,
+      @Value("${disc.artist}") String artist) {
+  this.title = title;
+  this.artist = artist;
+}
+```
+
+## Wiring with the Spring Expression Language
+Spring 3 introduced Spring Expression Language (SpEL), a powerful yet succinct way of wiring values into a bean’s properties or constructor arguments using expressions that are evaluated at runtime. 
+
+```java
+public BlankDisc(
+      @Value("#{systemProperties['disc.title']}") String title,
+      @Value("#{systemProperties['disc.artist']}") String artist) {
+  this.title = title;
+  this.artist = artist;
+}
+
+#{3.14159}
+#{false}
+#{sgtPeppers.artist}
+#{artistSelector.selectArtist()}
+#{artistSelector.selectArtist()?.toUpperCase()}
+T(java.lang.Math).PI
+#{disc.title + ' by ' + disc.artist}
+#{counter.total eq 100}
+#{T(java.lang.Math).PI * circle.radius ^ 2}
+#{scoreboard.score > 1000 ? "Winner!" : "Loser"}
+#{jukebox.songs[4].title}
+```
+
+```xml
+<bean id="sgtPeppers"
+class="soundsystem.BlankDisc"
+c:_title="#{systemProperties['disc.title']}"
+c:_artist="#{systemProperties['disc.artist']}" />
+```
+
+
+
+
+
