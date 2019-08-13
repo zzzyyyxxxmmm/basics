@@ -12,33 +12,35 @@ The data in nosql is stored by key-values pairs. It doesn't need to follow the A
 ACID
 
 * 原子性 (Atomicity)
-  A transaction can not be interruptted. Either all the information is committed to save, or none is saved.
+A transaction can not be interruptted. Either all the information is committed to save, or none is saved.
 * 一致性（Consistency）
 The data saved can’t violate any of the database’s integrity. For example, AB have one thousand dollar in sum and A send B five hundred dollar. 
 * 隔离性（Isolation）
-　　The transactionis not affected by any other transactions taking place.
+The transactionis not affected by any other transactions taking place.
 * 持久性（Durability）
-　　Once a transaction is committed, it will remain so, regardless of a subsequent system failure.
+Once a transaction is committed, it will remain so, regardless of a subsequent system failure.
   
   我们先看看如果不考虑事务的隔离性，会发生的几种问题：
+
 * 脏读
-　　脏读是指在一个事务处理过程里读取了另一个未提交的事务中的数据。
+脏读是指在一个事务处理过程里读取了另一个未提交的事务中的数据。
 * 不可重复读
-　　不可重复读是指在对于数据库中的某个数据，一个事务范围内多次查询却返回了不同的数据值，这是由于在查询间隔，被另一个事务修改并提交了。
+不可重复读是指在对于数据库中的某个数据，一个事务范围内多次查询却返回了不同的数据值，这是由于在查询间隔，被另一个事务修改并提交了。
 　　
 例如事务T1在读取某一数据，而事务T2立马修改了这个数据并且提交事务给数据库，事务T1再次读取该数据就得到了不同的结果，发送了不可重复读。
 　　
 不可重复读和脏读的区别是，脏读是某一事务读取了另一个事务未提交的脏数据，而不可重复读则是读取了前一事务提交的数据。
 　　
 * 虚读(幻读)
-　　幻读是事务非独立执行时发生的一种现象。例如事务T1对一个表中所有的行的某个数据项做了从“1”修改为“2”的操作，这时事务T2又对这个表中插入了一行数据项，而这个数据项的数值还是为“1”并且提交给数据库。而操作事务T1的用户如果再查看刚刚修改的数据，会发现还有一行没有修改，其实这行是从事务T2中添加的，就好像产生幻觉一样，这就是发生了幻读。
+幻读是事务非独立执行时发生的一种现象。例如事务T1对一个表中所有的行的某个数据项做了从“1”修改为“2”的操作，这时事务T2又对这个表中插入了一行数据项，而这个数据项的数值还是为“1”并且提交给数据库。而操作事务T1的用户如果再查看刚刚修改的数据，会发现还有一行没有修改，其实这行是从事务T2中添加的，就好像产生幻觉一样，这就是发生了幻读。
 　　
 幻读和不可重复读都是读取了另一条已经提交的事务（这点就脏读不同），所不同的是不可重复读查询的都是同一个数据项，而幻读针对的是一批数据整体（比如数据的个数）。
  
 现在来看看MySQL数据库为我们提供的四种隔离级别：
-1. Serializable (串行化)：可避免脏读、不可重复读、幻读的发生。2. Repeatable read (可重复读)：可避免脏读、不可重复读的发生。
-2. Read committed (读已提交)：可避免脏读的发生。
-3. Read uncommitted (读未提交)：最低级别，任何情况都无法保证。
+1. Serializable (串行化)：可避免脏读、不可重复读、幻读的发生。
+2. Repeatable read (可重复读)：可避免脏读、不可重复读的发生。
+3. Read committed (读已提交)：可避免脏读的发生。
+4. Read uncommitted (读未提交)：最低级别，任何情况都无法保证。
 
 
 # 数据库的基本操作
@@ -69,16 +71,16 @@ CREATE TABLE table_name
 );
 
 DROP TABLE table_name;
-
+```
 
 ### alter table
-
 ```sql
 alter table table_name 
 [modify] [column column_name][datatype|null not null] [restrict|cascade]
 [drop] [constraint constraint_name] 
 [add] [column] column definition
 ```
+
 Common rules for modifing columns:
 * The length of a column can be increased to the maximum length of the given data type.
 * The length of a column can be decreased only if the largest value for that col- umn in the table is less than or equal to the new length of the column.
@@ -112,8 +114,7 @@ CREATE TABLE EMPLOYEE_TBL
     PRIMARY KEY (EMP_ID, ...))
 );
 
-ALTER TABLE PRODUCTS
-ADD CONSTRAINT PRODUCTS_PK PRIMARY KEY (PROD_ID, VEND_ID);
+Alter table tb add primary key(id);
 
 ```
 

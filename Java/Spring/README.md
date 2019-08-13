@@ -564,6 +564,234 @@ c:_title="#{systemProperties['disc.title']}"
 c:_artist="#{systemProperties['disc.artist']}" />
 ```
 
+# Aspect-oriented Spring
+In software development, functions that span multiple points of an application are called cross-cutting concerns.
+
+## What is aspect-oriented programming?
+As stated earlier, aspects help to modularize cross-cutting concerns. In short, a cross- cutting concern can be described as any functionality that affects multiple points of an application. Security, for example, is a cross-cutting concern, in that many methods in an application can have security rules applied to them. Figure 4.1 gives a visual depic- tion of cross-cutting concerns.
+
+
+Spring aspects can work with five kinds of advice:
+* Before—The advice functionality takes place before the advised method is invoked.
+* After—The advice functionality takes place after the advised method completes, regardless of the outcome.
+* After-returning—The advice functionality takes place after the advised method successfully completes.
+* After-throwing—The advice functionality takes place after the advised method throws an exception.
+* Around—The advice wraps the advised method, providing some functionality before and after the advised method is invoked.
+
+## Creating annotated aspects
+```java
+public interface Performance {
+    public void perform();
+}
+
+@Aspect
+public class Audience {
+    @Before("execution(* concert.Performance.perform(..))")
+    public void silenceCellPhones() {
+        System.out.println("Silencing cell phones");
+    }
+    @Before("execution(* concert.Performance.perform(..))")
+    public void takeSeats() {
+        System.out.println("Taking seats");
+    }
+    @AfterReturning("execution(* concert.Performance.perform(..))")
+    public void applause() {
+        System.out.println("CLAP CLAP CLAP!!!");
+    }
+    @AfterThrowing("execution(* concert.Performance.perform(..))")
+    public void demandRefund() {
+        System.out.println("Demanding a refund");
+    }
+}
+```
+
+```java
+@After
+@AfterReturning
+@AfterThrowing
+@Around
+@Before
+```
+
+可以看到上面excution四句都是相同的，想办法优化
+
+```java
+@Pointcut("execution(* concert.Performance.perform(..))")
+public void performance() {}
+
+@Before("performance()")
+public void silenceCellPhones() {
+    System.out.println("Silencing cell phones");
+}
+@Before("performance()")
+public void takeSeats() {
+    System.out.println("Taking seats");
+}
+@AfterReturning("performance()")
+public void applause() {
+    System.out.println("CLAP CLAP CLAP!!!");
+}
+@AfterThrowing("performance()")
+public void demandRefund() {
+    System.out.println("Demanding a refund");
+}
+```
+
+使用
+
+```java
+@Configuration
+@EnableAspectJAutoProxy
+@ComponentScan
+public class ConcertConfig {
+  @Bean
+  public Audience audience() {
+    return new Audience();
+  }
+}
+```
+
+```xml
+<aop:aspectj-autoproxy />
+<bean class="concert.Audience" />
+```
+
+### Around
+
+```xml
+public class Audience {
+    @Pointcut("execution(** concert.Performance.perform(..))")
+    public void performance() {
+    }
+
+    @Around("performance()")
+    public void watchPerformance(ProceedingJoinPoint jp) {
+        try {
+            System.out.println("Silencing cell phones");
+            System.out.println("Taking seats");
+            jp.proceed();
+            System.out.println("CLAP CLAP CLAP!!!");
+        } catch (Throwable e) {
+            System.out.println("Demanding a refund");
+        }
+    }
+}
+```
+
+### Handling parameters in advice
+可以看到，perform是包含参数的，如果里面有参数，我们又想统计这个参数呢
+
+```java
+@Aspect
+public class TrackCounter {
+    private Map<Integer, Integer> trackCounts =
+            new HashMap<Integer, Integer>();
+
+    @Pointcut(
+            "execution(* soundsystem.CompactDisc.playTrack(int)) " +
+                    "&& args(trackNumber)")
+    public void trackPlayed(int trackNumber) {
+    }
+
+    @Before("trackPlayed(trackNumber)")
+    public void countTrack(int trackNumber) {
+        int currentCount = getPlayCount(trackNumber);
+        trackCounts.put(trackNumber, currentCount + 1);
+    }
+
+    public int getPlayCount(int trackNumber) {
+        return trackCounts.containsKey(trackNumber)
+
+    }
+}
+```
+
+## Annotating introductions
+With Spring AOP, you can introduce new methods to a bean. A proxy intercepts the calls and delegates to a different object that provides the implementation.
+
+let’s say you want to introduce the following Encoreable interface to any implementation of Performance:
+
+```java
+public interface Encoreable {
+    void performEncore();
+}
+```
+
+```java
+@Aspect
+public class EncoreableIntroducer {
+  @DeclareParents(value="concert.Performance+",
+                  defaultImpl=DefaultEncoreable.class)
+  public static Encoreable encoreable;
+}
+```
+
+The @DeclareParents annotation is made up of three parts:
+* The value attribute identifies the kinds of beans that should be introduced with the interface. In this case, that’s anything that implements the Performance interface. (The plus sign at the end specifies any subtype of Performance, as opposed to Performance itself.)
+* The defaultImpl attribute identifies the class that will provide the implemen- tation for the introduction. Here you’re saying that DefaultEncoreable will provide that implementation.
+* The static property that is annotated by @DeclareParents specifies the inter- face that’s to be introduced. In this case, you’re introducing the Encoreable interface.
+
+## Declaring aspects in XML
+
+```xml
+<aop:config>
+<aop:aspect ref="audience"> Reference audience bean
+    <aop:before
+      pointcut="execution(** concert.Performance.perform(..))"
+      method="silenceCellPhones"/>
+    <aop:before
+      pointcut="execution(** concert.Performance.perform(..))"
+      method="takeSeats"/>
+
+     <aop:after-returning pointcut="execution(** concert.Performance.perform(..))" method="applause"/>
+<aop:after-throwing pointcut="execution(** concert.Performance.perform(..))" method="demandRefund"/>
+  </aop:aspect>
+</aop:config>
+
+
+<aop:config>
+  <aop:aspect ref="audience">
+<aop:pointcut id="performance"
+expression="execution(** concert.Performance.perform(..))" />
+ <aop:before
+   pointcut-ref="performance"
+   method="silenceCellPhones"/>
+   </aop:aspect>
+   </aop:config>
+  
+   
+   
+<!--Declaring around advice-->
+<aop:config>
+  <aop:aspect ref="audience">
+    <aop:pointcut
+        id="performance"
+expression="execution(** concert.Performance.perform(..))" />
+<aop:around advice pointcut-ref="performance"
+method="watchPerformance"/>
+  </aop:aspect>
+</aop:config>
+
+
+<!--Passing parameters to advice-->
+<aop:config>
+  <aop:aspect ref="trackCounter">
+  <aop:pointcut id="trackPlayed" expression=
+    "execution(* soundsystem.CompactDisc.playTrack(int))
+        and args(trackNumber)" />
+
+
+<!--Introducing new functionality with aspects-->
+<aop:aspect>
+  <aop:declare-parents
+    types-matching="concert.Performance+"
+    implement-interface="concert.Encoreable"
+    default-impl="concert.DefaultEncoreable"
+    />
+</aop:aspect>
+```
+
+
 
 
 
