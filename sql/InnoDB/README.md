@@ -413,7 +413,7 @@ COLUMNS分区可视为RANGE分区和LIST分区的一种进化。COLUMNS分区可
 ## InnoDB 存储引擎索引概述
 InnoDB存储引擎支持以下几种常见的索引
 * B+树索引
-* 全文索引
+* 全文索引(Full-Text Search)
 * 哈希索引
 
 ## B+树

@@ -28,3 +28,8 @@ ArrayMap是一种通用的key-value映射的数据结构，旨在提高内存效
 * ArrayMap会在remove item的时候收缩数组。
 * ArrayMap不是线程安全的。
 
+# ArrayList
+
+ArrayList满了才会扩容，扩容后的大小为原大小的1.5倍，即增加了50%
+元素hash值第N+1位为0：不需要进行位置调整
+元素hash值第N+1位为1：调整至原索引+oldcap处
