@@ -1,4 +1,4 @@
-#一些配置
+# 一些配置
 
 ## Spring context
 ```xml
@@ -78,6 +78,15 @@ public class CDPlayerTest {
        assertNotNull(cd);
     }
 }
+
+//or
+
+@Test
+public void cdShouldNotBeNull(){
+    ApplicationContext applicationContext=new AnnotationConfigApplicationContext(CDPlayerConfig.class);
+    CompactDisc compactDisc=applicationContext.getBean(SgtPeppers.class);
+   assertNotNull(compactDisc);
+}
 ```
 
 CDPlayerTest takes advantage of Spring’s SpringJUnit4ClassRunner to have a Spring application context automatically created when the test starts. And the @Context- Configuration annotation tells it to load its configuration from the CDPlayerConfig class. Because that configuration class includes @ComponentScan, the resulting applica- tion context should include the CompactDisc bean.
@@ -135,7 +144,7 @@ If there are no matching beans, Spring will throw an exception as the applicatio
 
 ## Wiring beans with Java
 
-Although automatic Spring configuration with component scanning and automatic wiring is preferable in many cases, there are times when automatic configuration isn’t an option and you must configure Spring explicitly. For instance, let’s say that you want to wire components from some third-party library into your application. Because you don’t have the source code for that library, there’s no opportunity to annotate its classes with @Component and @Autowired. Therefore, automatic configu- ration isn’t an option.
+Although automatic Spring configuration with component scanning and automatic wiring is preferable in many cases, there are times when automatic configuration isn’t an option and you must configure Spring explicitly. For instance, let’s say that you want to wire components from some third-party library into your application. Because you don’t have the source code for that library, there’s no opportunity to annotate its classes with @Component and @Autowired. Therefore, automatic configuration isn’t an option.
 
 ### Creating a configuration class
 ```java
@@ -172,11 +181,22 @@ By default, the bean will be given an ID that is the same as the @Bean-annotated
 ## Wiring beans with XML
 
 ### Creating an XML configuration specification
-Create ApplicationContext in /resources 
+Create ApplicationContext.xml in /resources 
 
 ### Declaring a simple <bean>
 ```xml
 <bean id="compactDisc" class="soundsystem.SgtPeppers" />
+```
+
+and call it:
+
+```java
+@Test
+public void cdShouldNotBeNull(){
+    ApplicationContext applicationContext=new ClassPathXmlApplicationContext("ApplicationContext.xml");
+    CompactDisc compactDisc=applicationContext.getBean(SgtPeppers.class);
+   assertNotNull(compactDisc);
+}
 ```
 
 ### Initializing a bean with constructor injection
