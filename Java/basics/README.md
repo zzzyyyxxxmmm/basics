@@ -1,6 +1,10 @@
 # basics
 一些Java基础
 
+# 还不懂的问题
+
+## 为什么接口不能是protected或者是default
+
 # Object Oriented Programming
 
 Object Oriented Programming (OOP) is a programming paradigm where the complete software operates as a bunch of objects talking to each other. An object is a collection of data and methods that operate on its data.

@@ -3,10 +3,19 @@
 
 ### Relational Database vs noSQL
 
-Relational Database is the database which uses relation model. Data is stored in the form of rows and columns in a table. Tables connect to each other by primary key and foreign key. There are some advantage of relational database: * It's easy to understand
+Relational Database is the database which uses relation model. Data is stored in the form of rows and columns in a table. The column in one table got some relations. Tables connect to each other by primary key and foreign key. There are some advantage of relational database: * It's easy to understand
 * The SQL statement is easy to mantipulate the database. * It's easy to maintain and reduce redundancy of the data.
 
 The data in nosql is stored by key-values pairs. It doesn't need to follow the ACID. They can easily scale out to many nodes in distribute system and handle big data access.
+
+data model:
+
+* Relationl
+* key/value redis
+* graph neo4j
+* document mongo
+* column-family HBase or BigTable
+* array machine learning
 
 ### 四大特性和隔离级别
 ACID
@@ -26,11 +35,9 @@ Once a transaction is committed, it will remain so, regardless of a subsequent s
 脏读是指在一个事务处理过程里读取了另一个未提交的事务中的数据。
 * 不可重复读
 不可重复读是指在对于数据库中的某个数据，一个事务范围内多次查询却返回了不同的数据值，这是由于在查询间隔，被另一个事务修改并提交了。
-　　
+
 例如事务T1在读取某一数据，而事务T2立马修改了这个数据并且提交事务给数据库，事务T1再次读取该数据就得到了不同的结果，发送了不可重复读。
-　　
-不可重复读和脏读的区别是，脏读是某一事务读取了另一个事务未提交的脏数据，而不可重复读则是读取了前一事务提交的数据。
-　　
+　　　　
 * 虚读(幻读)
 幻读是事务非独立执行时发生的一种现象。例如事务T1对一个表中所有的行的某个数据项做了从“1”修改为“2”的操作，这时事务T2又对这个表中插入了一行数据项，而这个数据项的数值还是为“1”并且提交给数据库。而操作事务T1的用户如果再查看刚刚修改的数据，会发现还有一行没有修改，其实这行是从事务T2中添加的，就好像产生幻觉一样，这就是发生了幻读。
 　　
@@ -98,7 +105,7 @@ from table_name
 ```
 
 ### Primary Key Constraints
-Primary key is the term used to identify one or more columns in a table that make a row of data unique. Although the primary key typically consists of one column in a table, more than one column can comprise the primary key.
+Primary key is the term used to uniquely identify one or more columns in a table that make a row of data unique. Although the primary key typically consists of one column in a table, more than one column can comprise the primary key.
 
 三种方式创建主键
 ```sql
@@ -119,7 +126,7 @@ Alter table tb add primary key(id);
 ```
 
 ### Foreign Key Constraints
-A foreign key is a column in a child table that references a primary key in the parent table. A foreign key constraint is the main mechanism used to enforce referential integrity between tables in a relational database. A column defined as a foreign key is used to reference a column defined as a primary key in another table.
+A foreign key is a column in a child table that references a primary key in the parent table. A foreign key constraint is the main mechanism used to enforce **referential integrity** between tables in a relational database. There have another two advantages of fk: Easier Detective Work and Better Performance.
 
 ```sql
 CONSTRAINT EMP_ID_FK FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEE_TBL (EMP_ID));
@@ -190,6 +197,7 @@ ORDER BY [DESC | 1]
 
 * IS NULL 
 * BETWEEN
+* Exception
 
 等于的
 * IN
