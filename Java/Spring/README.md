@@ -385,11 +385,12 @@ profile="dev">
 
 ### Active Profile
 There are several ways to set these properties:
-1. As initialization parameters on DispatcherServlet  As context parameters of a web application
-2. As JNDI entries
-3. As environment variables
-4. As JVM system properties
-5. Using the @ActiveProfiles annotation on an integration test class
+1. As initialization parameters on DispatcherServlet 
+2. As context parameters of a web application
+3. As JNDI entries
+4. As environment variables
+5. As JVM system properties
+6. Using the @ActiveProfiles annotation on an integration test class
 
 ## Conditional beans
 Suppose you want one or more beans to be configured if and only if some library is available in the application’s classpath. Or let’s say you want a bean to be created only if a certain other bean is also declared. Maybe you want a bean to be created if and only if a specific environment variable is set.
@@ -400,7 +401,7 @@ Until Spring 4, it was difficult to achieve this level of conditional configurat
 ## Addressing ambiguity in autowiring
 
 ```java
- @Autowired
+@Autowired
 public void setDessert(Dessert dessert) {
     this.dessert = dessert;
 }
@@ -811,8 +812,23 @@ method="watchPerformance"/>
 </aop:aspect>
 ```
 
+# Building Spring web applications
+
+## Getting started with Spring MVC
+
+### Following the life of a request
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/web_request.png" width="500" height="500">
+</div>
 
 
-
-
+1. When the request leaves the browser, it carries information about what the user is asking for. At the least, the request will be carrying the requested URL. But it may also carry additional data, such as the information submitted in a form by the user.
+The first stop in the request’s travels is at Spring’s DispatcherServlet. Like most Java- based web frameworks, Spring MVC funnels requests through a single front controller servlet. A front controller is a common web application pattern where a single servlet delegates responsibility for a request to other components of an application to per- form actual processing. In the case of Spring MVC, DispatcherServlet is the front controller.
+2. The DispatcherServlet’s job is to send the request on to a Spring MVC controller. A controller is a Spring component that processes the request. But a typical application may have several controllers, and DispatcherServlet needs some help deciding which controller to send the request to. So the DispatcherServlet consults one or more handler mappings to figure out where the request’s next stop will be. The handler mapping pays particular attention to the URL carried by the request when making its decision.
+3. Once an appropriate controller has been chosen, DispatcherServlet sends the request on its merry way to the chosen controller D. At the controller, the request drops off its payload (the information submitted by the user) and patiently waits while the controller processes that information. (Actually, a well-designed controller per- forms little or no processing itself and instead delegates responsibility for the business logic to one or more service objects.)
+The logic performed by a controller often results in some information that needs to be carried back to the user and displayed in the browser. This information is referred to as the model. But sending raw information back to the user isn’t suffi- cient—it needs to be formatted in a user-friendly format, typically HTML. For that, the information needs to be given to a view, typically a JavaServer Page (JSP).
+4. One of the last things a controller does is package up the model data and identify the name of a view that should render the output. It then sends the request, along with the model and view name, back to the DispatcherServlet E.
+5. So that the controller doesn’t get coupled to a particular view, the view name passed back to DispatcherServlet doesn’t directly identify a specific JSP. It doesn’t even necessarily suggest that the view is a JSP. Instead, it only carries a logical name that will be used to look up the actual view that will produce the result. The DispatcherServlet consults a view resolver F to map the logical view name to a spe- cific view implementation, which may or may not be a JSP.
+6. Now that DispatcherServlet knows which view will render the result, the request’s job is almost over. Its final stop is at the view implementation G, typically a JSP, where it delivers the model data. The request’s job is finally done. The view will use the model data to render output that will be carried back to the client by the (not- so-hardworking) response object H.
 
