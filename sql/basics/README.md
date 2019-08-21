@@ -1,6 +1,12 @@
 # Basics for SQL
 关于数据库的一些基础知识
 
+#install (MAC)
+1. download it
+2. copy the temperory password
+3. mysql -u root -p 
+4. SET PASSWORD = PASSWORD('root');
+
 ### Relational Database vs noSQL
 
 Relational Database is the database which uses relation model. Data is stored in the form of rows and columns in a table. The column in one table got some relations. Tables connect to each other by primary key and foreign key. There are some advantage of relational database: * It's easy to understand
@@ -15,7 +21,7 @@ data model:
 * graph neo4j
 * document mongo
 * column-family HBase or BigTable
-* array machine learning
+* array machine learning 
 
 ### 四大特性和隔离级别
 ACID
@@ -294,7 +300,7 @@ VARCHAR is a variable length string data type, so it holds only the characters y
 ```sql
 BIT(n)
 BIT VARYING(n) 
-DECIMAL(p,s)
+DECIMAL(p,s) --DECIMAL速度会比FLOAT慢很多，但是精确，FLOAT你懂的 0.3=0.299999999
 INTEGER 2^32
 SMALLINT 2^16
 BIGINT  2^64
@@ -641,18 +647,15 @@ CALL NEW_PRODUCT (‘9999’,’INDIAN CORN’,1.99);
 ## Triggers
 A trigger is a compiled SQL procedure in the database used to perform actions based on other actions that occur within the database. The trigger can be executed before or after an INSERT, DELETE, or UPDATE statement. Triggers can also be used to check data integrity before an INSERT, DELETE, or UPDATE statement. Triggers can roll back transactions, and they can modify data in one table and read from another table in another database.
 
+创建只有一个执行语句的触发器
+创建了一个名为trig1的触发器，一旦在work表中有插入动作，就会自动往time表里插入当前时间
+
 ```sql
-CREATE TRIGGER EMP_PAY_TRIG
-AFTER UPDATE ON EMPLOYEE_PAY_TBL
-FOR EACH ROW
-BEGIN
-  INSERT INTO EMPLOYEE_PAY_HISTORY
-  (EMP_ID, PREV_PAY_RATE, PAY_RATE, DATE_LAST_RAISE,
-   TRANSACTION_TYPE)
-  VALUES
-  (:NEW.EMP_ID, :OLD.PAY_RATE, :NEW.PAY_RATE,
-   :NEW.DATE_LAST_RAISE, ‘PAY CHANGE’);
-END;
+CREATE TRIGGER trig1 AFTER INSERT
+    ON work FOR EACH ROW
+    BEGIN
+      INSERT INTO time VALUES(NOW());
+    END
 ```
 
 ## 如何连接数据库

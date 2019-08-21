@@ -13,6 +13,8 @@ Integer的hashcode就是自己本身
 ## 如何putval
 找到在table中的对应位置，插入node，如果发现大于树化的threshold的话，就进行树化。如果发现插入的元素重复了，则根据一个参数决定是否更新value的值，最后检查table的大小决定是否resize
 
+## 如何getval
+先比较hashcode,再用equals比较key，因为hashcode比较快
 # ConcurrentHashMap
 
 
