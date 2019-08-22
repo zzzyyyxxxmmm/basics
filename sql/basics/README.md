@@ -1,7 +1,7 @@
 # Basics for SQL
 关于数据库的一些基础知识
 
-#install (MAC)
+# install (MAC)
 1. download it
 2. copy the temperory password
 3. mysql -u root -p 
@@ -23,7 +23,84 @@ data model:
 * column-family HBase or BigTable
 * array machine learning 
 
-### 四大特性和隔离级别
+# How the DBMS represents the database in files on disk.
+File Storage
+Page Layout
+Tuple Layout
+
+## FILE STORAGE
+The DBMS stores a database as one or more files
+on disk. The OS doesn't know anything about these files.
+
+The storage manager is responsible for
+maintaining a database's files.
+
+It organizes the files as a collection of pages.
+1. Tracks data read/written to pages.
+2. Tracks the available space.
+
+## DATABASE PAGES
+A page is a fixed-size block of data.
+1. It can contain tuples, meta-data, indexes, log records…
+2. Most systems do not mix page types.
+3. Some systems require a page to be self-contained.
+
+Each page is given a unique identifier.
+* The DBMS uses an indirection layer to map page ids to
+physical locations.
+
+page size:
+* sqlite 1KB
+* oracle 4KB
+* SQL server & postgreSQL 8KB
+* MYSQL 16KB
+
+### PAGE STORAGE ARCHITECTURE
+Different DBMSs manage pages in files on disk in
+different ways.
+* Heap File Organization
+* Sequential / Sorted File Organization
+* Hashing File Organization
+
+**DATABASE HEAP**
+
+A heap file is an unordered collection of pages
+where tuples that are stored in random order.
+* Get / Delete Page
+* Must also support iterating over all pages.
+
+Need meta-data to keep track of what pages exist
+and which ones have free space.
+
+Two ways to represent a heap file:
+* Linked List
+* Page Directory
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_heap_list.png" width="500" height="300">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_heap_directory.png" width="500" height="300">
+</div>
+
+### PAGE HEADER
+Every page contains a header of metadata about the page's contents.
+* Page Size
+* Checksum
+* DBMS Version
+* Transaction Visibility
+* Compression Information
+
+### PAGE LAYOUT
+Two approaches:
+* Tuple-oriented
+* Log-structured
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_slotted_page.png" width="500" height="300">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_log.png" width="500" height="300">
+</div>
+
+
+# 四大特性和隔离级别
 ACID
 
 * 原子性 (Atomicity)
