@@ -77,8 +77,8 @@ Two ways to represent a heap file:
 * Page Directory
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_heap_list.png" width="500" height="300">
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_heap_directory.png" width="500" height="300">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_heap_list.png" width="300" height="200">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_heap_directory.png" width="300" height="200">
 </div>
 
 ### PAGE HEADER
@@ -95,10 +95,34 @@ Two approaches:
 * Log-structured
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_slotted_page.png" width="500" height="300">
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_log.png" width="500" height="300">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_slotted_page.png" width="300" height="200">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/sql_log.png" width="300" height="200">
 </div>
 
+## TUPLE LAYOUT
+A tuple is essentially a sequence of bytes.
+It's the job of the DBMS to interpret those bytes
+into attribute types and values.
+
+Each tuple is prefixed with a header
+that contains meta-data about it.
+* Visibility info (concurrency control)
+* Bit Map for NULL values.
+  
+Attributes are typically stored in the
+order that you specify them when you
+create the table.
+
+| Header | a | b | c | d |
+
+
+## RECORD IDS
+The DBMS needs a way to keep track
+of individual tuples.
+Each tuple is assigned a unique record
+identifier.
+* Most common: page_id + offset/slot
+* Can also contain file location info. 
 
 # 四大特性和隔离级别
 ACID
