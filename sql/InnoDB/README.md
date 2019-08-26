@@ -416,6 +416,11 @@ InnoDB存储引擎支持以下几种常见的索引
 * 全文索引(Full-Text Search)
 * 哈希索引
 
+## B+ Tree索引和Hash索引区别 
+* 哈希索引适合等值查询，但是不无法进行范围查询 哈希索引没办法利用索引完成排序 
+* 哈希索引不支持多列联合索引的最左匹配规则 
+* 如果有大量重复键值得情况下，哈希索引的效率会很低，因为存在哈希碰撞问题
+  
 ## B+树
 B+树索引有一个特点是高扇出性，因此在数据库中，B+树的高度一般在2到3层。也就是说查找某一键值的记录，最多只需要2到3次IO开销。
 数据库中B+树索引分为聚集索引（clustered index)和非聚集索引（secondary index)，这两种索引的共同点是内部都是B+树，高度都是平衡的，叶节点存放着所有数据。不同点是叶节点是否存放着一整行数据。
@@ -423,11 +428,30 @@ B+树索引有一个特点是高扇出性，因此在数据库中，B+树的高�
 ### 聚集索引
 聚集索引是指数据库表行中数据的物理顺序与键值的逻辑（索引）顺序相同。每张表只能有一个聚集索引（一个主键）。一个node包含一个row
 
-聚集索引的好处是它对于主键的排序查找和范围的速度非常快。叶节点的数据就是我们要找的数据。
+聚集索引的好处是它对于主键的排序查找和范围的速度非常快。叶节点的数据就是我们要找的数据。聚集索引存的是node的实际的tuple
 
 ### 辅助索引
 辅助索引（也称非聚集索引）。叶级别不包含行的全部数据，叶级别除了包含行的键值以外，每个索引行还包含了一个书签（bookmark），该书签告诉innodb存储引擎，哪里可以找到与索引对应的数据。
-辅助索引的存在并不影响数据再聚集索引中的组织，因此一个表可以有多个辅助索引。当通过辅助索引查找数据时，innodb会遍历辅助索引并通过叶级别的指针获得指向聚集索引的主键。然后再通过聚集索引找到一行完整的数据
+辅助索引的存在并不影响数据再聚集索引中的组织，因此一个表可以有多个辅助索引。the leaf node of the nonclustered index contains the clustered index keys.
+
+### Covering Index
+The nonclustered index contained all of the required information to resolve the query. No Key Lookups were required. An index that contains all information required to resolve the query is known as a “Covering Index”; it completely covers the query. 
+例如,对A,B建立noncluster index。
+```sql
+select A,B from t where A = ''
+```
+这里，noncluster就不需要look up，因为本身key就已经包括了所有需要的值
+
+因此，如果经常需要查询多个字段，多个字段就需要建立联合索引，避免触发look up
+
+### Single vs Composite Index
+对于复合索引（多列b+tree，使用多列值组合而成的b+tree索引）。遵循最左侧原则，从左到右的使用索引中的字段，一个查询可以只使用索引中的一部份，但只能是最左侧部分。例如索引是key index (a,b,c). 可以支持a  a,b a,b,c 3种组合进行查找，但不支持 b,c进行查找。当使用最左侧字段时，索引就十分有效。
+
+### Index失效的情况
+[Index失效](https://blog.csdn.net/sc9018181134/article/details/78888022)
+
+### Key Lookup 
+SQL Server uses a Key Lookup to retrieve non-key data from the data page when a nonclustered index is used to resolve the query. That is, once SQL Server has used the nonclustered index to identify each row that matches the query criteria, it must then retrieve the column information for those rows from the data pages of the table.
 
 ## 全文检索(Full-Text Search)
 全文检索是将储存于数据库中的整本书或整篇文章中的任意内容信息查找出来的技术。对每一个词建立一个索引， 指明该词在文中出现的次数和位置，当用户查询时，搜索程序就根据事先建立的索引进行查找，并将查找的结果反馈给用户。

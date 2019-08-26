@@ -209,5 +209,192 @@ Int什么的都是由这个类加载的
 5. 执行子类的实例变量初始化 
 6. 执行子类的构造函数 
 
+# java8
+
+## Stream
+
+```java
+filter
+.distinct()
+.takeWhile
+.dropWhile
+.limit(3) //select first 3 elements
+.skip(2) //skip first 2 elements
+```
+
+### flatMap
+
+the flatMap method lets you replace each value of a stream with another stream and then concatenates all the generated streams into a single stream
+
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/flatmap.png)
+
+
+```java
+List<String> list = new ArrayList<>();
+list.add("abcd");
+list.add("bcd");
+// return a list of all the unique characters for a list of words a b c d
+
+//wrong, the final result is String[], we want string
+List<String[]> result1 = list.stream().map(word -> word.split("")).distinct().collect(toList());
+List<Stream<String>> result2 = list.stream().map(word -> word.split("")).map(Arrays::stream).distinct().collect(toList());
+
+//use flat map
+List<String> result3 = list.stream().map(word -> word.split("")).flatMap(Arrays::stream).distinct().collect(toList());
+
+/*
+2. Given two lists of numbers, how would you return all pairs of numbers? For example,
+given a list [1, 2, 3] and a list [3, 4] you should return [(1, 3), (1, 4), (2, 3), (2, 4), (3, 3), (3, 4)].
+For simplicity, you can represent a pair as an array with two elements.
+*/
+
+List<Integer> numbers1 = Arrays.asList(1, 2, 3);
+List<Integer> numbers2 = Arrays.asList(3, 4);
+List<int[]> pairs =
+          numbers1.stream()
+               .flatMap(i -> numbers2.stream()
+                         .map(j -> new int[]{i, j})
+               )
+               .collect(toList());
+```
+
+## find and match
+```java
+if(menu.stream().anyMatch(Dish::isVegetarian)) {
+     System.out.println("The menu is (somewhat) vegetarian friendly!!");
+}
+
+boolean isHealthy = menu.stream().allMatch(dish -> dish.getCalories() < 1000);
+
+boolean isHealthy = menu.stream().noneMatch(d -> d.getCalories() >= 1000);
+
+Optional<Dish> dish = menu.stream().filter(Dish::isVegetarian).findAny();
+
+menu.stream().filter(Dish::isVegetarian).findAny().ifPresent(dish -> System.out.println(dish.getName());
+
+.findFirst()
+/*
+* isPresent() returns true if Optional contains a value, false otherwise.
+* ifPresent(Consumer<T> block) executes the given block if a value is present. We introduced the Consumer functional interface in chapter 3; it lets you pass a
+lambda that takes an argument of type T and returns void.
+* T get() returns the value if present; otherwise it throws a NoSuchElement-
+Exception.
+*T orElse(T other) returns the value if present; otherwise it returns a default
+value.
+*/
+```
+
+## Reduce
+```java
+int sum = numbers.stream().reduce(0, (a, b) -> a + b);
+int sum = numbers.stream().reduce(0, Integer::sum);
+Optional<Integer> sum = numbers.stream().reduce((a, b) -> (a + b));
+Optional<Integer> max = numbers.stream().reduce(Integer::max);
+```
+
+## Numeric streams
+```java
+int calories = menu.stream().mapToInt(Dish::getCalories).sum();
+
+IntStream intStream = menu.stream().mapToInt(Dish::getCalories);
+Stream<Integer> stream = intStream.boxed();
+
+IntStream evenNumbers = IntStream.rangeClosed(1, 100) .filter(n -> n % 2 == 0);
+System.out.println(evenNumbers.count());
+
+//直角三角形
+IntStream.rangeClosed(1,100).boxed().flatMap(a->IntStream.rangeClosed(a,100).mapToObj(b->new Double[]{Double.valueOf(a), (double) b,Math.sqrt(a*a+b*b)}).filter(t->t[2]%1==0))
+                .forEach(t ->
+                        System.out.println(t[0] + ", " + t[1] + ", " + t[2]));
+```
+
+## Building streams
+```java
+
+Stream<String> stream = Stream.of("Modern ", "Java ", "In ", "Action"); stream.map(String::toUpperCase).forEach(System.out::println);
+
+Stream<String> emptyStream = Stream.empty();
+
+Stream<String> homeValueStream
+            = Stream.ofNullable(System.getProperty("home"));
+
+int[] numbers = {2, 3, 5, 7, 11, 13};
+int sum = Arrays.stream(numbers).sum();
+
+
+//看下面三句，iterate是可以加predicate的，filter虽然过滤了，但stream还是会发送，可以用takewhile停止.limit也可以
+IntStream.iterate(0, n -> n < 100, n -> n + 4)
+         .forEach(System.out::println);
+
+IntStream.iterate(0, n -> n + 4)
+         .filter(n -> n < 100)
+         .forEach(System.out::println);
+
+IntStream.iterate(0, n -> n + 4)
+         .takeWhile(n -> n < 100)
+         .forEach(System.out::println);
+
+
+Stream.generate(Math::random)
+.limit(5)
+      .forEach(System.out::println);
+
+
+IntStream ones = IntStream.generate(() -> 1);
+
+
+IntStream twos = IntStream.generate(new IntSupplier(){
+            public int getAsInt(){
+return 2; }
+});
+
+
+
+IntSupplier fib = new IntSupplier(){
+    private int previous = 0;
+    private int current = 1;
+    public int getAsInt(){
+        int oldPrevious = this.previous;
+        int nextValue = this.previous + this.current;
+        this.previous = this.current;
+        this.current = nextValue;
+        return oldPrevious;
+} };
+IntStream.generate(fib).limit(10).forEach(System.out::println);
+```
+
+## Collecting data with streams
+Here are some example queries of what you’ll be able to do using collect and collectors:
+
+* Group a list of transactions by currency to obtain the sum of the values of all transactions with that currency (returning a Map<Currency, Integer>)
+* Partition a list of transactions into two groups: expensive and not expensive (returning a Map<Boolean, List<Transaction>>)
+* Create multilevel groupings, such as grouping transactions by cities and then further categorizing by whether they’re expensive or not (returning a Map<String, Map<Boolean, List<Transaction>>>)
+
+```java
+Map<Currency, List<Transaction>> transactionsByCurrencies =
+        transactions.stream().collect(groupingBy(Transaction::getCurrency));
+
+Map<Dish.Type, List<Dish>> caloricDishesByType =
+                            menu.stream().filter(dish -> dish.getCalories() > 500)
+                                         .collect(groupingBy(Dish::getType));
+//{OTHER=[french fries, pizza], MEAT=[pork, beef]}
+
+Map<Dish.Type, List<Dish>> caloricDishesByType =
+              menu.stream()
+                  .collect(groupingBy(Dish::getType,
+                           filtering(dish -> dish.getCalories() > 500, toList())));
+
+Map<Dish.Type, List<String>> dishNamesByType =
+      menu.stream()
+          .collect(groupingBy(Dish::getType,
+                   mapping(Dish::getName, toList())));
+//{OTHER=[french fries, pizza], MEAT=[pork, beef], FISH=[]}
+
+Map<Dish.Type, Long> typesCount = menu.stream().collect(
+                    groupingBy(Dish::getType, counting()));
+
+//{MEAT=3, FISH=2, OTHER=4}
+```
+
 ### 
 [Java 浮点类型 float 和 double 的表示方法和范围](http://www.runoob.com/w3cnote/java-the-different-float-double.html)

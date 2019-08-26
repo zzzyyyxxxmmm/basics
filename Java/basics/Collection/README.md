@@ -15,6 +15,21 @@ Integer的hashcode就是自己本身
 
 ## 如何getval
 先比较hashcode,再用equals比较key，因为hashcode比较快
+
+## 常见Hash Function
+
+### CRC32
+
+### SHA256
+
+### MurmurHash
+
+### Goolge CityHash
+
+### Goolge FarmHash
+
+### CLHash
+
 # ConcurrentHashMap
 
 
