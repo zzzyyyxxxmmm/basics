@@ -30,6 +30,77 @@ Integer的hashcode就是自己本身
 
 ### CLHash
 
+## STATIC HASHING SCHEMES
+* Linear Probe Hashing
+* Robin Hood Hashing
+* Cuckoo Hashing
+
+### LINEAR PROBE HASHING
+Single giant table of slots.
+Resolve collisions by linearly searching for the
+next free slot in the table.
+* To determine whether an element is present, hash to a
+location in the index and scan for it.
+* Have to store the key in the index to know when to stop
+scanning.
+* Insertions and deletions are generalizations of lookups.
+
+### ROBIN HOOD HASHING
+Variant of linear probe hashing that steals slots
+from "rich" keys and give them to "poor" keys.
+* Each key tracks the number of positions they are from
+where its optimal position in the table.
+* On insert, a key takes the slot of another key if the first
+key is farther away from its optimal position than the
+second key.
+
+A 0
+B 0
+C 1
+最后一步C要插到B的位置，但由于B[1]>C[0],因此C需要向后插
+
+| | | |  ->  |A[0]| | |  ->  |A[0]|B[1]| |  ->  |A[0]|B[1]|C[1]|
+
+### CUCKOO HASHING
+Use multiple hash tables with different hash
+functions.
+* On insert, check every table and pick anyone that has a
+free slot.
+* If no table has a free slot, evict the element from one of
+them and then re-hash it find a new location.
+
+If we find a cycle, then we can rebuild the entire
+hash tables with new hash functions.
+* With two hash functions, we (probably) won’t need to
+rebuild the table until it is at about 50% full.
+* With three hash functions, we (probably) won’t need to
+rebuild the table until it is at about 90% full.
+
+## Dynamic hash tables
+
+### Chained Hashing
+Maintain a linked list of buckets for each slot in
+the hash table.
+Resolve collisions by placing all elements with the
+same hash key into the same bucket.
+* To determine whether an element is present, hash to its
+bucket and scan for it.
+* Insertions and deletions are generalizations of lookups.
+
+### EXTENDIBLE HASHING
+* Chained-hashing approach with buckets.
+* Instead of letting the linked list of buckets grow indefinitely, we’re going to split them incrementally.
+* When a bucket is full, we split the bucket and reshuffle its elements.
+* Uses global and local depths to determine buckets
+* Hash table doubles in size to allow for more buckets
+
+### Linear Hashing
+* Maintain a pointer that tracks the next bucket to split.
+* Overflow criterion is left up to the implementation.
+* When any bucket overflows, split the bucket at the pointer location by adding a new slot entry, and create a new hash function.
+* If hash function maps to slot that has previously been pointed to by pointer, apply the new hash function.
+* When pointer reaches last slot, delete original hash function and replace it with new hash function.
+
 # ConcurrentHashMap
 
 

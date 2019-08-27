@@ -299,6 +299,7 @@ int calories = menu.stream().mapToInt(Dish::getCalories).sum();
 IntStream intStream = menu.stream().mapToInt(Dish::getCalories);
 Stream<Integer> stream = intStream.boxed();
 
+//IntStream 避免的boxing
 IntStream evenNumbers = IntStream.rangeClosed(1, 100) .filter(n -> n % 2 == 0);
 System.out.println(evenNumbers.count());
 
@@ -396,5 +397,85 @@ Map<Dish.Type, Long> typesCount = menu.stream().collect(
 //{MEAT=3, FISH=2, OTHER=4}
 ```
 
+## Parallel data processing and performance
+
+## Collection API enhancements
+
+### Arrays.asList vs List.of
+
+前者是mutable,允许 null，但是两个都不能添加元素
+
+```java
+Map<String, Integer> ageOfFriends
+   = Map.of("Raphael", 30, "Olivia", 25, "Thibaut", 26);
+```
+
+Consider the following code, which tries to remove transactions that have a reference code starting with a digit:
+```java
+for (Transaction transaction : transactions) {
+     if(Character.isDigit(transaction.getReferenceCode().charAt(0))) {
+          transactions.remove(transaction);
+     }
+}
+
+// 等于下面的
+
+for (Iterator<Transaction> iterator = transactions.iterator();terator.hasNext()) {
+   Transaction transaction = iterator.next();
+   if(Character.isDigit(transaction.getReferenceCode().charAt(0))) {
+       transactions.remove(transaction);
+   }
+}
+```
+Notice that two separate objects manage the collection:
+* The Iterator object, which is querying the source by using next() and has- Next()
+* The Collection object itself, which is removing the element by calling remove()
+As a result, the state of the iterator is no longer synced with the state of the collection, and vice versa. To solve this problem, you have to use the Iterator object explicitly and call its remove() method:
+```java
+for (Iterator<Transaction> iterator = transactions.iterator();
+             iterator.hasNext(); ) {
+           Transaction transaction = iterator.next();
+           if(Character.isDigit(transaction.getReferenceCode().charAt(0))) {
+               iterator.remove();
+           }
+}
+
+transactions.removeIf(transaction ->
+             Character.isDigit(transaction.getReferenceCode().charAt(0)));
+```
+
+Sometimes, though, instead of removing an element, you want to replace it. For this purpose, Java 8 added replaceAll.
+
+```java
+referenceCodes.replaceAll(code -> Character.toUpperCase(code.charAt(0)) +
+             code.substring(1));
+```
+
+### Working with Map
+
+Two new utilities let you sort the entries of a map by values or keys:
+* Entry.comparingByValue 
+* Entry.comparingByKey
+
+**Compute patterns**
+* computeIfAbsent—If there’s no specified value for the given key (it’s absent or its value is null), calculate a new value by using the key and add it to the Map.
+* computeIfPresent—If the specified key is present, calculate a new value for it and add it to the Map.
+* compute—This operation calculates a new value for a given key and stores it in
+the Map.
+
+```java
+friendsToMovies.computeIfAbsent("Raphael", name -> new ArrayList<>())
+              .add("Star Wars");
+```
+
+**Remove patterns**
+```java
+favouriteMovies.remove(key, value);
+```
+
+**Replacement patterns**
+```java
+favouriteMovies.replaceAll((friend, movie) -> movie.toUpperCase());
+```
 ### 
 [Java 浮点类型 float 和 double 的表示方法和范围](http://www.runoob.com/w3cnote/java-the-different-float-double.html)

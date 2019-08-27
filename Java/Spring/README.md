@@ -832,3 +832,45 @@ The logic performed by a controller often results in some information that needs
 5. So that the controller doesn’t get coupled to a particular view, the view name passed back to DispatcherServlet doesn’t directly identify a specific JSP. It doesn’t even necessarily suggest that the view is a JSP. Instead, it only carries a logical name that will be used to look up the actual view that will produce the result. The DispatcherServlet consults a view resolver F to map the logical view name to a spe- cific view implementation, which may or may not be a JSP.
 6. Now that DispatcherServlet knows which view will render the result, the request’s job is almost over. Its final stop is at the view implementation G, typically a JSP, where it delivers the model data. The request’s job is finally done. The view will use the model data to render output that will be carried back to the client by the (not- so-hardworking) response object H.
 
+## Accepting request input
+
+* Query parameters 
+* Form parameters 
+* Path variables
+
+### Taking query parameters
+```java
+///spittles/show?spittle_id=12345.
+@RequestMapping(method=RequestMethod.GET)
+public List<Spittle> spittles(
+    @RequestParam("max",defaultValue=MAX_LONG_AS_STRING) long max,
+    @RequestParam("count") int count) {
+  return spittleRepository.findSpittles(max, count);
+}
+```
+
+### Taking input via path parameters
+```java
+///spittles/12345
+@RequestMapping(value="/{spittleId}", method=RequestMethod.GET)
+public String spittle(
+    @PathVariable("spittleId") long spittleId,
+    Model model) {
+  model.addAttribute(spittleRepository.findOne(spittleId));
+  return "spittle";
+}
+```
+
+# Hitting the database with Spring and JDBC
+
+## Using JDBC driver-based data sources
+
+* DriverManagerDataSource—Returns a new connection every time a connec- tion is requested. Unlike DBCP’s BasicDataSource, the connections provided by DriverManagerDataSource aren’t pooled.
+* SimpleDriverDataSource—Works much the same as DriverManagerData- Source except that it works with the JDBC driver directly to overcome class load- ing issues that may arise in certain environments, such as in an OSGi container.
+* SingleConnectionDataSource—Returns the same connection every time a connection is requested. Although SingleConnectionDataSource isn’t exactly a pooled data source, you can think of it as a data source with a pool of exactly one connection.
+
+## object-relational mapping
+* Integrated support for Spring declarative transactions  Transparent exception handling
+* Thread-safe, lightweight template classes
+* DAO support classes
+* Resource management

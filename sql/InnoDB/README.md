@@ -440,9 +440,31 @@ The nonclustered index contained all of the required information to resolve the 
 ```sql
 select A,B from t where A = ''
 ```
-这里，noncluster就不需要look up，因为本身key就已经包括了所有需要的值
+这里，noncluster就不需要look up，因为本身key就已经包括了所有需要的值，因此，如果经常需要查询多个字段，多个字段就需要建立联合索引，避免触发look up
 
-因此，如果经常需要查询多个字段，多个字段就需要建立联合索引，避免触发look up
+### Index Include Index
+那么如果是
+```sql
+select A,B,C from t where A = ''
+```
+那么如果我就想要C，而且我也不想建立联合索引呢，那么可以使用Index Include Index，目前MS SQL Server，postgres11支持，mysql5.7不支持，sqlite不支持
+
+Embed additional columns in index to support index-only queries.
+
+### Function/Expression Indexes
+Store the output of a function or expression as the key instead of the original
+value. It is the DBMS’s job to recognize which queries can use that index.
+```sql
+SELECT * FROM users
+WHERE EXTRACT(dow
+FROM login) = 2;
+
+CREATE INDEX idx_user_login --wrong
+ON users (login);
+
+CREATE INDEX idx_user_login
+ON users (EXTRACT(dow FROM login));
+```
 
 ### Single vs Composite Index
 对于复合索引（多列b+tree，使用多列值组合而成的b+tree索引）。遵循最左侧原则，从左到右的使用索引中的字段，一个查询可以只使用索引中的一部份，但只能是最左侧部分。例如索引是key index (a,b,c). 可以支持a  a,b a,b,c 3种组合进行查找，但不支持 b,c进行查找。当使用最左侧字段时，索引就十分有效。
