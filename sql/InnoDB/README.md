@@ -484,6 +484,69 @@ SQL Server uses a Key Lookup to retrieve non-key data from the data page when a 
 
 # 锁
 
+## Latches vs Locks
+A page in SQL Server is 8KB and can store multiple rows. To increase concurrency and performance, buffer latches are held only for the duration of the physical operation on the page, unlike locks which are held for the duration of the logical transaction. Latches are internal to the SQL engine and are used to provide memory consistency, whereas locks are used by SQL Server to provide logical transactional consistency.
+
+## LATCH MODES
+
+### Read Mode
+* Multiple threads are allowed to read the
+same item at the same time.
+* A thread can acquire the read latch if
+another thread has it in read mode
+
+### Write Mode
+* Only one thread is allowed to access the
+item.
+* A thread cannot acquire a write latch if
+another thread holds the latch in any mode.
+
+## LATCH CRABBING/COUPLING
+[reference](!https://15445.courses.cs.cmu.edu/fall2018/slides/09-indexconcurrency.pdf)
+Protocol to allow multiple threads to
+access/modify B+Tree at the same time.
+Basic Idea:
+* Get latch for parent.
+* Get latch for child
+* Release latch for parent if “safe”
+
+A safe node is one that will not split or merge
+when updated.
+* Not full (on insertion)
+* More than half-full (on deletion)
+
+Search: Start at root and go down; repeatedly,
+* Acquire R latch on child
+* Then unlatch parent
+
+Insert/Delete: Start at root and go down,
+obtaining W latches as needed. Once child is
+latched, check if it is safe:
+* If child is safe, release all latches on ancestors.
+
+## BETTER LATCHING ALGORITHM
+Assume that the leaf node is safe.
+Use read latches and crabbing to reach
+it, and verify that it is safe.
+If leaf is not safe, then do previous
+algorithm using write latches.
+
+Search: Same as before.
+
+Insert/Delete:
+* Set latches as if for search, get to leaf, and set W latch on
+leaf.
+* If leaf is not safe, release all latches, and restart thread
+using previous insert/delete protocol with write latches.
+
+This approach optimistically assumes that only leaf
+node will be modified; if not, R latches set on the
+first pass to leaf are wasteful.
+
+## LEAF NODE SCAN
+如果是在横向的叶子上找，例如查找val<4，可能就会到达叶子val为4节点，然后继续向左查找，这时候如果是search的话，两个thread会交换latch
+如果一个是读，一个是写，则kill themselves
+
 ## 锁的类型
 行锁
 * 共享锁，允许事务读取一行数据
@@ -511,3 +574,17 @@ SQL Server uses a Key Lookup to retrieve non-key data from the data page when a 
 如果没有并发控制，那么如果同时有用户读写数据，那么可能出现读出的数据不一致的情况。比如说，进行银行账户A到B的转账，当A账户的钱被扣掉，而钱还没有加到B账户，此时用户查看自己的余额，会感觉钱凭空消失了。MySQL的隔离性就是用来解决这类问题的，而隔离性是通过不同的并发控制手段来实现的。对于刚才的问题，一种简单的并发控制方式，就是讲读写操作串行化，在账户间转账时，不允许查询账户，虽然这种方式可以解决问题，但无疑过于简单粗暴，效率极低。相比于串行化的并发控制，MVCC的优势在于读写影响，对于现代互联网读多写少的场景，这种方式性能明显更高。
 
 MVCC是通过保存数据的多个版本来实现并发控制，当需要更新某条数据时，实现了MVCC的存储系统不会立即用新数据覆盖原始数据，而是创建该条记录的一个新的版本。对于多数数据库系统，存储会分为Data Part和Undo Log，Data Part用来存储事务已提交的数据，而Undo Log用来存储旧版本的数据。多版本的存在允许了读和写的分离，读操作是需要读取某个版本之前的数据即可，和写操作不冲突，大大提高了性能。
+
+# sort and group by
+
+## EXTERNAL MERGE SORT
+**Sorting Phase**
+
+Sort small chunks of data that fit in main-memory, and
+then write back the sorted data to a file on disk.
+
+**Merge Phase**
+
+Combine sorted sub-files into a single larger file.
+
+group by 可以用sort去重，或者hash去重，hash是把val映射到disk里，如果是相同的值，那value肯定相同，就相当于合并，最后再一起拿出来，主要用于处理大数据的

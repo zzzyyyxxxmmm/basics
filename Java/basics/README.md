@@ -71,9 +71,9 @@ GC is used to collect objects which is marked as garbage.
 ### Which Object will be marked as garbage
 根搜索算法
 通过一系列名为GC Roots的对象作为起始点，从这些节点开始向下搜索，搜索所走过的路径成为引用链，当一个对象到GC Roots没有任何引用链相连，则证明此对象是不可用的。根搜索算法中不可达的对象也并非是‘非死不可’的，暂时是‘缓刑’阶段，要真正判断一个对象死亡要经历两次标记过程：如果对象在进行根搜索后发现对象不可达，那它将会进行被第一次标记并且进行筛选，筛选的条件是此对象是否有必要执行finalize()方法。当对象没有覆盖finalize()方法或者finalize()方法已经被虚拟机掉用过，这两种情况都视为‘没有必要执行’。
-     如果对象被认为有必要执行finalize()方法，那么这个方法会被放置在一个名为F-Queue的队列之中，并在稍后由一条由虚拟机自动建立的、低优先级的Finalizer线程去执行。这里的‘执行’也只是指虚拟机会触发这个方法，但并不承诺一定会执行。
-     finalize()方法是对象逃脱死亡命运的最后一次机会，稍后GC会对F-Queue中的对象进行第二次小规模的标记，如果对象在finalize()中重新与引用链上的任何一个对象建立了关联，就会被移出‘即将回收’集合，如果没有移出，那就真的离死亡不远了。
-     finalize()方法只会被系统自动调用一次。
+如果对象被认为有必要执行finalize()方法，那么这个方法会被放置在一个名为F-Queue的队列之中，并在稍后由一条由虚拟机自动建立的、低优先级的Finalizer线程去执行。这里的‘执行’也只是指虚拟机会触发这个方法，但并不承诺一定会执行。
+finalize()方法是对象逃脱死亡命运的最后一次机会，稍后GC会对F-Queue中的对象进行第二次小规模的标记，如果对象在finalize()中重新与引用链上的任何一个对象建立了关联，就会被移出‘即将回收’集合，如果没有移出，那就真的离死亡不远了。
+finalize()方法只会被系统自动调用一次。
 
 **GC Roots**
 
@@ -197,7 +197,12 @@ Int什么的都是由这个类加载的
 4. Bootstrap ClassLoader如果没有查找成功，则ExtClassLoader自己在java.ext.dirs路径中去查找，查找成功就返回，查找不成功，再向下让子加载器找。 
 5. ExtClassLoader查找不成功，AppClassLoader就自己查找，在java.class.path路径下查找。找到就返回。如果没有找到就让子类找，如果没有子类会怎么样？抛出各种异常。
 
-双亲委托的好处就是防止自定义的类，例如我定义一个String类，但是类加载器会从顶端先加载
+**为什么要使用classloader**
+So, suppose a user calls his class java.lang.MyClass. Theoretically, it could get package access to all the fields and methods in the java.lang package and change the way they work. The language itself doesn't prevent this. But the JVM will block this, because all the real java.lang classes were loaded by bootstrap class loader. Not the same loader = no access.
+
+There are other security features built into the class loaders that make it hard to do certain types of hacking.
+
+So why three class loaders? Because they represent three levels of trust. The classes that are most trusted are the core API classes. Next are installed extensions, and then classes that appear in the classpath, which means they are local to your machine.
 
 # static 加载顺序
 
@@ -477,5 +482,10 @@ favouriteMovies.remove(key, value);
 ```java
 favouriteMovies.replaceAll((friend, movie) -> movie.toUpperCase());
 ```
+
+## Default Method
+
+ArrayList里的sort就是default method, 通过default method避免在更新时，强制要求实现类实现新加的方法
+
 ### 
 [Java 浮点类型 float 和 double 的表示方法和范围](http://www.runoob.com/w3cnote/java-the-different-float-double.html)

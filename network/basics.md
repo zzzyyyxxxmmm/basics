@@ -1,6 +1,10 @@
+# OSI
+[seven layers](!https://github.com/zzzyyyxxxmmm/basics/blob/master/image/OSI.png)
+
 # HTTP/HTTPS
 
-[https](!https://github.com/zzzyyyxxxmmm/basics/blob/master/image/https.png);
+[https建立过程](!https://github.com/zzzyyyxxxmmm/basics/blob/master/image/https.png)
+unsymmetrical
 
 ## http response code
 1** : 服务器收到请求，需要请求者继续执行操作

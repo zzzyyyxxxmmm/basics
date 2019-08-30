@@ -124,6 +124,38 @@ identifier.
 * Most common: page_id + offset/slot
 * Can also contain file location info. 
 
+# ACCESS METHODS
+An access method is a way that the
+DBMS can access the data stored in a
+table.
+* Not defined in relational algebra.Three basic approaches:
+* Sequential Scan
+* Index Scan
+* Multi-Index / "Bitmap" Scan
+
+## SEQUENTIAL SCAN
+For each page in the table:
+* Retrieve it from the buffer pool.
+* Iterate over each tuple and check whether
+to include it.
+
+The DBMS maintains an internal
+cursor that tracks the last page / slot
+it examined.
+
+### Sequential Scan Optimizations
+* Prefetching
+* Parallelization
+* Buffer Pool Bypass
+* Zone Maps 
+Pre-computed aggregates for the attribute values
+in a page. DBMS checks the zone map first to
+decide whether it wants to access the page.
+提前存储一些例如平均值，最大值的信息，例如查找大于400的val，但最大值就是300，那么就可以直接返回了
+
+* Late Materialization
+* Heap Clustering
+
 # 四大特性和隔离级别
 ACID
 
