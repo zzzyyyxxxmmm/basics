@@ -271,7 +271,7 @@ A foreign key is a column in a child table that references a primary key in the 
 CONSTRAINT EMP_ID_FK FOREIGN KEY (EMP_ID) REFERENCES EMPLOYEE_TBL (EMP_ID));
 
 alter table employee_pay_tbl
-add constraint id_fk foreign key (emp_id)
+add constraint id_fk foreign key (emp_id) 
 references employee_tbl (emp_id);
 ```
 

@@ -2,9 +2,20 @@
 
 ```brew install redis```
 
-### run with backgroud service
+## Mac
+
+### run with and without backgroud service
+```
+brew services start redis
+```
+
 ```
 redis-server /usr/local/etc/redis.conf
+```
+
+### open client
+```
+redis-cli
 ```
 
 # 什么是redis
