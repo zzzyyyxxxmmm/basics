@@ -48,6 +48,9 @@ general idea
 2.	变量： interface: public static final var
 3.  方法： 抽象方法都不可以被直接声明。接口中的的方法必须是public，为啥不能和abstract class一样可以是protected的呢？接口本身创建出来的作用之一就是给外部实现然后调用的。 抽象类的普通方法可以实现。 在Java7中不可以实现，Java8中可以通过default method实现。Java8中的接口静态方法只能通过接口名调用. Java9支持私有方法和私有静态方法
 
+## DI and IOC
+
+
 # 一些小问题
 
 # JVM

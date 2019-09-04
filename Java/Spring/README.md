@@ -491,11 +491,9 @@ By default, all beans created in the Spring application context are created as s
 
 Spring defines several scopes under which a bean can be created, including the following:
 * Singleton—One instance of the bean is created for the entire application.
-* Prototype—One instance of the bean is created every time the bean is injected
-into or retrieved from the Spring application context.
+* Prototype—One instance of the bean is created every time the bean is injected into or retrieved from the Spring application context.
 * Session —In a web application, one instance of the bean is created for each session.
-* Request—In a web application, one instance of the bean is created for each
-request.
+* Request—In a web application, one instance of the bean is created for each request.
 
 ```java
 @Component
