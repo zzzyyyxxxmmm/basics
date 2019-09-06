@@ -71,5 +71,4 @@ Session默认的生命周期是20分钟，可以手动设置更长或更短的�
 
 持久化登录用session
 
-
-
+## [Encoding vs. Encryption vs. Hashing vs. Obfuscation](!https://danielmiessler.com/study/encoding-encryption-hashing-obfuscation/#summary)

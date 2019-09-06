@@ -48,8 +48,95 @@ general idea
 2.	变量： interface: public static final var
 3.  方法： 抽象方法都不可以被直接声明。接口中的的方法必须是public，为啥不能和abstract class一样可以是protected的呢？接口本身创建出来的作用之一就是给外部实现然后调用的。 抽象类的普通方法可以实现。 在Java7中不可以实现，Java8中可以通过default method实现。Java8中的接口静态方法只能通过接口名调用. Java9支持私有方法和私有静态方法
 
-## DI and IOC
+## IOC
+In software engineering, inversion of control is a programming principle. IoC inverts the flow of control as compared to traditional control flow. In IoC, custom-written portions of a computer program receive the flow of control from a generic framework.
 
+## DI
+In software engineering, dependency injection is a technique whereby one object supplies the dependencies of another object. A "dependency" is an object that can be used, for example as a service. Instead of a client specifying which service it will use, something tells the client what service to use.
+
+## String为什么是final的
+
+String是final并不仅仅只是指这个class是final的，而是代表这个类是不可修改的，里面的char array同样也是用final修饰的
+
+类上声明final也是为了不让其他类继承从而破坏其**immutable**，immutable带来的好处就是安全
+
+例如，String本身的touppercase是直接新建一个大写的类，然后指向它，如果继承String，改写其touppercase，使其是mutable的，那会改变常量池所有原本字符串的引用
+
+首先看下几个例子：
+```java
+class Solution {
+    
+    public static String addStr(String s){
+        s+="abc";
+        return s;
+    }
+
+    public static StringBuilder addSB(StringBuilder stringBuilder){
+        stringBuilder.append("abc");
+        return stringBuilder;
+    }
+
+    public static void main(String[] args) {
+        String s="1";
+        addStr(s);
+        System.out.println(s);
+
+        StringBuilder stringBuilder=new StringBuilder("1");
+        addSB(stringBuilder);
+        System.out.println(stringBuilder);
+
+    }
+}
+```
+
+由于String是final的，因此不可以修改，String s 传递到方法里拷贝的是String的引用，然后s+="abc"实际是将拷贝的引用指向了新的常量，而不是在原来的基础上修改
+
+另一个严重的问题：
+```java
+class Solution {
+
+    public static void main(String[] args) {
+        HashSet<StringBuilder> hs=new HashSet<>();
+        StringBuilder sb1=new StringBuilder("aaa");
+        StringBuilder sb2=new StringBuilder("aaabbb");
+        hs.add(sb1);
+        hs.add(sb2);
+        StringBuilder sb3=sb1;
+        sb3.append("bbb");
+        System.out.println(hs);
+    }
+}
+```
+这个例子直接破坏了set的性质，会出现两个aaabbb
+
+## 为什么wait/notify要放在synchonized里
+
+wait通常是写在一个无限循环中，如果条件不成立则wait
+
+```java
+while(!condition){      //Thread A
+    wait();
+}
+
+condition=true;         //Thread B
+notify();
+
+```
+
+如果线程A执行到wait前，B刚好执行到notify的时候，那么A就会一直死循环了，加上syncronized就可以解决这个问题
+
+## Why Java doen't support multi inheritance
+
+C++ supports multi inheritance, so why Java doen't support multi inheritance?
+
+Let's first look at one problem called Diamond Problem:
+
+Suppose we have a class called A, and A containes a method called fun();
+There have two classes B,C who inherite from class A.
+So, if a class D extends B and C at the same time and then call method fun(). whose method will be called. B or C? C++ use virtual inheritance to solve this problem.
+
+That is one of the problem of multi inheritance. However, In most cases, we doen't always need to use multi inheritance, so java developer think we need to 
+simplify the design of Java. Although we lose some features of multi intheritence, we gain the simplicity. And java can implement multi inheritance by interface.
 
 # 一些小问题
 
