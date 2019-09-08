@@ -206,6 +206,96 @@ protected MonetaryAmount buyNowPrice;
 
 这段代码可以把11.23 USD or 99 EUR.转成类的形式
 
+# Mapping inheritance
+
+## @MappedSuperclass
+```java
+@MappedSuperclass
+public abstract class BillingDetails { @NotNull
+     protected String owner;
+     // ...
+}
+
+@Entity @AttributeOverride(name = "owner", column = @Column(name = "CC_OWNER", nullable = false))   //当然也可以直接在父类上声明
+public class CreditCard extends BillingDetails {
+
+}
+```
+
+对于执行```select bd from BillingDetails bd```,
+会执行下面查询:
+```sql
+select
+    ID, OWNER, ACCOUNT, BANKNAME, SWIFT
+from BANKACCOUNT
+select
+    ID, CC_OWNER, CARDNUMBER, EXPMONTH, EXPYEAR
+from CREDITCARD
+```
+Hibernate uses a separate SQL query for each concrete subclass. On the other hand, queries against the concrete classes are trivial and perform well—Hibernate uses only one of the statements.
+
+## @Inheritance
+[Inheritance的三种类型](!https://blog.csdn.net/songmaolin_csdn/article/details/78517534)
+per_table 会为每个继承他的表创建table
+single_table就指回合并所有的子类然后创建一个表
+joined就是会创建子类表和所有表,然后关联
+
+基于多台查询的时候会返回List,需要自己进行类型转换
+
+```java
+@Entity
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS) public abstract class BillingDetails {
+@Id
+@GeneratedValue(generator = Constants.ID_GENERATOR) protected Long id;
+@NotNull
+protected String owner;
+// ...
+}
+
+
+@Entity
+public class CreditCard extends BillingDetails { @NotNull
+protected String cardNumber; @NotNull
+protected String expMonth; @NotNull
+    protected String expYear;
+    // ...
+}
+```
+对于查询```select bd from BillingDetails bd```
+
+```sql
+select
+    ID, OWNER, EXPMONTH, EXPYEAR, CARDNUMBER,
+    ACCOUNT, BANKNAME, SWIFT, CLAZZ_
+from
+( select
+          ID, OWNER, EXPMONTH, EXPYEAR, CARDNUMBER,
+          null as ACCOUNT,
+          null as BANKNAME,
+           null as SWIFT,
+          1 as CLAZZ_
+      from
+          CREDITCARD
+      union all
+select
+          id, OWNER,
+          null as EXPMONTH,
+          null as EXPYEAR,
+          null as CARDNUMBER,
+          ACCOUNT, BANKNAME, SWIFT,
+          2 as CLAZZ_
+from
+          BANKACCOUNT
+    ) as BILLINGDETAILS
+```
+虽然都是创建多个表,但后者执行的是union,比上面要好
+
+### 如何选择
+1. If you don’t require polymorphic associations or queries, lean toward table-per- concrete class—in other words, if you never or rarely select bd from Billing- Details bd and you have no class that has an association to BillingDetails. An explicit UNION-based mapping with InheritanceType.TABLE_PER_CLASS should be preferred, because (optimized) polymorphic queries and associa- tions will then be possible later.
+   
+2. If you do require polymorphic associations (an association to a superclass, hence to all classes in the hierarchy with dynamic resolution of the concrete class at runtime) or queries, and subclasses declare relatively few properties (particularly if the main difference between subclasses is in their behavior), lean toward InheritanceType.SINGLE_TABLE. Your goal is to minimize the number of nullable columns and to convince yourself (and your DBA) that a denormalized schema won’t create problems in the long run.
+   
+3. If you do require polymorphic associations or queries, and subclasses declare many (non-optional) properties (subclasses differ mainly by the data they hold), lean toward InheritanceType.JOINED. Alternatively, depending on the width and depth of your inheritance hierarchy and the possible cost of joins versus unions, use InheritanceType.TABLE_PER_CLASS. This decision might require evaluation of SQL execution plans with real data.
 
 # tips
 1. 一个entity里的properties最好是不可分的,例如User里不要包含一个address,如果本身数据库就不包含address表的话,User里包含address会导致address的lifecycle脱离User. 多个User指向一个address也是不好的,例如修改一个address可能导致多个user的address发生改变
