@@ -162,7 +162,7 @@ ACID
 * 原子性 (Atomicity)
 A transaction can not be interruptted. Either all the information is committed to save, or none is saved.
 * 一致性（Consistency）
-The data saved can’t violate any of the database’s integrity. For example, AB have one thousand dollar in sum and A send B five hundred dollar. 
+The data saved can’t violate any of the database’s integrity. Any operations should be logically correct. For example, AB have one thousand dollar in sum and A send B five hundred dollar. 
 * 隔离性（Isolation）
 The transactionis not affected by any other transactions taking place.
 * 持久性（Durability）
@@ -571,7 +571,7 @@ departmentTable(departmentName,departmentPresident)
 上面都是消除非主属性对于key的依赖，这里我们需要消除主属性对key的依赖（key包含主属性），指导如何设计key
 
 ## Transction
-A transaction is a unit of work that is performed against a database. Transactions are units or sequences of work accomplished in a logical order.
+Transactions are sequences of operations accomplished in a logical order on a shared database.
 
 The following list describes the nature of transactions:
 * All transactions have a beginning and an end.

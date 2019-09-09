@@ -297,5 +297,133 @@ from
    
 3. If you do require polymorphic associations or queries, and subclasses declare many (non-optional) properties (subclasses differ mainly by the data they hold), lean toward InheritanceType.JOINED. Alternatively, depending on the width and depth of your inheritance hierarchy and the possible cost of joins versus unions, use InheritanceType.TABLE_PER_CLASS. This decision might require evaluation of SQL execution plans with real data.
 
+# Mapping collections and entity associations
+
+The collection you could create is Item#images, referencing all images for a partic-
+ular item. You create and map this collection property to do the following:
+* Execute the SQL query SELECT * from IMAGE where ITEM_ID = ? automatically when you call someItem.getImages(). As long as your domain model instances are in a managed state (more later), you can read from the database on-demand while navigating the associations between your classes. You don’t have to manu- ally write and execute a query with the EntityManager to load data. On the other hand, the collection query when you start iterating the collection is always “all images for this item,” never “only images that match criteria XYZ.”
+* Avoid saving each Image with entityManager.persist(). If you have a mapped collection, adding the Image to the collection with someItem.getImages() .add() will make it persistent automatically when the Item is saved. This cascad- ing persistence is convenient because you can save instances without calling EntityManager.
+* Have a dependent life cycle of Images. When you delete an Item, Hibernate deletes all attached Images with an extra SQL DELETE. You don’t have to worry about the life cycle of images and cleaning up orphans (assuming your database foreign key constraint doesn’t ON DELETE CASCADE). The JPA provider handles the composition life cycle.
+
+## mapping a list
+```java
+@Entity
+public class Item {
+    @ElementCollection 
+    @CollectionTable(name = "IMAGE", joinColumns = @JoinColumn(name = "ITEM_ID")) 
+    @Column(name = "FILENAME")
+}
+```
+ITEM:
+
+| Id | Name |
+|----|------|
+| 1  | Foo  |
+| 2  | B    |
+| 3  | C    |
+
+IMAGE:
+
+| Item_Id | FileName |
+|---------|----------|
+| 1       | Foo.jpg  |
+| 1       | bar.jpg  |
+| 1       | baz.jpg  |
+| 2       | b.jpg    |
+
+
+
+```java
+@Entity
+public class Item {
+    @ElementCollection
+    @CollectionTable(name = "IMAGE") 
+    @Column(name = "FILENAME") 
+    @CollectionId(columns = @Column(name = "IMAGE_ID"), type = @Type(type = "long"), generator = Constants.ID_GENERATOR)
+    protected Collection<String> images = new ArrayList<String>();
+```
+
+ITEM:
+
+| Id | Name |
+|----|------|
+| 1  | Foo  |
+| 2  | B    |
+| 3  | C    |
+
+
+IMAGE:
+
+| Image_Id | ItemID | FileName |
+|---------|--------|----------|
+| 1       | 1      | Foo.jpg  |
+| 2       | 1      | bar.jpg  |
+| 3       | 1      | baz.jpg  |
+| 4       | 1      | baz.jpg  |
+| 5       | 2      | b.jpg    |
+
+### @OrderColumn
+暂时不知道有啥用
+
+## mapping a map
+```java
+@Entity
+public class Item {
+    @ElementCollection
+    @CollectionTable(name = "IMAGE")
+    @MapKeyColumn(name = "FILENAME")
+    @Column(name = "IMAGENAME")
+    protected Map<String, String> images = new HashMap<String, String>();
+    // ...
+}
+```
+
+ITEM:
+
+| Id | Name |
+|----|------|
+| 1  | Foo  |
+| 2  | B    |
+| 3  | C    |
+
+
+IMAGE:
+| Item_Id | FileName | IMAGENAME |
+|---------|----------|-----------|
+| 1       | Foo.jpg  | Foo       |
+| 1       | bar.jpg  | bar       |
+| 1       | baz.jpg  | baz       |
+| 2       | b1.jpg   | b1        |
+| 2       | b2.jpg   | b2        |
+
+这些都是可以进行有序化的
+
+
+## @Parent 
+用于address持有一个USer对象,不常用
+
+## Mapping entity associations
+
+上面讲的这些都存在严重的依赖关系,删一个就会级联删除
+
+```java
+@Entity
+public class Bid {
+
+@ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "ITEM_ID", nullable = false) protected Item item;
+// ...
+}
+```
+You don’t need to map the other side of this relationship; you can ignore the one-to- many association from Item to Bid. 
+
+不过这是单向的,如果是双向的依然需要绑定
+```java
+@Entity
+public class Item {
+@OneToMany(mappedBy = "item", fetch = FetchType.LAZY)
+    protected Set<Bid> bids = new HashSet<>();
+// ...
+}
+```
 # tips
 1. 一个entity里的properties最好是不可分的,例如User里不要包含一个address,如果本身数据库就不包含address表的话,User里包含address会导致address的lifecycle脱离User. 多个User指向一个address也是不好的,例如修改一个address可能导致多个user的address发生改变
