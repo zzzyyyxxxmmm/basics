@@ -12,6 +12,8 @@
 
 2019-09-08: 继续看hibernate和数据库, 2-phase-locking
 
-2019-09-09: 继续看hibernate和数据库, 基于docker部署mysql服务
-
 ### 周进度2
+
+2019-09-09: 继续看hibernate和数据库, 终于搞懂4大隔离的实现原理了; 基于docker部署mysql服务; 弄懂CAS+redis实现多服务多server环境下的单点登录
+
+2019-09-09: 继续看hibernate和数据库, 基于docker部署tomcat服务 
