@@ -169,6 +169,12 @@ private Address address;
 在User表里的address里的annotation会覆盖address里的annotation
 You can declare @AttributeOverrides at any level, as you do for the name property of the City class, mapping it to the CITY column. This can be achieved with either (as shown) an @AttributeOverride in Address or an override in the root entity class, User. Nested properties can be referenced with dot notation: for example, on User#address, @AttributeOveride(name = "city.name") references the Address #City#name attribute.
 
+```java
+@EmbeddedId
+protected UserId id;
+```
+同样,这个也可以作为composite primary key.
+
 ## Creating custom JPA converters
 ```java
 public class MonetaryAmount implements Serializable {
@@ -425,5 +431,55 @@ public class Item {
 // ...
 }
 ```
+
+# Managing data
+
+[lifecycle of a object in hibernate](!https://github.com/zzzyyyxxxmmm/basics/blob/master/image/hibernate_life.png)
+
+注意remove之后不一定立刻变成transient,而是经历flush/close之后才会transient
+
+The persistence context acts as a first-level cache; it remembers all entity instances you’ve handled in a particular unit of work.
+
+```java
+Item item = em.getReference(Item.class, ITEM_ID);
+```
+If the persistence context already contains an Item with the given identifier, that Item instance is returned by getReference() without hitting the database. Furthermore, if no persistent instance with that identifier is currently managed, Hibernate produces a hollow placeholder: a proxy. This means getReference() won’t access the database, and it doesn’t return null, unlike find().
+
+Hibernate, as a JPA implementation, synchronizes at the following times:
+* When a joined JTA system transaction is committed
+* Before a query is executed—we don’t mean lookup with find() but a query
+with javax.persistence.Query or the similar Hibernate API
+* When the application calls flush() explicitly
+
+# Transactions and concurrency 重要啊
+
+```java
+EntityManager em = null;
+UserTransaction tx = TM.getUserTransaction();
+try {
+    tx.begin();
+    em = JPA.createEntityManager();
+    tx.commit();
+} catch (Exception ex) {
+     try {
+    if (tx.getStatus() == Status.STATUS_ACTIVE
+        || tx.getStatus() == Status.STATUS_MARKED_ROLLBACK)
+        tx.rollback();
+} catch (Exception rbEx) {
+ System.err.println("Rollback of transaction failed, trace follows!");
+        rbEx.printStackTrace(System.err);
+    }
+    throw new RuntimeException(ex);
+} finally {
+    if (em != null && em.isOpen())
+        em.close();
+}
+```
+
+# Fetch plans, strategies, and profiles
+
+
+
+
 # tips
 1. 一个entity里的properties最好是不可分的,例如User里不要包含一个address,如果本身数据库就不包含address表的话,User里包含address会导致address的lifecycle脱离User. 多个User指向一个address也是不好的,例如修改一个address可能导致多个user的address发生改变
