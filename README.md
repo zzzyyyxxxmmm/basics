@@ -21,3 +21,7 @@
 2019-09-10: 继续看hibernate和数据库, 用maven打包spring boot项目部署到docker上
 
 2019-09-11: Docker数据卷, 把mysql的数据放到数据卷中
+
+2019-09-12: 基于many to many 的表查询, mvn 命令, 线程池完结, 了解spring batch
+
+2019-09-13: nexus上传service服务

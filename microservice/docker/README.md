@@ -39,8 +39,25 @@ sudo reboot
 
 ```docker run -p 3306:3306 --name root -e MYSQL_ROOT_PASSWORD=root -d mysql```
 
+指定volume
+```docker run -p 3306:3306 -v mysql:/var/lib/mysql --name root -e MYSQL_ROOT_PASSWORD=root -d mysql```
+
 **远程连接数据库**
 ```mysql -u root -p root -h 192.168.31.130 -P 3306```
+
+**进入mysql**
+```docker exec -it root bash```
+
+# Volume
+
+```
+# 查看所有volume
+docker volume ls
+# 删除指定volume
+docker volume rm [volume name]
+# 查看volume详细
+docker volume inspect [volume name]
+```
 
 # 部署springboot + mysql 服务
 [gua](!https://bingohuang.com/spring-boot-docker/)

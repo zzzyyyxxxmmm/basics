@@ -796,4 +796,10 @@ CREATE TRIGGER trig1 AFTER INSERT
 
 然后输入密码
 
+# install (MAC)
+1. download it
+2. copy the temperory password
+3. mysql -u root -p 
+4. SET PASSWORD = PASSWORD('root');
+
 ## MongoDB和MySQL区别
