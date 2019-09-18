@@ -170,22 +170,19 @@ Once a transaction is committed, it will remain so, regardless of a subsequent s
   
   我们先看看如果不考虑事务的隔离性，会发生的几种问题：
 
-* 脏读
-脏读是指在一个事务处理过程里读取了另一个未提交的事务中的数据。
-* 不可重复读
-不可重复读是指在对于数据库中的某个数据，一个事务范围内多次查询却返回了不同的数据值，这是由于在查询间隔，被另一个事务修改并提交了。
+* Dirty Read
+A dirty read (aka uncommitted dependency) occurs when a transaction is allowed to read data from a row that has been modified by another running transaction and not yet committed.
 
-例如事务T1在读取某一数据，而事务T2立马修改了这个数据并且提交事务给数据库，事务T1再次读取该数据就得到了不同的结果，发送了不可重复读。
+* Non-repeatable reads
+A non-repeatable read occurs, when during the course of a transaction, a row is retrieved twice and the values within the row differ between reads.
 　　　　
-* 虚读(幻读)
-幻读是事务非独立执行时发生的一种现象。例如事务T1对一个表中所有的行的某个数据项做了从“1”修改为“2”的操作，这时事务T2又对这个表中插入了一行数据项，而这个数据项的数值还是为“1”并且提交给数据库。而操作事务T1的用户如果再查看刚刚修改的数据，会发现还有一行没有修改，其实这行是从事务T2中添加的，就好像产生幻觉一样，这就是发生了幻读。
-　　
-幻读和不可重复读都是读取了另一条已经提交的事务（这点就脏读不同），所不同的是不可重复读查询的都是同一个数据项，而幻读针对的是一批数据整体（比如数据的个数）。
+* Phantom reads
+A phantom read occurs when, in the course of a transaction, new rows are added or removed by another transaction to the records being read.
  
 现在来看看MySQL数据库为我们提供的四种隔离级别：
-1. Serializable (串行化)：可避免脏读、不可重复读、幻读的发生。
-2. Repeatable read (可重复读)：可避免脏读、不可重复读的发生。
-3. Read committed (读已提交)：可避免脏读的发生。
+1. Serializable (串行化)：可避免脏读、不可重复读、幻读的发生。 使用range lock
+2. Repeatable read (可重复读)：可避免脏读、不可重复读的发生。 使用write read lock
+3. Read committed (读已提交)：可避免脏读的发生。 使用write lock
 4. Read uncommitted (读未提交)：最低级别，任何情况都无法保证。
 
 

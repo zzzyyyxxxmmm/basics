@@ -25,3 +25,6 @@
 2019-09-12: 基于many to many 的表查询, mvn 命令, 线程池完结, 了解spring batch
 
 2019-09-13: nexus上传service服务
+
+2019-09-16: vim 映射JK到esc
+

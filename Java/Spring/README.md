@@ -17,6 +17,12 @@
 </dependencies>
 ```
 
+## IOC
+In software engineering, inversion of control is a programming principle. IoC inverts the flow of control as compared to traditional control flow. In IoC, custom-written portions of a computer program receive the flow of control from a generic framework.
+
+## DI
+In software engineering, dependency injection is a technique whereby one object supplies the dependencies of another object. A "dependency" is an object that can be used, for example as a service. Instead of a client specifying which service it will use, something tells the client what service to use.
+
 # Wiring beans
 In Spring, objects aren’t responsible for finding or creating the other objects that they need to do their jobs. Instead, the container gives them references to the objects that they collaborate with.
 
@@ -85,7 +91,7 @@ public class CDPlayerTest {
 public void cdShouldNotBeNull(){
     ApplicationContext applicationContext=new AnnotationConfigApplicationContext(CDPlayerConfig.class);
     CompactDisc compactDisc=applicationContext.getBean(SgtPeppers.class);
-   assertNotNull(compactDisc);
+    assertNotNull(compactDisc);
 }
 ```
 
@@ -176,7 +182,7 @@ public CompactDisc sgtPeppers() {
 
 The @Bean annotation tells Spring that this method will return an object that should be registered as a bean in the Spring application context. 
 
-By default, the bean will be given an ID that is the same as the @Bean-annotated method’s name. In this case, the bean will be named compactDisc. If you’d rather it have a different name, you can either rename the method or prescribe a different name with the name attribute
+By default, the bean will be given an ID that is the same as the @Bean-annotated method’s name. In this case, the bean will be named compactDisc. If you’d rather it have a different name, you can either rename the method or prescribe a different name with the name attribute.
 
 ## Wiring beans with XML
 
@@ -677,7 +683,7 @@ public class ConcertConfig {
 
 ### Around
 
-```xml
+```java
 public class Audience {
     @Pointcut("execution(** concert.Performance.perform(..))")
     public void performance() {

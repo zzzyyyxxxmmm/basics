@@ -48,11 +48,6 @@ general idea
 2.	变量： interface: public static final var
 3.  方法： 抽象方法都不可以被直接声明。接口中的的方法必须是public，为啥不能和abstract class一样可以是protected的呢？接口本身创建出来的作用之一就是给外部实现然后调用的。 抽象类的普通方法可以实现。 在Java7中不可以实现，Java8中可以通过default method实现。Java8中的接口静态方法只能通过接口名调用. Java9支持私有方法和私有静态方法
 
-## IOC
-In software engineering, inversion of control is a programming principle. IoC inverts the flow of control as compared to traditional control flow. In IoC, custom-written portions of a computer program receive the flow of control from a generic framework.
-
-## DI
-In software engineering, dependency injection is a technique whereby one object supplies the dependencies of another object. A "dependency" is an object that can be used, for example as a service. Instead of a client specifying which service it will use, something tells the client what service to use.
 
 ## String为什么是final的
 
