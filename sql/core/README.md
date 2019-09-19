@@ -79,6 +79,42 @@ about last class.
 matching tuples.
 * May need to backtrack depending on the join type.
 
+复杂度: 
+
+**Sort Cost (R):** 2M ∙ (log M / log B)
+**Sort Cost (S):** 2N ∙ (log N / log B)
+**Merge Cost:** (M + N)
+
+The worst case for the merging phase is when the
+join attribute of all of the tuples in both relations
+contain the same value.
+
+**Cost:** (M ∙ N) + (sort cost)
+
+One or both tables are already sorted on join key.
+Output must be sorted on join key.
+
+### BASIC HASH JOIN ALGORITHM
+就是对外表建一个hash, 然后就不用一个一个直接比较了
+
+但明显一个问题就是hash不够大, 发生碰撞, 这时候就需要用到grace hash join, 大概就是发生碰撞的再hash第二次.
+
+**Partitioning Phase:**
+* Read+Write both tables
+* 2(M+N) IOs
+
+**Probing Phase:**
+* Read both tables
+* M+N IOs
+
+| Algorithm               | IO Cost             | Example      |
+|-------------------------|---------------------|--------------|
+| Simple Nested Loop Join | M+(m*N)             | 1.3 hours    |
+| Block Nested Loop Join  | M + (M ∙ N)         | 50 seconds   |
+| Index Nested Loop Join  | M + (m ∙ C)         | ~20 seconds  |
+| Sort-Merge Join         | M + N + (sort cost) | 0.59 seconds |
+| Hash Join               | 3(M + N)            | 0.45 seconds |
+
 # Cache
 
 show variables like '%query_cache%'; 

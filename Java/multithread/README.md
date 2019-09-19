@@ -1,8 +1,22 @@
+# Concurrency and parallelism 
+Parallel processing is a subset of concurrent processing.
+
+Concurrency means, essentially, that task A and task B both need to happen independently of each other, and A starts running, and then B starts before A is finished.
+
+There are various different ways of accomplishing concurrency. One of them is parallelism--having multiple CPUs working on the different tasks at the same time. But that's not the only way. Another is by task switching, which works like this: Task A works up to a certain point, then the CPU working on it stops and switches over to task B, works on it for a while, and then switches back to task A. If the time slices are small enough, it may appear to the user that both things are being run in parallel, even though they're actually being processed in serial by a multitasking CPU.
+
+# Process and Thread
+You can simply take process as a application in your computer. Process runs in separate memory spaces and it contains at least one thread. Threads in same process run in a shared memory space.
+进程是操作系统分配资源的最小单元，线程是操作系统调度的最小单元。
+
+# Daemon Thread and User Thread
+Daemon Thread is a service Thread running in the background to serving User Thread. GC is a Daemon Thread. If all User threads shut down, JVM will shutdown too.
+
 # join
 当前线程等待子线程的终止, 比如子线程t1创建，并执行，然后掉用t1.join()方法，这时候main线程会暂停，等待t1执行完毕，执行完毕后继续执行join后面的方法
 
 # yield
-使当前线程从执行状态（运行状态）变为可执行态（就绪状态）。cpu会从众多的可执行态里选择，也就是说，当前也就是刚刚的那个线程还是有可能会被再次执行到的，并不是说一定会执行其他线程而该线程在下一次中不会执行到了。
+使当前线程从执行状态（运行状态）变为可执行态（就绪状态）。cpu会从众多的可执行态里选择，也就是说，当前也就是刚刚的那个线程还是有可能会被再次执行到的，并不是说一定会执行其他线程而该线程在下一次中不会执行到了。会继续占用锁
  
 # 交替打印AB
 ```java
@@ -171,6 +185,11 @@ A task that returns a result and may throw an exception. Implementors define a s
 The Callable interface is similar to Runnable, in that both are designed for classes whose instances are potentially executed by another thread. A Runnable, however, does not return a result and cannot throw a checked exception.
 
 ### Future Interface
+```java
+boolean isCancelled();
+boolean cancel(boolean mayInterruptIfRunning);
+V get() throws InterruptedException, ExecutionException;
+```
 A Future represents the result of an asynchronous computation. Methods are provided to check if the computation is complete, to wait for its completion, and to retrieve the result of the computation. The result can only be retrieved using method get when the computation has completed, blocking if necessary until it is ready. Cancellation is performed by the cancel method. Additional methods are provided to determine if the task completed normally or was cancelled. Once a computation has completed, the computation cannot be cancelled. If you would like to use a Future for the sake of cancellability but not provide a usable result, you can declare types of the form Future<?> and return null as a result of the underlying task.
 
 ### interface RunnableFuture<V> extends Runnable, Future<V>
@@ -178,11 +197,15 @@ A Future that is Runnable. Successful execution of the run method causes complet
 
 ### class FutureTask<V> implements RunnableFuture<V>
 A cancellable asynchronous computation. This class provides a base implementation of Future, with methods to start and cancel a computation, query to see if the computation is complete, and retrieve the result of the computation. 
+就是Future的实现啦
 
 ### Executor interface
 ```java
 void execute(Runnable command);
 ```
+
+### public class FutureTask<V> implements RunnableFuture<V>
+
 
 ### interface ExecutorService implements Executor
 An Executor that provides methods to manage termination and methods that can produce a Future for tracking progress of one or more asynchronous tasks.
@@ -265,3 +288,5 @@ super(corePoolSize, Integer.MAX_VALUE, DEFAULT_KEEPALIVE_MILLIS, MILLISECONDS, n
 * 
 The newCachedThreadPool factory is a good default choice for an Executor, providing better queuing performance than a fixed thread pool.[5] A fixed size thread pool is a good choice when you need to limit the number of concurrent tasks for resource management purposes, as in a server application that accepts requests from network clients and would otherwise be vulnerable to overload.
 
+# Lock
+悲观锁：总是假设最坏的情况，每次去拿数据的时候都认为别人会修改，所以每次在拿数据的时候都会上锁，这样别人想拿这个数据就会阻塞直到它拿到锁。传统的关系型数据库里边就用到了很多这种锁机制，比如行锁，表锁等，读锁，写锁等，都是在做操作之前先上锁。再比如Java里面的同步原语synchronized关键字的实现也是悲观锁。乐观锁：每次去拿数据的时候都认为别人不会修改，所以不会上锁，但是在更新的时候会判断一下在此期间别人有没有去更新这个数据，可以使用版本号等机制。乐观锁适用于多读的应用类型，这样可以提高吞吐量，像数据库提供的类似于write_condition机制，其实都是提供的乐观锁。在Java中java.util.concurrent.atomic包下面的原子变量类就是使用了乐观锁的一种实现方式CAS实现的。

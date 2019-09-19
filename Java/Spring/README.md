@@ -17,6 +17,9 @@
 </dependencies>
 ```
 
+## AOP
+Aspect-oriented programming (AOP) is a programming paradigm that aims to increase modularity by allowing the separation of cross-cutting concerns. It does so by adding additional behavior to existing code (an advice) without modifying the code itself, instead separately specifying which code is modified via a "pointcut" specification, such as "log all function calls when the function's name begins with 'set'". This allows behaviors that are not central to the business logic (such as logging) to be added to a program without cluttering the code, core to the functionality. AOP forms a basis for aspect-oriented software development.
+
 ## IOC
 In software engineering, inversion of control is a programming principle. IoC inverts the flow of control as compared to traditional control flow. In IoC, custom-written portions of a computer program receive the flow of control from a generic framework.
 
@@ -500,6 +503,7 @@ Spring defines several scopes under which a bean can be created, including the f
 * Prototype—One instance of the bean is created every time the bean is injected into or retrieved from the Spring application context.
 * Session —In a web application, one instance of the bean is created for each session.
 * Request—In a web application, one instance of the bean is created for each request.
+* Global-session
 
 ```java
 @Component

@@ -455,6 +455,8 @@ int（3）显示结果为010
 ```
 就是显示的长度不一样而已 都是占用四个字节的空间
 
+所以大小都一样, 只是显示的不一样
+
 ``NUMERIC(5)``
 
 This example restricts the maximum value entered in a particular field to 99999.

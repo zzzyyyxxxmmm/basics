@@ -48,6 +48,12 @@ general idea
 2.	变量： interface: public static final var
 3.  方法： 抽象方法都不可以被直接声明。接口中的的方法必须是public，为啥不能和abstract class一样可以是protected的呢？接口本身创建出来的作用之一就是给外部实现然后调用的。 抽象类的普通方法可以实现。 在Java7中不可以实现，Java8中可以通过default method实现。Java8中的接口静态方法只能通过接口名调用. Java9支持私有方法和私有静态方法
 
+# What is JDK? JRE? JVM?
+* JDK(Java Development Tools): The JDK is a development environment for building applications, applets, and components using the Java programming language. 
+* JRE(Java Runtime Environment): It’s an environment for you to run Java application. 
+* JVM(Java Virtual Machine): Run java bytecode.
+
+Basically, JDK contains JRE, but with compiler tools and other programming tools. JRE contains JVM and other component to run applets and application written in Java.
 
 ## String为什么是final的
 
