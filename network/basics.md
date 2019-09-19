@@ -1,9 +1,9 @@
 # OSI
-[seven layers](!https://github.com/zzzyyyxxxmmm/basics/blob/master/image/OSI.png)
+[seven layers](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/OSI.png)
 
 # HTTP/HTTPS
 
-[https建立过程](!https://github.com/zzzyyyxxxmmm/basics/blob/master/image/https.png)
+[https建立过程](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/https.png)
 unsymmetrical
 
 ## http response code
