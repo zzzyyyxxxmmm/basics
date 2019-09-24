@@ -17,7 +17,14 @@ Join () method is used to join one thread with the end of the currently running 
 当前线程等待子线程的终止, 比如子线程t1创建，并执行，然后调用t1.join()方法，这时候main线程会暂停，等待t1执行完毕，执行完毕后继续执行join后面的方法
 
 # yield
+A yield () method moves the currently running thread to a  runnable state and allows the other threads for execution. So that equal priority threads have a chance to run.
 使当前线程从执行状态（运行状态）变为可执行态（就绪状态）。cpu会从众多的可执行态里选择，也就是说，当前也就是刚刚的那个线程还是有可能会被再次执行到的，并不是说一定会执行其他线程而该线程在下一次中不会执行到了。会继续占用锁
+
+# Wait
+When a wait () method is executed during a thread execution then immediately the thread gives up the lock on the object and goes to the waiting pool. Wait () method tells the thread to wait for a given amount of time.
+
+# Synchronization
+Synchronization makes only one thread to access a block of code at a time. If multiple thread accesses the block of code.
  
 # 交替打印AB
 ```java

@@ -761,7 +761,7 @@ FETCH EMP_CURSOR INTO EMP_RECORD
 ## Stored Procedures and Functions
 A stored procedure is a group of one or more SQL statements or functions that are stored in the database, compiled, and ready to be executed by a database user. A stored function is the same as a stored procedure, but a function is used to return a value.
 
-A stored procedure will be excuted as a single part while function will be excute with the sql statement.
+Functions are not allowed to change anything, must have at least one parameter, and they must return a value. A function can be used inline in SQL statements if it returns a scalar value, or can be joined upon if it returns a result set. Stored procs do not have to have a parameter, can change database objects, and do not have to return a value.
 
 ```sql
 CREATE PROCEDURE NEW_PRODUCT

@@ -98,23 +98,64 @@ Content-Type: text/html
 * 2** : 成功**
 
 * 3** : 重定向**
-**301 Moved Permanently:**** Requested object has been permanently moved; thenewURLisspecifiedin Location:headeroftheresponsemessage.The client software will automatically retrieve the new URL.
 
-* 4** : 客户端错误，请求包含语法错误或无法完成请求**
-400 Bad Request: This is a generic error code indicating that the request could not be understood by the server.
-* 5** : 服务器错误**
+**301 Moved Permanently:** Requested object has been permanently moved; the new URL is specified in Location:header of the response message.The client software will automatically retrieve the new URL.
+
+**304 Not Modified**
+
+* 4** : 客户端错误，请求包含语法错误或无法完成请求
+
+**400 Bad Request:** This is a generic error code indicating that the request could not be understood by the server.
+
+**404 Not Found:** The requested document does not exist on this server.
+
+
+* 5** : 服务器错误
+
+**505 HTTP Version Not Supported:** The requested HTTP protocol
+version is not supported by the server.
+
+## Cache
+
+client first sends a request, it will first check whether the local storage (local storage is established by local ISP)has cache or not. If yes, it just return the cache in response. If not, it will send the request to the server, and when response return, it will be cached for the next time request. The response has a header called Last-Modified which indicate the last time the object was modified.
+
+What if the content they cache is modified on server? The send a request with a header called If-modified-since. The request will go to the server and check if the Last-Modified is same with If-modified-since. If yes, it will return 304 to tell the client to get the cache directly. If not, it will return a normall response and the response will be cached again.
 
 [https建立过程](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/https.png)
 
+# File Transfer: FTP
+The most striking **difference** is that FTP uses two parallel TCP connections to transfer a file, a **control connection** and a d**ata connection**. The control connection is used for sending control information between the two hosts—information such as user identification, password, commands to change remote directory, and commands to “put” and “get” files. The data connection is used to actually send a file. 
+
+Thus, with FTP, the control connection remains open throughout the duration of the user session, but a new data connec- tion is created for each file transferred within a session (that is, the data connec- tions are non-persistent).
+
+# P2P
+
+## Torrent内容
+1、torrent文件的原理：如果您这个问题是指torrent文件本身，那么，当您对一个文件（或者文件夹）制作成.torrent文件，实际上生成的.torrent文件里面主要包括了这些信息：     
+1. 这个文件（文件夹）中数据的SHA1值，比如一个1G的文件，如果按1M每块进行分块，则会被分为了1000块，torrent中就会有这1000个数据块的指纹值（SHA1的hash值），这个占据了torrent文件的绝大部分空间。这些值的目的是为了下载的过程中进行数据校验，确保数据收到的和当时源头制作torrent时的源文件100%一致，防止恶意数据攻击
+2. 一般制作torrent文件时，还会要指定一个或者多个Tracker的地址，比如http://www.a.com:8080/announce这种地址。torrent里面一般也会存储了这个信息，这个其实也尤为重要。相当于记录了一个问询服务器的地址，这个问询服务器的作用，后面我再解释。
+3. 文件或者文件夹内每个文件的名字，方便下载文件时，磁盘上直接命名好跟原始数据一样的目录结构、文件名。
+4. 其它一些辅助和可扩展的信息，比如可以配置一个P2SP的http地址辅助下载，比如制作软件的名字、备注……。
+5. 上面信息生成后，torrent会把A）里面的这些信息，以及torrent里面的文件名等关键信息，再进行一次Hash，生成一个新的SHA1值，作为torrent的HASH值，也就是我们经常看到的下载软件里面对这个种子命名的一个唯一的hash值，也有的在magnet这种磁力链接中可以看到这个值，这就是torrent的唯一标记。以上就是.torrent文件的内容，可以用记事本打开，但可能看到乱码。这个文件的编码遵循了bencode编码规则。但实际内容就主要是上面这些。所以，torrent可以理解为对原始数据的一些记录。
+
+## Torrent流程
+1. 下载软件拿到.torrent文件后，先进行打开，读取里面的这些信息，载入内存.
+2. torrent中有Tracker的地址，下载软件拿到后，会去跟Tracker进行通讯，告诉Tracker：我要下载这个文件（通过hash值作为标记）； Tracker收到请求后，会记录这个客户端的公网IP（记录这厮在下载这个文件），同时呢，会返回给他：我这边还知道哪些人也在下载这个文件，一般是会返回200个IP（如果不够，当然就有多少返回多少）。
+当然了，如果下载过程中，协议要求你必须5分钟跟tracker通讯一次，如果太久不通讯，tracker就认为你下线了，会把你从节点列表中删除的。
+3. 客户端拿到了一堆IP后，就开始挨个去尝试连接，连上后就开始互相通讯了。比如告诉对方，我有哪些分块，问问对方有哪些，然后把我有的给对方；让对方把他有的某一块给我，这样就你来我往开始了下载。当然，如果很悲催的情况下，此时没别人在线，那就只能没速度了，就只能不停的找啊找啊找朋友，直到找到一个好朋友.
+4. 当然，如果torrent中有一个P2SP的Http地址辅助下载，那么也可以同时从这个Http服务器要数据，也会把这个服务器当成一个普通的节点，每次要1块数据，通过Http协议里面的Range标记，指定只要一部分数据过来辅助下载。整个BT的基本原理和过程就是这样，当然，这只是BT的基本原理，要做好一个完善的BT还是有很多路要走的。比如：1）如果Tracker服务器出问题了，连不上这个问询的服务器，就拿不到周围的邻居节点，怎么办？---NB的BT发明者提出了DHT的概念，就算Tracker连不上了，也可以通过分布式哈希表DHT技术，通过DHT网络慢慢的寻找志同道合的邻居节点，只是没有Tracker那么直接那么快速，但慢一些总还是有机会找到邻居的。
+
 # DNS
-DNS工作过程
-How does DNS work?
+DNS is based on UDP
 DNS is a distributed database of IP to domain name mappings. Its basic job is to turn a user-friendly domain name like "howstuffworks.com" into an Internet Protocol (IP) address like 70.42.251.42 that computers use to identify each other on the network.
+
+To understand how these three classes of servers interact, suppose a DNS client wants to determine the IP address for the hostname www.amazon.com. To a first approximation, the following events will take place. The client first contacts one of the root servers, which returns IP addresses for TLD servers for the top-level domain com. The client then contacts one of these TLD servers, which returns the IP address of an authoritative server for amazon.com. Finally, the client contacts one of the authoritative servers for amazon.com, which returns the IP address
+
 1. Request information
 The process begins when you ask your computer to resolve a hostname, such as visiting http://dyn.com. The first place your computer looks is its local DNS cache, which stores information that your computer has recently retrieved.
 If your computer doesn’t already know the answer, it needs to perform a DNS query to find out.
 2. Ask the recursive DNS servers
-If the information is not stored locally, your computer queries (contacts) your ISP’s recursive DNS servers. These specialized computers perform the legwork of a DNS query on your behalf. Recursive servers have their own caches, so the process usually ends here and the information is returned to the user.
+If the information is not stored locally, your computer queries (contacts) your ISP’s recursive DNS servers. These specialized computers perform the legwork of a DNS query on your behalf. Recursive servers have their own caches, so the process usually ends here and the information is returned to the user. TLD的地址也可以被缓存, 因此有可能会跳过第三步
 3. Ask the root nameservers
 If the recursive servers don’t have the answer, they query the root nameservers. A nameserver is a computer that answers questions about domain names, such as IP addresses. The thirteen root nameservers act as a kind of telephone switchboard for DNS. They don’t know the answer, but they can direct our query to someone that knows where to find it.
 4. Ask the TLD nameservers
@@ -127,7 +168,12 @@ The recursive server retrieves the A record for dyn.com from the authoritative n
 Armed with the answer, recursive server returns the A record back to your computer. Your computer stores the record in its cache, reads the IP address from the record, then passes this information to your browser. The browser then opens a connection to the webserver and receives the website.
 This entire process, from start to finish, takes only milliseconds to complete.
 
+### DNS Records and Messages
+The DNS servers that together implement the DNS distributed database store resource records (RRs), including RRs that provide hostname-to-IP address map- pings. A resource record is a four-tuple that contains the following fields:
 
+(Name, Value, Type, TTL)
+
+TTL is the time to live of the resource record
 # URL vs URI
 For starters, URI stands for uniform resource identifier and URL stands for uniform resource locator.
 
@@ -162,7 +208,7 @@ Session默认的生命周期是20分钟，可以手动设置更长或更短的�
 
 持久化登录用session
 
-## [Encoding vs. Encryption vs. Hashing vs. Obfuscation](!https://danielmiessler.com/study/encoding-encryption-hashing-obfuscation/#summary)
+## [Encoding vs. Encryption vs. Hashing vs. Obfuscation](https://danielmiessler.com/study/encoding-encryption-hashing-obfuscation/#summary)
 
 
 

@@ -6,3 +6,7 @@ IOC and DI are used to remove the dependencies. IOC is an idea and DI is the imp
 ### What is AOP
 AOP addresses the problem of cross-cutting concerns. It adds additional behavior to existing code (an advice) without modifying the code itself, instead they do so by a "pointcut" specification, in spring, it's called Aspect. We can use aspect to do like log, security check.
 
+# SQL
+
+### What is Stored Procedures, Functions, views, triggers.
+

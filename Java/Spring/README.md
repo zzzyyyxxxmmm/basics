@@ -1,21 +1,15 @@
-# 一些配置
+# What is Spring, SpringMVC, SpringBoot
 
-## Spring context
-```xml
-<dependencies>
-    <dependency>
-        <groupId>org.springframework</groupId>
-        <artifactId>spring-context</artifactId>
-        <version>4.3.13.RELEASE</version>
-    </dependency>
-    <dependency>
-        <groupId>junit</groupId>
-        <artifactId>junit</artifactId>
-        <version>RELEASE</version>
-        <scope>test</scope>
-    </dependency>
-</dependencies>
-```
+Spring is a framework provides comprehensive infrastructure support for developing Java applications. It has some nice features like DI and AOP. It contains some greate modules like SpringMVC, Spring Data. 
+
+SpringMVC is the implementation of MVC pattern in Spring. MVC means model, view and controller. According to the solid design pricinple, the first one if single responsibility which means each componenent should have one and only one responsibilty. We often use SpringMVC to develop web and restful applications.
+
+Spring Boot is basically an extension of the Spring framework which eliminated the boilerplate configurations required for setting up a Spring application. Here are just a few of the features in Spring Boot:
+
+* Opinionated ‘starter' dependencies to simplify build and application configuration
+* Embedded server to avoid complexity in application deployment
+* Metrics, Helth check, and externalized configuration
+* Automatic config for Spring functionality – whenever possible
 
 ## AOP
 Aspect-oriented programming (AOP) is a programming paradigm that aims to increase modularity by allowing the separation of cross-cutting concerns. It does so by adding additional behavior to existing code (an advice) without modifying the code itself, instead separately specifying which code is modified via a "pointcut" specification, such as "log all function calls when the function's name begins with 'set'". This allows behaviors that are not central to the business logic (such as logging) to be added to a program without cluttering the code, core to the functionality. AOP forms a basis for aspect-oriented software development.
