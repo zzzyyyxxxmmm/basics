@@ -402,6 +402,10 @@ ON EMPLOYEE_TBL.EMP_ID = EMPLOYEE_PAY_TBL.EMP_ID;
 --natural join会删除重复的元素
 ```
 
+## Union
+
+union all have duplicate results.
+
 # 数据库的基础概念
 
 ## 数据库中数据的类型

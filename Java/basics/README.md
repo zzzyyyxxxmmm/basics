@@ -1,10 +1,6 @@
 # basics
 一些Java基础
 
-# 还不懂的问题
-
-## 为什么接口不能是protected或者是default
-
 # Object Oriented Programming
 
 Object Oriented Programming (OOP) is a programming paradigm where the complete software operates as a bunch of objects talking to each other. An object is a collection of data and methods that operate on its data.
@@ -27,6 +23,7 @@ A car can take on different forms. It could be a taxi, a bus or a truck. But we 
 The morden car inherits from old car like the carriage pulled by a horse. It reuse some features of carriage like morden car is able to run and have four wheels. But it also has some new features like engine to make it run faster than carriage. In java, inheritance is that a class is based on another class and uses data and implementation of the other class.
 The purpose of inheritance is Code Reuse.
 
+一般来说除非实现多态或者有强烈的is a 关系, 使用composition多一点
 ### SOLID
 
 * Single Responsibility Principle: one class should have one and only responsibility.

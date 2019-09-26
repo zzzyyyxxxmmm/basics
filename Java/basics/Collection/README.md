@@ -103,6 +103,21 @@ bucket and scan for it.
 
 # ConcurrentHashMap
 
+### 1.7
+```static final class Segment<K,V> extends ReentrantLock implements Serializable```
+It uses Segment which extends from reentrantlock it's contains part of hashentry. When you put a key-value pair, it will try to get the spin lock of segment. After try some times, if it still can not get the spin lock, it will try to get the normal lock to make sure it will get the lock. All the value is declared by voltile, so get method is quick. But it doen't have red-black tree. So, it's still not quick
+
+### 1.8
+It uses CAS + sychronized.
+
+It write with CAS, CAS is a Optimistic lock. If it fails, it will use sychronized to write it.
+
+插入流程
+1.  定位
+2.  如果为空, 则用CAS插入
+3.  不为空则利用syn获取头结点的lock
+
+
 
 # ArrayMap
 ArrayMap是一种通用的key-value映射的数据结构，旨在提高内存效率，它与传统的HashMap有很大的不同。它将其映射保留在数组数据结构中：

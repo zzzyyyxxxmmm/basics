@@ -257,17 +257,38 @@ FGCT：老年代垃圾回收消耗时间 0.070秒
 GCT：垃圾回收消耗总时间 0.146秒
 
 ### jinfo
-
 jinfo [option] pid
 
 jinfo -flag CMSInitiatlingOccupancyFraction 1444
 
 查询CMS..的信息
+
+
+### jmap
+jmap [option] pid
+
+jmap（Memory Map for Java）的作用并不仅仅为了获取heap dump文件，它还可以查询finalize执行队列、java堆和永久代的详细信息。如空间使用率、当前用的是哪种收集器等。
+
+### jstack
+jstack（Stack Trace for Java）jstack命令用于生成虚拟机当前时刻的线程快照。
+
+线程快照就是当前虚拟机内每一条线程正在执行的方法堆栈集合，生成线程快照的主要目的是定位线程出现长时间停顿的原因，如线程死锁、死循环、请求外部资源导致长时间等待等。
+
+### VisualVM & BTrace
+
 # 内存溢出的种类
 1. OutOfMemoryError： PermGen(永久代) space
 2. OutOfMemoryError：  Java heap space
 3. OutOfMemoryError：unable to create new native thread
 
+## Memory leak 
+Memory leak是倒是OOM的原因
+
+主要还是由于长生命的object持有了短生命对象的引用, 导致短生命对象无法引用
+1. 没有正确关闭一些连接, 这些连接对象是不会被java主动关闭的
+2. 一些container: ArrayList, HashMap, 里面对象被修改之后, 可能remove不掉
+3. 单例模式. 常见于Android中, 例如给一个类传入一个Activity Context, 当这个Activity关闭时, 由于类里持有这个context的引用, 就会导致GC无法回收Activity.
+4. 内部类默认持有外部类引用
 # 类什么时候初始化
 
 加载完类后，类的初始化就会发生，意味着它会初始化所有类静态成员，以下情况一个类被初始化：
