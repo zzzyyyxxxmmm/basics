@@ -46,6 +46,34 @@ Circuit Breaker Pattern（熔断器模式）就是这样的一种设计思想。
 
 ## Graceful degradation
 
+# BASE理论
+基本可用（Basically Available）
+软状态（Soft State）
+最终一致性（Eventually Consistent）
+
+# SAP(Scalability, Performance, High Availibility)
+
+## Performance
+1. RPC 通信 (jetty)
+2. Kyro 高速序列化
+3. HikariCP 数据库连接池,Spring boot 默认连接池
+4. SQL优化
+5. Redis缓存
+6. JVM优化
+
+## Scalability
+scale out, scale up, load balancer, cluster
+
+## High Availibility
+主要基于k8s实现
+Service discovery
+load balancing
+check health, Auto Recovery
+Auto add server
+Canary release
+
+
+
 
 # Distribute Database
 
@@ -57,6 +85,7 @@ Circuit Breaker Pattern（熔断器模式）就是这样的一种设计思想。
 事实上MySQL单表可以存储1billion亿级数据，只是这时候性能比较差，业界公认MySQL单表容量在10 million以下是最佳状态，因为这时它的BTREE索引树高在3~5之间。
 
 ## How
+
 ### 分区 partition
 Parition break the table into multiple entities, but it's still a unbroken table in a logic way. When a query comes, it will check a table who will decide which partition the query will go. Partions will share the same memeory, CPU resourses, which means they run in one machine. I think it's same as the sharind in a scale out way.
 分区并没有将表拆分, 而只是数据**分段**划分在多个位置存放
