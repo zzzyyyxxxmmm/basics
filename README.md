@@ -1,11 +1,11 @@
 # Log
 
 ## 月进度 SEP,2019
-1. 巩固上月所学(SQL,JAVA)
-2. Spring和Hibernate熟练使用
-3. Docker熟练使用, 能快速部署服务
-4. 读完hibernate和docker的两本书
-* React
+1. 巩固上月所学(SQL,JAVA) √
+2. Spring和Hibernate熟练使用 √
+3. Docker熟练使用, 能快速部署服务 |
+4. 读完hibernate √
+* React ×
 
 ### 周进度1
 2019-09-07: 不想用博客园了,在国外实在太慢, 以后在github记录一下学习状态吧, hibernate的继承和多态
@@ -39,3 +39,9 @@
 1. JVM调优
 2. 继续network
 
+## Oct 计划, 2019
+
+1. 读完docker
+2. 读完Computer networking
+3. Go语言巩固 + 分布式学习
+4. 每天三道题

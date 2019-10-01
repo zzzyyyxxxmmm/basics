@@ -63,6 +63,8 @@ The operand stack is empty when the frame that contains it is created. The Java 
 ## Dynamic Linking 
 Each frame contains a reference to the run-time constant pool for the type of the current method to support dynamic linking of the method code. The class file code for a method refers to methods to be invoked and variables to be accessed via symbolic references. Dynamic linking translates these symbolic method references into concrete method references, loading classes as necessary to resolve as-yet-undefined symbols, and translates variable accesses into appropriate offsets in storage structures associated with the run-time location of these variables. 
 
+## direct Memory
+
 # JVM
 
 ## GC
@@ -289,6 +291,9 @@ Memory leak是倒是OOM的原因
 2. 一些container: ArrayList, HashMap, 里面对象被修改之后, 可能remove不掉
 3. 单例模式. 常见于Android中, 例如给一个类传入一个Activity Context, 当这个Activity关闭时, 由于类里持有这个context的引用, 就会导致GC无法回收Activity.
 4. 内部类默认持有外部类引用
+   
+## 官方的一些优化方案
+[link](https://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-VM/html/clopts.html)
 # 类什么时候初始化
 
 加载完类后，类的初始化就会发生，意味着它会初始化所有类静态成员，以下情况一个类被初始化：
