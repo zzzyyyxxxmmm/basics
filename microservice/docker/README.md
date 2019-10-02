@@ -23,12 +23,21 @@ sudo reboot
 ```docker system df```
 
 ### run docker
+当利用 docker run 来创建容器时，Docker 在后台运行的标准操作包括： 
+1. 检查本地是否存在指定的镜像，不存在就从公有仓库下载 
+2. 利用镜像创建并启动一个容器 
+3. 分配一个文件系统，并在只读的镜像层外面挂载一层可读写层 
+4. 从宿主主机配置的网桥接口中桥接一个虚拟接口到容器中去 
+5. 从地址池配置一个 ip 地址给容器 
+6. 执行用户指定的应用程序 
+7. 执行完毕后容器被终止
+
 ```docker run -p 8080:8080 tomcat```
 
 ```docker run -p 8080:8080 -d tomcat``` 
 
 常用参数:
--it 交互终端
+-it 交互终端, t让Docker分配一个伪终端(pseudo-tty)并绑定到容器的标准输入上, i则让容器的标准输入保持打开
 
 --rm 退出后随即将其删除
 
@@ -39,11 +48,18 @@ sudo reboot
 
 ```docker image rm $(docker image ls -q redis)```
 
+```docker container prune``` 删除停止的容器
+
 ### show running docker
 ```docker ps```
 
 ### show all docker
 ```docker ps -a```
+
+### dockerhub
+```docker login```如果push自己的image需要登录
+
+```docker search centos``` search相关的image
 
 # Custom Docker Image
 
@@ -104,6 +120,7 @@ docker build https://server/context.tar.gz
 ```docker image prune```
 
 # Volume
+
 ```
 # 查看所有volume
 docker volume ls

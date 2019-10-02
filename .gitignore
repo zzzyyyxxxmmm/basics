@@ -2,3 +2,4 @@
 *.docx
 *.pdf
 .DS_Store
+*.cpp

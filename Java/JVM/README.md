@@ -1,3 +1,7 @@
+# java 命令
+[class file format](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/class_file_format.png)
+
+java -verbose 输出字节码内容(minor version, major version, constant pool, Access flag)
 # data types
 
 the Java Virtual Machine operates on two kinds of types: primitive types and reference types. 
