@@ -3,3 +3,6 @@
 *.pdf
 .DS_Store
 *.cpp
+algorithm/a
+algorithm/a.dSYM
+.vscode/

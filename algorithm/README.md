@@ -39,6 +39,21 @@ rangeSum还是以1开头比较好
 基本思路都是过滤掉不相交的, 相交的再求
 ### [Interval List Intersections] (https://leetcode.com/problems/interval-list-intersections/)
 
+## 单调栈
+```java
+for(int i=0;i<n;i++){
+    while(!st.empty()&&A[st.top()]>=A[i]) st.pop();
+    if(st.empty())   left.push_back(0);
+    else left.push_back(st.top()+1);
+    st.push(i);
+}
+```
+核心是求从某个元素开始, 最多能向两边扩展多少, 整个延展应该是一个波谷形
+
+栈应该是单调递增的, 去掉所有左边比他大的,那么栈顶就是比他小的元素, 再+1就是能扩展到的地方
+
+由于类似于[1,1]计算的时候会出现重复, 因此从右往左遍历的时候就不需要相等的情况了
+
 # 模板
 
 ## upperBound & lowerBound

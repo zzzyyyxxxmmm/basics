@@ -168,6 +168,65 @@ Using the circular overlay in Figure 2.27(a), now suppose that peer 3 wants to d
 
 BitTorrent使用Kademlia DHT
 
+# Socket实现TCP/UDP通讯
+
+### TCP
+**UDPClient.py**
+```python
+from socket import *
+
+serverName = ‘hostname’
+serverPort = 12000
+clientSocket = socket(socket.AF_INET, socket.SOCK_DGRAM) 
+message = raw_input(’Input lowercase sentence:’) 
+clientSocket.sendto(message,(serverName, serverPort)) 
+modifiedMessage, serverAddress = clientSocket.recvfrom(2048) 
+print modifiedMessage
+clientSocket.close()
+```
+
+**UDPServer.py**
+```python
+from socket import *
+serverPort = 12000
+serverSocket = socket(AF_INET, SOCK_DGRAM) 
+serverSocket.bind((’’, serverPort))
+print ”The server is ready to receive” 
+while 1:
+    message, clientAddress = serverSocket.recvfrom(2048) modifiedMessage = message.upper() serverSocket.sendto(modifiedMessage, clientAddress)
+```
+
+### UDP
+**TCPClient.py**
+```python
+from socket import *
+serverName = ’servername’
+serverPort = 12000
+clientSocket = socket(AF_INET, SOCK_STREAM) 
+clientSocket.connect((serverName,serverPort)) 
+sentence = raw_input(‘Input lowercase sentence:’) clientSocket.send(sentence)
+modifiedSentence = clientSocket.recv(1024) 
+print ‘From Server:’, modifiedSentence clientSocket.close()
+```
+
+**TCPServer.py**
+```python
+from socket import *
+serverPort = 12000
+serverSocket = socket(AF_INET,SOCK_STREAM) 
+serverSocket.bind((‘’,serverPort)) 
+serverSocket.listen(1)
+print ‘The server is ready to receive’ 
+while 1:
+    connectionSocket, addr = serverSocket.accept() 
+    sentence = connectionSocket.recv(1024) 
+    capitalizedSentence = sentence.upper() 
+    connectionSocket.send(capitalizedSentence) connectionSocket.close()
+```
+
+**connectionSocket, addr = serverSocket.accept()**
+
+When a client knocks on this door, the program invokes the accept() method for serverSocket, which creates a new socket in the server, called connec- tionSocket, dedicated to this particular client. The client and server then complete the handshaking, creating a TCP connection between the client’s clientSocket and the server’s connectionSocket. With the TCP connection established, the client and server can now send bytes to each other over the connection. With TCP, all bytes sent from one side not are not only guaranteed to arrive at the other side but also guaranteed arrive in order.
 
 # DNS
 DNS is based on UDP

@@ -1,5 +1,4 @@
 # java 命令
-[class file format](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/class_file_format.png)
 
 java -verbose 输出字节码内容(minor version, major version, constant pool, Access flag)
 # data types
@@ -298,6 +297,17 @@ Memory leak是倒是OOM的原因
    
 ## 官方的一些优化方案
 [link](https://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-VM/html/clopts.html)
+
+## class文件
+[class file format](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/class_file_format.png)
+
+constant pool: 类全限定名(com/wjk/Test), 字面量与符号引用。字面量为代码中声明为Final的常量值，符号引用如类和接口的全局限定名、字段的名称和描述符、方法的名称和描述符。简单来讲就是:符号引用就是先有一个标签。第一次运行后将这个标签替换为一个可以直接找到方法具体内存位置的具体值，利用这个具体值可以直接将被调用的方法直接放到虚拟机栈内存。
+
+access flag: abstract public final 类和接口
+
+字段表feild_info: static final voltile
+
+[字节码增强技术](https://tech.meituan.com/2019/09/05/java-bytecode-enhancement.html)
 # 类什么时候初始化
 
 加载完类后，类的初始化就会发生，意味着它会初始化所有类静态成员，以下情况一个类被初始化：
