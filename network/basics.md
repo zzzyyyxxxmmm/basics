@@ -228,6 +228,22 @@ while 1:
 
 When a client knocks on this door, the program invokes the accept() method for serverSocket, which creates a new socket in the server, called connec- tionSocket, dedicated to this particular client. The client and server then complete the handshaking, creating a TCP connection between the client’s clientSocket and the server’s connectionSocket. With the TCP connection established, the client and server can now send bytes to each other over the connection. With TCP, all bytes sent from one side not are not only guaranteed to arrive at the other side but also guaranteed arrive in order.
 
+## Multiplexing and Demultiplexing
+我们通过socket发送message, 需要将message 分解然后传给socket, 这叫做multiplexing. The job of gathering data chunks at the source host from different sockets, encapsulating each data chunk with header information (that will later be used in demultiplexing) to create segments, and passing the segments to the network layer is called multiplexing.
+
+把接收到的packet传给server上不同的socket叫Demultiplexing. This job of delivering the data in a transport-layer segment to the correct socket is called demultiplexing.
+
+With port numbers assigned to UDP sockets, we can now precisely describe UDP multiplexing/demultiplexing. Suppose a process in Host A, with UDP port 19157, wants to send a chunk of application data to a process with UDP port 46428 in Host B. The transport layer in Host A creates a transport-layer segment that includes the application data, the source port number (19157 used if the reciever want to reply), the destination port number (46428), and two other values (which will be discussed later, but are unim- portant for the current discussion). The transport layer then passes the resulting seg- ment to the network layer. The network layer encapsulates the segment in an IP datagram and makes a best-effort attempt to deliver the segment to the receiving host. If the segment arrives at the receiving Host B, the transport layer at the receiving host examines the destination port number in the segment (46428) and delivers the segment to its socket identified by port 46428. Note that Host B could be running multiple processes, each with its own UDP socket and associated port number. As UDP segments arrive from the network, Host B directs (demultiplexes) each segment to the appropriate socket by examining the segment’s destination port number.
+
+唯一能够确定一个连接有4个东西：
+1. 服务器的IP
+2. 服务器的Port
+3. 客户端的IP
+4. 客户端的Port
+
+1. 只有一个在监听socket，只做监听；
+2. 接收到(accept)连接后把该请求分配到线程或子进程(fork)去处理；
+
 # DNS
 DNS is based on UDP
 DNS is a distributed database of IP to domain name mappings. Its basic job is to turn a user-friendly domain name like "howstuffworks.com" into an Internet Protocol (IP) address like 70.42.251.42 that computers use to identify each other on the network.

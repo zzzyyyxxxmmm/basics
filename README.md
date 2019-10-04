@@ -1,5 +1,9 @@
 # Log
 
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/1.png" width="700" height="500">
+</div>
+
 ## 月进度 SEP,2019
 1. 巩固上月所学(SQL,JAVA) √
 2. Spring和Hibernate熟练使用 √

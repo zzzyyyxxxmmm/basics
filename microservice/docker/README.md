@@ -10,6 +10,12 @@ sudo usermod -a -G docker $USER
 sudo reboot
 ```
 
+# 一些基础操作
+
+**关闭防火墙:**  ```sudo ufw disable```
+
+**ftp开启写mode:**  ```vi /etc/vsftp.conf   sudo service vsftp restart```
+
 # mantipulate docker
 
 ### show images
@@ -35,6 +41,8 @@ sudo reboot
 ```docker run -p 8080:8080 tomcat```
 
 ```docker run -p 8080:8080 -d tomcat``` 
+
+```docker logs -f name``` 查看运行容器的log
 
 常用参数:
 -it 交互终端, t让Docker分配一个伪终端(pseudo-tty)并绑定到容器的标准输入上, i则让容器的标准输入保持打开
