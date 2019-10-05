@@ -1,4 +1,4 @@
-#GO Basics
+# GO Basics
 之前只是快速的略读了go的语法，最近在学分布式系统时觉得代码读起来很困难，因此还是再次系统性的学习一下吧
 
 学习一个语言，第一个代码一定是hello world，那先写个hello world吧:
@@ -14,6 +14,29 @@ func main() {
 命令行运行：go run hello.go 
 编译并运行：go build hello.go   ->   ./hello 
 
+## Go Package
+Let’s take a look at an example. If Go was installed under ```/usr/local/go``` and your GOPATH was set to ```/home/myproject:/home/mylibraries```, the compiler would look for the net/http package in the following order:
+```
+/usr/local/go/src/pkg/net/http
+/home/myproject/src/net/http
+/home/mylibraries/src/net/http
+```
+
+Go可以通过url import: ```import "github.com/spf13/viper"```
+
+### Named imports
+```
+import (
+    "fmt"
+    myfmt "mylib/fmt"
+)
+
+func main() {
+    fmt.Println("Standard Library")
+    myfmt.Println("mylib/fmt")
+}
+```
+类似于python里的from as, 用于解决重名问题
 ## 变量的赋值
 
 ```go
