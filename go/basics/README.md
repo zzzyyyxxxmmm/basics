@@ -64,37 +64,12 @@ go默认使用值传递
 var variable_name [SIZE] variable_type
 var balance [10] float32
 var balance = [5]float32{1000.0, 2.0, 3.4, 7.0, 50.0}
- var balance = [...]float32{1000.0, 2.0, 3.4, 7.0, 50.0}
-```
+var balance = [...]float32{1000.0, 2.0, 3.4, 7.0, 50.0}
+array := [4][2]int{1: {0: 20}, 3: {1: 41}}
+func foo(array *[1e6]int) {
 
-## 结构体
-```go
-type struct_variable_type struct {
-   member definition;
-   member definition;
-   ...
-   member definition;
-}
-
-type Books struct {
-   title string
-   author string
-   subject string
-   book_id int
-}
-func main() {
-    // 创建一个新的结构体
-    fmt.Println(Books{"Go 语言", "www.runoob.com", "Go 语言教程", 6495407})
-
-    // 也可以使用 key => value 格式
-    fmt.Println(Books{title: "Go 语言", author: "www.runoob.com", subject: "Go 语言教程", book_id: 6495407})
-
-    // 忽略的字段为 0 或 空
-   fmt.Println(Books{title: "Go 语言", author: "www.runoob.com"})
 }
 ```
-
-结构体通过指针方式传递，则可以修改值
 
 ## Slice
 ```go
@@ -107,6 +82,42 @@ slice1 := make([]type, len)
 s :=[] int {1,2,3 } 
 ```
 
+```go
+slice := []int{10, 20, 30, 40, 50}
+newSlice := slice[1:3]
+```
+对于上面代码:
+For **slice[i:j]** with an underlying array of capacity k
+
+Length:   j - i
+
+Capacity: k - i
+
+所以newSlice只包含{20,30}
+
+For **slice[i:j:k]**  or  [2:3:4]
+
+Length: j-i or 3-2=1 
+
+Capacity:k-i or 4-2=2
+
+If you attempt to set a capacity that’s larger than the available capacity, you’ll get a runtime error.
+
+**合并两个slice:**
+```
+fmt.Printf("%v\n", append(s1, s2...))
+```
+
+**slice传递**
+```go
+func foo(slice []int) []int {
+...
+    return slice
+}
+```
+
+slice本身就是类似于指正, 底部指向数组, 因此slice就不用像数组一样传递
+
 ## Map
 ```go
 /* 声明变量，默认 map 是 nil */
@@ -114,7 +125,13 @@ var map_variable map[key_data_type]value_data_type
 
 /* 使用 make 函数 */
 map_variable := make(map[key_data_type]value_data_type)
+dict := map[string]string{"Red": "#da1337", "Orange": "#e95a22"}
+dict := map[int][]string{}
 
+
+var colors map[string]string //注意这种方式创建的map是没有初始化的, 不能赋值
+colors := map[string]string{}   //通过这两种方法初始化, 所以很麻烦, 还不如直接:=呢
+colors := make(map[string]string)
 
 //countryCapitalMap := map[string]string{"France": "Paris", "Italy": "Rome", "Japan": "Tokyo", "India": "New delhi"}
     var countryCapitalMap map[string]string /*创建集合 */
@@ -130,7 +147,7 @@ map_variable := make(map[key_data_type]value_data_type)
     delete(countryCapitalMap, "France")
 
     /*查看元素在集合中是否存在 */
-    capital, ok := countryCapitalMap [ "American" ] /*如果确定是真实的,则存在,否则不存在 */
+    capital, ok := countryCapitalMap [ "American" ] /*如果确定是真实的,则存在,否则不存在, 不存在的话value是"", 但还是别用*/
     /*fmt.Println(capital) */
     /*fmt.Println(ok) */
     if (ok) {
@@ -138,4 +155,85 @@ map_variable := make(map[key_data_type]value_data_type)
     } else {
         fmt.Println("American 的首都不存在")
     }
+
+
+    //删除
+    delete(colors, "Coral")
 ```
+
+**map是传递地址的**, 因此可以修改元素
+
+# 结构体
+```go
+type struct_variable_type struct {
+   member definition;
+   member definition;
+   ...
+   member definition;
+}
+
+type Books struct {
+   title string
+   author string
+   subject string
+   book_id int
+}
+
+book := Books{
+    title: "",
+    author: "",
+    subject: "",
+    book_id: 1,
+}
+func main() {
+    // 创建一个新的结构体
+    fmt.Println(Books{"Go 语言", "www.runoob.com", "Go 语言教程", 6495407})
+
+    // 也可以使用 key => value 格式
+    fmt.Println(Books{title: "Go 语言", author: "www.runoob.com", subject: "Go 语言教程", book_id: 6495407})
+
+    // 忽略的字段为 0 或 空
+   fmt.Println(Books{title: "Go 语言", author: "www.runoob.com"})
+}
+```
+
+```go
+type user struct{
+	name string
+	email string
+}
+func (u user) notify(){
+	fmt.Printf("%s + %s\n",u.name,u.email)
+}
+
+func (u *user) change(email string){
+		user.email=email
+}
+```
+
+# Method Interface
+
+**方法传递很奇怪:**
+Values                    Methods Receivers
+
+T                         (t T)
+
+*T                        (t T) and (t *T)
+
+也就是说,参数是指针, 那么只能传指正, 参数是普通, 则都可以
+
+## Type embedding
+```go
+type user struct{
+    name string
+    email string
+}
+
+type admin struct{
+    user
+    level string
+}
+```
+
+### Exporting and unexporting identifiers
+When an identifier starts with a lowercase letter, the identifier is unexported or unknown to code outside the package. When an identifier starts with an uppercase let- ter, it’s exported or known to code outside the package. 

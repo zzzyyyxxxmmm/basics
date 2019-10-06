@@ -45,7 +45,12 @@
 
 ## Oct 计划, 2019
 
-1. 读完docker
+1. 读完docker √
 2. 读完Computer networking
 3. Go语言巩固 + 分布式学习
 4. 每天三道题
+
+## 周进度1
+1. 读JVM
+2. go in action
+3. network
