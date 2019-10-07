@@ -237,3 +237,70 @@ type admin struct{
 
 ### Exporting and unexporting identifiers
 When an identifier starts with a lowercase letter, the identifier is unexported or unknown to code outside the package. When an identifier starts with an uppercase let- ter, it’s exported or known to code outside the package. 
+
+# Goroutines
+
+```go
+package main
+
+import (
+	"fmt"
+	"runtime"
+	"sync"
+)
+
+func main() {
+
+	runtime.GOMAXPROCS(2)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	fmt.Println("Start Goroutines")
+
+	go func() {
+		defer wg.Done()
+		for count := 0; count < 3; count++ {
+			for char := 'a'; char < 'a'+26; char++ {
+				fmt.Printf("%c ",char)
+            }
+            
+		}
+	}()
+
+
+	go func() {
+		defer wg.Done()
+		for count := 0; count < 3; count++ {
+			for char := 'A'; char < 'A'+26; char++ {
+				fmt.Printf("%c ",char)
+			}
+		}
+	}()
+
+	fmt.Println("Waiting To Finish")
+	wg.Wait();
+
+	fmt.Println("\nTerminating Program")
+}
+```
+
+```go
+mutex.Lock()
+{
+
+}
+mutex.Unlock()
+```
+
+## channels
+```go
+// Unbuffered channel of integers. An unbuffered channel is a channel with no capacity to hold any value before it’s received. These types of channels require both a sending and receiving goroutine to be ready at the same instant before any send or receive operation can complete. 
+unbuffered := make(chan int)
+// Buffered channel of strings.
+buffered := make(chan string, 10)
+
+buffered <- "Gopher"       //send
+
+value := <-buffered        //recieve
+```

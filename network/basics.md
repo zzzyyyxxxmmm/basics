@@ -59,6 +59,16 @@ UDP is a no-frills, lightweight transport protocol, providing minimal services. 
 | Internet telephony     | SIP [RFC 3261], RTP [RFC 3550], or proprietary (e.g., Skype) | UDP or TCP                    |
 
 Because Internet telephony applications (such as Skype) can often tolerate some loss but require a minimal rate to be effective, developers of Inter- net telephony applications usually prefer to run their applications over UDP, thereby circumventing TCP’s congestion control mechanism and packet over- heads. But because many firewalls are configured to block (most types of) UDP traffic, Internet telephony applications often are designed to use TCP as a backup if UDP communication fails.
+### UDP segment structure
+Source port + Dest port + Length + Checksum + Application data
+checksum就是所有数据加到一起 然后反转 010 -> 101, 接收端接收到后求sum, 然后加在一起, 得到111, 全是1, 用来检测信息是否遭到修改
+### 选择UDP的原因:
+1. Finer application-level control over what data is sent, and when. TCP有拥塞控制, 不能保证发出去的message被准时发出
+2. No connection establishment.
+3. No connection state. 通常可以比TCP支持更多的client
+4. Small packet header overhead. The TCP segment has 20 bytes of header over- head in every segment, whereas UDP has only 8 bytes of overhead.
+
+
 
 # HTTP
 The HyperText Transfer Protocol (HTTP), the Web’s application-layer protocol, is at the heart of the Web. HTTP is implemented in two programs: a client program and a server program. The client program and server program, executing on different end systems, talk to each other by exchanging HTTP messages. HTTP defines the structure of these messages and how the client and server exchange the messages.
