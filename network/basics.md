@@ -31,6 +31,7 @@ A transport-layer protocol can also provide timing guarantees. Such a service wo
 | Interactive games                      | Loss-tolerant | Few kbps–10 kbps                            | Yes: 100s of msec |
 | Instant messaging                      | No loss       | Elastic                                     | Yes and no        |
 
+
 ## TCP
 The TCP service model includes a connection-oriented service and a reliable data transfer service.
 
@@ -44,6 +45,26 @@ The communicating processes can rely on TCP to deliver all data sent without err
 
 **congestion-control mechanism**
 
+### Building a Reliable Data Transfer Protocol
+1. 假设我们有一个sender和一个reciever, 保证网络可靠, 即packet不会被损坏, 也不会丢失, 那么直接发送即可
+2. 假设packet会损坏, 那么我们需要检测error和recover from error. 检测error需要在packet里加上checksum, recover from error就是重发, reciever通过checksum检测发送过来的包是否损坏, 如果损坏, 则发送NAK, 否则发送ACK. sender根据接收到的决定是否重发
+3. 再假设, 发送过来的ACK/NAK也损坏了呢? 最直接的想法就是对这个ACK/NAK也建立一个关于ACK/NAK的反馈, 但这样显然会无限循环了.(两座山的故事). 正确方法就是也检测ACK/NAK是否损坏, 损坏或者NAK就直接重发. 那reciever就有可能接收到duplicate packet, 区分方法就是加上sequential number: 0代表第一次发送, 1代表重发.
+4. 如果packet发送的时候丢了呢. 这里加上timer计时即可
+
+以上都是基于 stop-and-wait的, 一次只能发送一个, 我们需要基于pipline式的, 一次支持发送多条, 因此上面的方法需要进一步改动:
+* The range of sequence numbers must be increased, since each in-transit packet (not counting retransmissions) must have a unique sequence number and there may be multiple, in-transit, unacknowledged packets.
+* The sender and receiver sides of the protocols may have to buffer more than one packet. Minimally, the sender will have to buffer packets that have been trans- mitted but not yet acknowledged. Buffering of correctly received packets may also be needed at the receiver, as discussed below.
+* The range of sequence numbers needed and the buffering requirements will depend on the manner in which a data transfer protocol responds to lost, cor- rupted, and overly delayed packets. Two basic approaches toward pipelined error recovery can be identified: **Go-Back-N** and **selective repeat**.
+
+### Go-Back-N
+[view](!https://github.com/zzzyyyxxxmmm/basics/blob/master/image/GBN.png)
+
+发送方maintain一个大小为N的窗口,类似于一个buffer发送packet. reciever必须要按续接收, 比如上一个接收的是n, 下一个一定要接收n+1, 否则则会要求sender重发n之后的所有packet
+
+缺点: 已发送的正确packet可能会重发
+
+### Selective Repeat (SR)
+[view](!https://github.com/zzzyyyxxxmmm/basics/blob/master/image/SR.png)
 
 ## UDP
 UDP is a no-frills, lightweight transport protocol, providing minimal services. UDP is connectionless, so there is no handshaking before the two processes start to communicate. UDP provides an unreliable data transfer service—that is, when a process sends a message into a UDP socket, UDP provides no guarantee that the message will ever reach the receiving process. Furthermore, messages that do arrive at the receiving process may arrive out of order.
@@ -180,6 +201,8 @@ BitTorrent使用Kademlia DHT
 
 # Socket实现TCP/UDP通讯
 
+
+
 ### TCP
 **UDPClient.py**
 ```python
@@ -251,8 +274,8 @@ With port numbers assigned to UDP sockets, we can now precisely describe UDP mul
 3. 客户端的IP
 4. 客户端的Port
 
-1. 只有一个在监听socket，只做监听；
-2. 接收到(accept)连接后把该请求分配到线程或子进程(fork)去处理；
+5. 只有一个在监听socket，只做监听；
+6. 接收到(accept)连接后把该请求分配到线程或子进程(fork)去处理；
 
 # DNS
 DNS is based on UDP
