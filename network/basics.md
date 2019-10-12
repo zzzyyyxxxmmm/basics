@@ -66,6 +66,42 @@ The communicating processes can rely on TCP to deliver all data sent without err
 ### Selective Repeat (SR)
 [view](!https://github.com/zzzyyyxxxmmm/basics/blob/master/image/SR.png)
 
+## TCP Segment Structure
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/tcp_segment.png)
+
+Both Ethernet and PPP link-layer proto- cols have an maximum segment size of 1,500 bytes. 
+
+Because the TCP header is typically 20 bytes (12 bytes more than the UDP header), segments sent by Telnet may be only 21 bytes in length.
+
+Figure 3.29 shows the structure of the TCP segment. As with UDP, the header includes source and destination port numbers, which are used for multiplexing/demultiplexing data from/to upper-layer applications. Also, as with UDP, the header includes a checksum field. A TCP segment header also contains the following fields:
+* The 32-bit sequence number field and the 32-bit acknowledgment number field are used by the TCP sender and receiver in implementing a reliable data transfer service, as discussed below.
+* The 16-bit receive window field is used for flow control. We will see shortly that it is used to indicate the number of bytes that a receiver is willing to accept.
+* The 4-bit header length field specifies the length of the TCP header in 32-bit words. The TCP header can be of variable length due to the TCP options field. (Typically, the options field is empty, so that the length of the typical TCP header is 20 bytes.)
+* The optional and variable-length options field is used when a sender and receiver negotiate the maximum segment size (MSS) or as a window scaling fac- tor for use in high-speed networks. A time-stamping option is also defined. See RFC 854 and RFC 1323 for additional details.
+* The flag field contains 6 bits. The ACK bit is used to indicate that the value car- ried in the acknowledgment field is valid; that is, the segment contains an acknowledgment for a segment that has been successfully received. The RST, SYN, and FIN bits are used for connection setup and teardown, as we will dis- cuss at the end of this section. Setting the PSH bit indicates that the receiver should pass the data to the upper layer immediately. Finally, the URG bit is used to indicate that there is data in this segment that the sending-side upper-layer entity has marked as “urgent.” The location of the last byte of this urgent data is indicated by the 16-bit urgent data pointer field. TCP must inform the receiving-side upper-layer entity when urgent data exists and pass it a pointer to the end of the urgent data. (In practice, the PSH, URG, and the urgent data pointer are not used. However, we mention these fields for completeness.)
+
+## telnet example
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/telnet.png)
+
+## timeout
+**EstimatedRTT = (1 – α) • EstimatedRTT + α • SampleRTT**
+
+α = 0.125
+
+**DevRTT = (1-β) * DevRTT + β * |SampleRTT - EstimatedRTT|**
+
+第一次的DevRTT=1/2(SampleRTT)，以后按公式来计算，推荐β为0.25
+
+**TimeoutInterval = EstimatedRTT + 4*DevRTT** 
+
+推荐的初始TimeoutInterval为1秒。出现超时后，TimeoutInterval直接加倍。因为此次重传可能是报文确认ACK因为网络拥塞而延迟到达从而导致报文重传，重传报文后，不久，ACK到达，会导致SampleRTT变小，进而使TimeoutInterval变小，使后面的报文出现过早超时！
+
+### Fast Retransmit
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/fast_retransmit.png)
+
+接收到三次ack信息后, 会
+
+
 ## UDP
 UDP is a no-frills, lightweight transport protocol, providing minimal services. UDP is connectionless, so there is no handshaking before the two processes start to communicate. UDP provides an unreliable data transfer service—that is, when a process sends a message into a UDP socket, UDP provides no guarantee that the message will ever reach the receiving process. Furthermore, messages that do arrive at the receiving process may arrive out of order.
 

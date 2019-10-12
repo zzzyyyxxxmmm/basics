@@ -51,6 +51,11 @@
 4. 每天三道题
 
 ## 周进度1
-1. 读JVM
-2. go in action
-3. network
+1. 读JVM    √
+2. go in action √
+3. network 
+
+## 周进度1
+1. Go实战练习   
+2. network 
+3. jenkins

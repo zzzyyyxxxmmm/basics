@@ -148,13 +148,13 @@ docker volume inspect [volume name]
 ```docker run -p 3306:3306 -v mysql:/var/lib/mysql --name root -e MYSQL_ROOT_PASSWORD=root -d mysql```
 
 **远程连接数据库**
-```mysql -u root -p root -h 192.168.31.130 -P 3306```
+```mysql -u root -p root -h 192.168.31.130 -P 3306 -D mysql```
 
 **进入mysql**
 ```docker exec -it root bash```
 
 # 部署springboot + mysql 服务
-[gua](!https://bingohuang.com/spring-boot-docker/)
+[gua](https://bingohuang.com/spring-boot-docker/)
 
 # tip
 

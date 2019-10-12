@@ -61,6 +61,8 @@ for(int i=0;i<n;i++){
 ## sudo
 比较naive的思想就是dfs, 然后比较当前行,当前列, 当前所在box, 很麻烦. 所以不如把行列box都拆开, 判断当前行列box是否包含了某个数字.
 
+## Find the Closest Palindrome
+这个的核心就是建立一个set存储可能的结果, Palindrome就是根据前半个的数字建立. 另外对于类似于1000, 需要特殊判断, 不然会丢失999这样的结果
 # 模板
 
 ## upperBound & lowerBound
