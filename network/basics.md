@@ -99,9 +99,49 @@ Figure 3.29 shows the structure of the TCP segment. As with UDP, the header incl
 ### Fast Retransmit
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/fast_retransmit.png)
 
-接收到三次ack信息后, 会
+### three-way handshake
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/three-way.png)
 
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/four-way.png)
+* Step 1. The client-side TCP first sends a special TCP segment to the server-side TCP. This special segment contains no application-layer data. But one of the flag bits in the segment’s header (see Figure 3.29), the SYN bit, is set to 1. For this reason, this special segment is referred to as a SYN segment. In addition, the client randomly chooses an initial sequence number (client_isn) and puts this number in the sequence number field of the initial TCP SYN segment. This segment is encapsulated within an IP datagram and sent to the server. There has 
+been considerable interest in properly randomizing the choice of the client_isn in order to avoid certain security attacks.
+* Step 2. Once the IP datagram containing the TCP SYN segment arrives at the server host (assuming it does arrive!), the server extracts the TCP SYN segment from the datagram, allocates the TCP buffers and variables to the connection, and sends a connection-granted segment to the client TCP. (We’ll see in Chapter 8 that the allocation of these buffers and variables before completing the third step of the three-way handshake makes TCP vulnerable to a denial-of-service attack known as SYN flooding.) This connection-granted segment also contains no application- layer data. However, it does contain three important pieces of information in the segment header. First, the SYN bit is set to 1. Second, the acknowledgment field of the TCP segment header is set to client_isn+1. Finally, the server chooses its own initial sequence number (server_isn) and puts this value in the sequence number field of the TCP segment header. This connection-granted segment is saying, in effect, “I received your SYN packet to start a connection with your initial sequence number, client_isn. I agree to establish this con- nection. My own initial sequence number is server_isn.” The connection- granted segment is referred to as a SYNACK segment.
+* Step 3. Upon receiving the SYNACK segment, the client also allocates buffers and variables to the connection. The client host then sends the server yet another segment; this last segment acknowledges the server’s connection-granted seg- ment (the client does so by putting the value server_isn+1 in the acknowl- edgment field of the TCP segment header). The SYN bit is set to zero, since the connection is established. This third stage of the three-way handshake may carry client-to-server data in the segment payload.
 
+## TCP Congestion Control
+this approach raises three questions.
+
+### How does a TCP sender limit the rate at which it sends traffic into its connection
+
+congestion window
+
+LastByteSent – LastByteAcked <= min{cwnd, rwnd}
+
+### How does a TCP sender perceive that there is congestion on the path between itself and the destination
+
+Let us define a “loss event” at a TCP sender as the occurrence of either a timeout or the receipt of three duplicate ACKs from the receiver. 
+
+Having considered how congestion is detected, let’s next consider the more optimistic case when the network is congestion-free, that is, when a loss event doesn’t occur. In this case, acknowledgments for previously unacknowledged segments will be received at the TCP sender. As we’ll see, TCP will take the arrival of these acknowledgments as an indication that all is well—that segments being transmitted into the network are being successfully delivered to the destination—and will use acknowledgments to increase its congestion window size (and hence its transmission rate). Note that if acknowledgments arrive at a relatively slow rate (e.g., if the end-end path has high delay or contains a low-bandwidth link), then the congestion window will be increased at a relatively slow rate. On the other hand, if acknowledgments arrive at a high rate, then the congestion window will be increased more quickly. Because TCP uses acknowledgments to trigger (or clock) its increase in congestion window size, TCP is said to be self-clocking.
+
+### what algorithm should the sender use to change its send rate as a function of perceived end-to-end congestion?
+The algorithm has three major components: 
+(1) slow start, 
+(2) congestion avoidance
+(3) fast recovery.
+
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/congestion.png)
+
+**Slow Start**
+
+in the slow-start state, the value of cwnd begins at 1 MSS and increases by 1 MSS every time a transmitted segment is first acknowledged. Thus, the TCP send rate starts slow but grows **exponentially** during the slow start phase. 
+
+But when should this exponential growth end? Slow start provides several answers to this question. First, if there is a loss event (i.e., congestion) indicated by a timeout, the TCP sender sets the value of cwnd to 1 and begins the slow start process anew. It also sets the value of a second state variable, ssthresh (shorthand for “slow start threshold”) to cwnd/2—half of the value of the con- gestion window value when congestion was detected. 
+
+**Congestion Avoidance**
+达到ssthresh后+1
+
+**Fast Recovery**
+3个ACK之后不从慢开始继续, 而是从ssthresh开始+1, 如果只是timeout那还是用慢开始
 ## UDP
 UDP is a no-frills, lightweight transport protocol, providing minimal services. UDP is connectionless, so there is no handshaking before the two processes start to communicate. UDP provides an unreliable data transfer service—that is, when a process sends a message into a UDP socket, UDP provides no guarantee that the message will ever reach the receiving process. Furthermore, messages that do arrive at the receiving process may arrive out of order.
 
@@ -312,6 +352,16 @@ With port numbers assigned to UDP sockets, we can now precisely describe UDP mul
 
 5. 只有一个在监听socket，只做监听；
 6. 接收到(accept)连接后把该请求分配到线程或子进程(fork)去处理；
+
+# NetWork Layer
+The role of the network layer is thus deceptively simple—to move packets from a sending host to a receiving host.
+
+* **Forwarding**. When a packet arrives at a router’s input link, the router must move the packet to the appropriate output link. For example, a packet arriving from Host H1 to Router R1 must be forwarded to the next router on a path to H2. In Section 4.3, we’ll look inside a router and examine how a packet is actually for- warded from an input link to an output link within a router.
+* **Routing**. The network layer must determine the route or path taken by packets as they flow from a sender to a receiver. The algorithms that calculate these paths are referred to as routing algorithms. A routing algorithm would determine, for example, the path along which packets flow from H1 to H2.
+
+Forwarding refers to the router-local action of transferring a packet from an input link interface to the appropriate output link interface. Routing refers to the network-wide process that determines the end-to-end paths that packets take from source to destina- tion.
+
+Every router has a **forwarding table**.
 
 # DNS
 DNS is based on UDP

@@ -19,6 +19,37 @@ Microservice is an idea to devide the project into small services. The service e
 3. Take care dependency. Modify one module may influence other modules.
 4. hard to delopy. There so many small service to deploy. 一种自动化方案就是适用Paas, 例如AWS. 另一种就是kubernates
 
+# CAP
+
+### Consistency
+* 某个节点的写操作对后面其他节点可见
+* 立刻可见(强一致性)
+* 允许部分不可见(弱一致性)
+* 一段时间后可见(最终一致性)
+  
+### Availability
+* 任何一个没有发生故障的节点必须在有限的时间内返回合理的结果
+
+### Partition Tolerance
+部分节点宕机或者无法与其他节点通信时, 各分区间还可保持分布式系统的功能
+
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/cap.png)
+
+## 一致性方案
+
+### Master-slave
+* RDBMS的读写分离即为典型的Master-slave方案
+* 同步复制可保证强一致性但会影响可用性
+* 异步复制可提供高可用性但会降低一致性
+
+### WNR
+* 主要用于去中心化(P2P)的分布式系统中, DynamicDB与Cassandra即采用此方案
+* N代表副本数, W代表每次写操作要保证的最少写成功的副本数, R代表每次读至少读取的副本数
+* 当W+R>N时, 可保证每次读取的数据至少有一个副本具有最新的更新
+* 多个写操作的顺序难以保证, 可能导致多个副本间的写操作顺序不一致, Dynamo通过向量时钟保证最终一致性
+
+### Paxos及其变种
+* Google的Chubby, Zookeeper的Zab, RAFT等
 # API GateWay
 
 load balancer, cache, access controll. (Nginx)
