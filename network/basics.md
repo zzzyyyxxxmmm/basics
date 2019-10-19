@@ -363,6 +363,48 @@ Forwarding refers to the router-local action of transferring a packet from an in
 
 Every router has a **forwarding table**.
 
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/route.png)
+
+可以看到table是由routing algorithm 决定的, the routing algorithm determines the values that are inserted into the routers’ forwarding tables.
+
+匹配是根据最长前缀匹配
+
+packet进入到route会被拆开, 根据from address 经过 input port, 通过table得知进入哪个output port, 然后通过Switch fabric分发到对于的output port上, 两个port都会有queue, 如果队列满了, 就会发生packet loss现象.
+
+# IPv4
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/ipv4.png)
+
+# DHCP Dynamic Host Configuration Protocol
+For a newly arriving host, the DHCP protocol is a four-step process, as shown in Figure 4.21 for the network setting shown in Figure 4.20. In this figure, yiaddr (as in “your Internet address”) indicates the address being allocated to the newly arriving client. The four steps are:
+* **DHCP server discovery**. The first task of a newly arriving host is to find a DHCP server with which to interact. This is done using a DHCP discover message, which a client sends within a UDP packet to port 67. The UDP packet is encap- sulated in an IP datagram. But to whom should this datagram be sent? The host doesn’t even know the IP address of the network to which it is attaching, much less the address of a DHCP server for this network. Given this, the DHCP client creates an IP datagram containing its DHCP discover message along with the broadcast destination IP address of 255.255.255.255 and a “this host” source IP address of 0.0.0.0. The DHCP client passes the IP datagram to the link layer, which then broadcasts this frame to all nodes attached to the subnet.
+* **DHCP server offer(s)**. A DHCP server receiving a DHCP discover message responds to the client with a DHCP offer message that is broadcast to all nodes on the subnet, again using the IP broadcast address of 255.255.255.255. (You might want to think about why this server reply must also be broadcast). Since several DHCP servers can be present on the subnet, the client may find itself in the enviable position of being able to choose from among several offers. Each server offer message contains the transaction ID of the received discover mes- sage, the proposed IP address for the client, the network mask, and an IP address lease time—the amount of time for which the IP address will be valid. It is com- mon for the server to set the lease time to several hours or days [Droms 2002].
+* **DHCP request**. The newly arriving client will choose from among one or more server offers and respond to its selected offer with a DHCP request message, echoing back the configuration parameters.
+* **DHCP ACK**. The server responds to the DHCP request message with a DHCP ACK message, confirming the requested parameters.
+
+# Network Address Translation (NAT)
+Suppose a user sitting in a home network behind host 10.0.0.1 requests a Web page on some Web server (port 80) with IP address 128.119.40.186. The host 10.0.0.1 assigns the (arbitrary) source port num- ber 3345 and sends the datagram into the LAN. The NAT router receives the data- gram, generates a new source port number 5001 for the datagram, replaces the source IP address with its WAN-side IP address 138.76.29.7, and replaces the origi- nal source port number 3345 with the new source port number 5001. When generat- ing a new source port number, the NAT router can select any source port number that is not currently in the NAT translation table. (Note that because a port number field is 16 bits long, the NAT protocol can support over 60,000 simultaneous con- nections with a single WAN-side IP address for the router!) NAT in the router also adds an entry to its NAT translation table. The Web server, blissfully unaware that the arriving datagram containing the HTTP request has been manipulated by the NAT router, responds with a datagram whose destination address is the IP address of the NAT router, and whose destination port number is 5001. When this datagram arrives at the NAT router, the router indexes the NAT translation table using the des- tination IP address and destination port number to obtain the appropriate IP address (10.0.0.1) and destination port number (3345) for the browser in the home network. The router then rewrites the datagram’s destination address and destination port number, and forwards the datagram into the home network.
+
+### Universal Plug and Play (UPnP)
+解决host behind NAT不能直接和另一个host直接通信的问题
+As an example, suppose your host, behind a UPnP-enabled NAT, has private address 10.0.0.1 and is running BitTorrent on port 3345. Also suppose that the public IP address of the NAT is 138.76.29.7. Your BitTorrent application naturally wants to be able to accept connections from other hosts, so that it can trade chunks with them. To this end, the BitTorrent application in your host asks the NAT to cre- ate a “hole” that maps (10.0.0.1, 3345) to (138.76.29.7, 5001). (The public port number 5001 is chosen by the application.) The BitTorrent application in your host could also advertise to its tracker that it is available at (138.76.29.7, 5001). In this manner, an external host running BitTorrent can contact the tracker and learn that your BitTorrent application is running at (138.76.29.7, 5001). The external host can send a TCP SYN packet to (138.76.29.7, 5001). When the NAT receives the SYN packet, it will change the destination IP address and port number in the packet to (10.0.0.1, 3345) and forward the packet through the NAT.
+
+# Internet Control Message Protocol (ICMP)
+ICMP is used by hosts and routers to communicate net- work-layer information to each other. The most typical use of ICMP is for error reporting. For example, when running a Telnet, FTP, or HTTP session, you may have encountered an error message such as “Destination network unreachable.” This message had its origins in ICMP. At some point, an IP router was unable to find a path to the host specified in your Telnet, FTP, or HTTP application. That router cre- ated and sent a type-3 ICMP message to your host indicating the error.
+
+ICMP is often considered part of IP but architecturally it lies just above IP, as ICMP messages are carried inside IP datagrams. That is, ICMP messages are carried as IP payload, just as TCP or UDP segments are carried as IP payload. Similarly, when a host receives an IP datagram with ICMP specified as the upper-layer proto- col, it demultiplexes the datagram’s contents to ICMP, just as it would demultiplex a datagram’s content to TCP or UDP.
+
+The well-known ping program sends an ICMP type 8 code 0 message to the specified host. The destination host, seeing the echo request, sends back a type 0 code 0 ICMP echo reply. (ICMP具体数据类型查看ICMP message types)
+
+ICMP也有congestion的作用, 不过是作用在网络层, 不常用
+
+# IPv6
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/IPv6.png)
+区别:
+
+* Expanded addressing capabilities. IPv6 increases the size of the IP address from 32 to 128 bits.
+* A streamlined 40-byte header. As discussed below, a number of IPv4 fields have been dropped or made optional. The resulting 40-byte fixed-length header allows for faster processing of the IP datagram. A new encoding of options allows for more flexible options processing.
+* Flow labeling and priority. For example, audio and video transmission might likely be treated as a flow. On the other hand, the more traditional applications, such as file transfer and e-mail, might not be treated as flows.
+* Fragmentation/Reassembly. IPv6 does not allow for fragmentation and reassem- bly at intermediate routers;  
 # DNS
 DNS is based on UDP
 DNS is a distributed database of IP to domain name mappings. Its basic job is to turn a user-friendly domain name like "howstuffworks.com" into an Internet Protocol (IP) address like 70.42.251.42 that computers use to identify each other on the network.
