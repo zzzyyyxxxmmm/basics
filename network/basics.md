@@ -371,6 +371,31 @@ Every router has a **forwarding table**.
 
 packet进入到route会被拆开, 根据from address 经过 input port, 通过table得知进入哪个output port, 然后通过Switch fabric分发到对于的output port上, 两个port都会有queue, 如果队列满了, 就会发生packet loss现象.
 
+## Routing Algorithms
+The purpose of a routing algorithm is then simple: given a set of routers, with links connecting the routers, a routing algorithm finds a “good” path from source router to destination router.
+* **A global routing algorithm** computes the least-cost path between a source and destination using complete, global knowledge about the network.
+
+The Link-State (LS) Routing Algorithm (Dijkstra’s algorithm)
+* **In a decentralized routing algorithm**, the calculation of the least-cost path is carried out in an iterative, distributed manner. 
+
+The Distance-Vector (DV) Routing Algorithm (BF算法)
+
+* **In a load-sensitive algorithm**, link costs vary dynami- cally to reflect the current level of congestion in the underlying link. If a high cost is associated with a link that is currently congested, a routing algorithm will tend to choose routes around such a congested link. 
+
+以上算法遇到的问题:
+* 每个路由存储大量信息; 迭代的目标太多, 难以converge
+* 公司自己想建自己的route algo, 不和外面一致
+
+Both of these problems can be solved by organizing routers into autonomous sys- tems (ASs), with each AS consisting of a group of routers that are typically under the same administrative control (e.g., operated by the same ISP or belonging to the same company network). Routers within the same AS all run the same routing algo- rithm (for example, an LS or DV algorithm) and have information about each other—exactly as was the case in our idealized model in the preceding section. The routing algorithm running within an autonomous system is called an intra- autonomous system routing protocol. It will be necessary, of course, to connect ASs to each other, and thus one or more of the routers in an AS will have the added task of being responsible for forwarding packets to destinations outside the AS; these routers are called **gateway routers**. gateway了解去别的block的path, internal的route只要知道去gateway就行.
+
+## Routing Information Protocol RIP
+RIP is a distance-vector protocol. The version of RIP specified in RFC 1058 uses hop count as a cost metric; that is, each link has a cost of 1. The maximum cost of a path is limited to 15, thus limiting the use of RIP to autonomous systems that are fewer than 15 hops in diameter.
+
+### Intra-AS Routing in the Internet: OSPF
+At its heart, however, OSPF is a link-state protocol that uses flooding of link-state information and a Dijkstra least-cost path algorithm. With OSPF, a router constructs a complete topological map (that is, a graph) of the entire autonomous system. 
+
+### Inter-AS Routing: BGP
+We just learned how ISPs use RIP and OSPF to determine optimal paths for source- destination pairs that are internal to the same AS. Let’s now examine how paths are determined for source-destination pairs that span multiple ASs. The Border Gate- way Protocol version 4. 很复杂
 # IPv4
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/ipv4.png)
 

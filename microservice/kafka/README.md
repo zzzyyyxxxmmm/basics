@@ -36,3 +36,88 @@ Kafka brokers are designed to operate as part of a cluster.
 * Metrics and logging
 * Commit log
 * Stream processing
+
+
+# Producer
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_producer.png)
+We start producing messages to Kafka by creating a ProducerRecord, which must include the topic we want to send the record to and a value. Optionally, we can also specify a key and/or a partition. Once we send the ProducerRecord, the first thing the producer will do is serialize the key and value objects to ByteArrays so they can be sent over the network.
+
+Next, the data is sent to a partitioner. If we specified a partition in the ProducerRecord, the partitioner doesn’t do anything and simply returns the partition we specified. If we didn’t, the partitioner will choose a partition for us, usually based on the ProducerRecord key. Once a partition is selected, the producer knows which topic and partition the record will go to. It then adds the record to a batch of records that will also be sent to the same topic and partition. A separate thread is responsible for sending those batches of records to the appropriate Kafka brokers.
+
+When the broker receives the messages, it sends back a response. If the messages were successfully written to Kafka, it will return a RecordMetadata object with the topic, partition, and the offset of the record within the partition. If the broker failed to write the messages, it will return an error. When the producer receives an error, it may retry sending the message a few more times before giving up and returning an error.
+
+### Constructing a Kafka Producer
+```java
+private Properties kafkaProps = new Properties();
+kafkaProps.put("bootstrap.servers", "broker1:9092,broker2:9092");
+kafkaProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+kafkaProps.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+producer = new KafkaProducer<String, String>(kafkaProps);
+```
+
+Once we instantiate a producer, it is time to start sending messages. There are three primary methods of sending messages:
+* Fire-and-forget We send a message to the server and don’t really care if it arrives succesfully or not. Most of the time, it will arrive successfully, since Kafka is highly available and the producer will retry sending messages automatically. However, some mes‐ sages will get lost using this method.
+* Synchronous send We send a message, the send() method returns a Future object, and we use get() to wait on the future and see if the send() was successful or not.
+* Asynchronous send We call the send() method with a callback function, which gets triggered when it receives a response from the Kafka broker.
+
+### 一些常用参数
+**acks**
+
+The acks parameter controls how many partition replicas must receive the record before the producer can consider the write successful. If **acks=0**, the producer will not wait for a reply from the broker before assuming the message was sent successfully. If **acks=1**, the producer will receive a success response from the broker the moment the leader replica received the message. If **acks=all**, the producer will receive a success response from the broker once all in-sync replicas received the message.
+
+**buffer.memory**
+
+This sets the amount of memory the producer will use to buffer messages waiting to be sent to brokers. If messages are sent by the application faster than they can be delivered to the server, the producer may run out of space.
+
+**retries**
+
+**batch.size**
+
+**linger.ms**
+
+**client.id**
+
+**max.in.flight.requests.per.connection**
+
+This controls how many messages the producer will send to the server without receiving responses. Setting this high can increase memory usage while improving throughput, but setting it too high can reduce throughput as batching becomes less efficient. Setting this to 1 will guarantee that messages will be written to the broker in the order in which they were sent, even when retries occur.
+
+**timeout.ms, request.timeout.ms, and metadata.fetch.timeout.ms**
+
+These parameters control how long the producer will wait for a reply from the server when sending data (request.timeout.ms) and when requesting metadata such as the current leaders for the partitions we are writing to (metadata.fetch.timeout.ms). If the timeout is reached without reply, the producer will either retry sending or respond with an error (either through exception or the send callback). timeout.ms controls the time the broker will wait for in-sync replicas to acknowledge the message in order to meet the acks configuration—the broker will return an error if the time elapses without the necessary acknowledgments.
+
+**max.block.ms**
+
+This parameter controls how long the producer will block when calling send() and when explicitly requesting metadata via partitionsFor(). Those methods block when the producer’s send buffer is full or when metadata is not available. When max.block.ms is reached, a timeout exception is thrown.
+
+**max.request.size**
+
+It caps both the size of the largest message that can be sent and the number of messages that the producer can send in one request. 
+
+**receive.buffer.bytes and send.buffer.bytes**
+
+These are the sizes of the TCP send and receive buffers used by the sockets when writing and reading data. If these are set to -1, the OS defaults will be used. 
+
+
+### Sending a Message to Kafka
+```java
+ProducerRecord<String, String> record = new ProducerRecord<>("CustomerCountry", "Precision Products", "France");
+try {
+    producer.send(record);
+    //producer.send(record).get();
+} catch (Exception e) {
+    e.printStackTrace();
+}
+
+
+//send asynchronously
+private class DemoProducerCallback implements Callback {
+            @Override
+        public void onCompletion(RecordMetadata recordMetadata, Exception e) {
+         if (e != null) {
+             e.printStackTrace();
+            }
+} }
+ProducerRecord<String, String> record =
+        new ProducerRecord<>("CustomerCountry", "Biomedical Materials", "USA");
+producer.send(record, new DemoProducerCallback());
+```
