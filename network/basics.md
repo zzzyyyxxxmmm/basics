@@ -396,6 +396,16 @@ At its heart, however, OSPF is a link-state protocol that uses flooding of link-
 
 ### Inter-AS Routing: BGP
 We just learned how ISPs use RIP and OSPF to determine optimal paths for source- destination pairs that are internal to the same AS. Let’s now examine how paths are determined for source-destination pairs that span multiple ASs. The Border Gate- way Protocol version 4. 很复杂
+
+## Broadcast and Multicast Routing
+Broadcast是不需要目的地址的
+主要还是flooding或者spanning tree算法, 实际用的是flooding算法
+
+## Multicast
+We’ve seen in the previous section that with broadcast service, packets are delivered to each and every node in the network. In this section we turn our attention to multicast service, in which a multicast packet is delivered to only a subset of network nodes. A number of emerging network applications require the delivery of packets from one or more senders to a group of receivers. These applications include bulk data transfer (for example, the transfer of a software upgrade from the software developer to users needing the upgrade), streaming continuous media (for example, the transfer of the audio, video, and text of a live lecture to a set of distributed lec- ture participants), shared data applications (for example, a whiteboard or teleconfer- encing application that is shared among many distributed participants), data feeds (for example, stock quotes), Web cache updating, and interactive gaming (for exam- ple, distributed interactive virtual environments or multiplayer games).
+
+Multicast需要多个地址, 所以有一个identity来确定一个group, 每个destination IP就是这个identity里的成员, 至于成员如何加入这个组, 组又是如何管理成员, 则是通过IGMP.
+
 # IPv4
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/ipv4.png)
 
