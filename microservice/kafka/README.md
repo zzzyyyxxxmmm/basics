@@ -121,3 +121,49 @@ ProducerRecord<String, String> record =
         new ProducerRecord<>("CustomerCountry", "Biomedical Materials", "USA");
 producer.send(record, new DemoProducerCallback());
 ```
+
+# Creating a Kafka Consumer
+```java
+Properties props = new Properties();
+props.put("bootstrap.servers", "broker1:9092,broker2:9092");
+props.put("group.id", "CountryCounter");
+props.put("key.deserializer",
+    "org.apache.kafka.common.serialization.StringDeserializer");
+props.put("value.deserializer",
+    "org.apache.kafka.common.serialization.StringDeserializer");
+KafkaConsumer<String, String> consumer = new KafkaConsumer<String,
+String>(props);
+
+consumer.subscribe("test.*");
+
+try {
+      while (true) {
+          ConsumerRecords<String, String> records = consumer.poll(100);
+          for (ConsumerRecord<String, String> record : records)
+          {
+              log.debug("topic = %s, partition = %s, offset = %d,
+                 customer = %s, country = %s\n",
+                 record.topic(), record.partition(), record.offset(),
+                 record.key(), record.value());
+              int updatedCount = 1;
+              if (custCountryMap.countainsValue(record.value())) {
+                  updatedCount = custCountryMap.get(record.value()) + 1;
+              }
+              custCountryMap.put(record.value(), updatedCount)
+              JSONObject json = new JSONObject(custCountryMap);
+              System.out.println(json.toString(4))
+          }
+}
+} finally {
+      consumer.close();
+    }
+
+```
+
+The parameter we pass, poll(), is a timeout interval and controls how long poll() will block if data is not avail‐ able in the consumer buffer. If this is set to 0, poll() will return immediately; otherwise, it will wait for the specified number of milliseconds for data to arrive from the broker.
+
+The poll loop does a lot more than just get data. The first time you call poll() with a new consumer, it is responsible for finding the GroupCoordinator, joining the con‐ sumer group, and receiving a partition assignment. If a rebalance is triggered, it will be handled inside the poll loop as well. And of course the heartbeats that keep con‐ sumers alive are sent from within the poll loop. For this reason, we try to make sure that whatever processing we do between iterations is fast and efficient.
+
+You can’t have multiple consumers that belong to the same group in one thread and you can’t have multiple threads safely use the same consumer. One consumer per thread is the rule. To run mul‐ tiple consumers in the same group in one application, you will need to run each in its own thread. It is useful to wrap the con‐ sumer logic in its own object and then use Java’s ExecutorService to start multiple threads each with its own consumer. The Conflu‐ ent blog has a [tutorial](https://www.confluent.io/blog/tutorial-getting-started-with-the-new-apache-kafka-0-9-consumer-client/) that shows how to do just that.
+
+### Configuration para
