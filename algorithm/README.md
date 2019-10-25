@@ -63,6 +63,9 @@ for(int i=0;i<n;i++){
 
 ## Find the Closest Palindrome
 这个的核心就是建立一个set存储可能的结果, Palindrome就是根据前半个的数字建立. 另外对于类似于1000, 需要特殊判断, 不然会丢失999这样的结果
+
+## 判断所有三角形组合
+注意双point方向, l和r只能相加
 # 模板
 
 ## upperBound & lowerBound

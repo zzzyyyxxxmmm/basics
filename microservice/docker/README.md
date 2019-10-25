@@ -71,6 +71,23 @@ sudo reboot
 
 # Custom Docker Image
 
+## 部署docker私服
+```c++
+sudo docker pull registry:latest
+sudo docker run -d -p 5000:5000 --name server-registry -v /tmp/registry:/tmp/registry docker.io/registry:latest
+/*
+Create or modify /etc/docker/daemon.json on the client machine
+
+{ "insecure-registries":["myregistry.example.com:5000"] }
+
+Restart docker daemon
+
+sudo /etc/init.d/docker restart
+*/
+docker tag springdemo 192.168.31.132:5000/springdemo
+docker push 192.168.31.132:5000/springdemo
+docker pull 192.168.31.132:5000/springdemo
+```
 ## Docker Commit
 
 1. nginx
@@ -121,15 +138,13 @@ docker build https://server/context.tar.gz
 # Dangling Image
 随着官方镜像维护, 发布了新版本后, 重新pull时, 镜像名被转移到了新下载的镜像上, 而旧的镜像上的名称则被取消. Docker build也可能导致这种情况
 
-### 查看Dangling image
-```docker image ls -f dangling=true```
+**查看Dangling image:**```docker image ls -f dangling=true```
 
-### 删除
-```docker image prune```
+**删除:**```docker image prune```
 
 # Volume
 
-```
+```s
 # 查看所有volume
 docker volume ls
 # 删除指定volume
@@ -140,33 +155,29 @@ docker volume inspect [volume name]
 
 
 # MYSQL
-**启动数据库**
+**启动数据库**```docker run -p 3306:3306 --name root -e MYSQL_ROOT_PASSWORD=root -d mysql```
 
-```docker run -p 3306:3306 --name root -e MYSQL_ROOT_PASSWORD=root -d mysql```
+**启动数据库并指定volume**```docker run -p 3306:3306 -v mysql:/var/lib/mysql --name root -e MYSQL_ROOT_PASSWORD=root -d mysql```
 
-指定volume
-```docker run -p 3306:3306 -v mysql:/var/lib/mysql --name root -e MYSQL_ROOT_PASSWORD=root -d mysql```
+**远程连接数据库**```mysql -u root -p root -h 192.168.31.130 -P 3306 -D mysql```
 
-**远程连接数据库**
-```mysql -u root -p root -h 192.168.31.130 -P 3306 -D mysql```
-
-**进入mysql**
-```docker exec -it root bash```
+**进入mysql**```docker exec -it root bash```
 
 # 部署springboot + mysql 服务
 [gua](https://bingohuang.com/spring-boot-docker/)
 
 # tip
 
-VMWare Fusion 改了network之后,虚拟机连不上
+**VMWare Fusion 改了network之后,虚拟机连不上**
 ```
 'sudo /Applications/VMware\ Fusion.app/Contents/Library/vmnet-cli --stop' and
 'sudo /Applications/VMware\ Fusion.app/Contents/Library/vmnet-cli --start'
 ```
 
-FTP 无法传输文件问题:
+**FTP 无法传输文件问题:**
 
-```sudo vi /etc/vsftpd.conf
+```
+sudo vi /etc/vsftpd.conf
 
 set write_enable=true
 

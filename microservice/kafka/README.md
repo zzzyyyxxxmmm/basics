@@ -52,6 +52,8 @@ private Properties kafkaProps = new Properties();
 kafkaProps.put("bootstrap.servers", "broker1:9092,broker2:9092");
 kafkaProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 kafkaProps.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+//props.put("key.serializer","org.apache.kafka.common.serialization.StringDeserializer");
+//props.put("value.serializer","io.confluent.kafka.serializers.KafkaAvroDeserializer");
 producer = new KafkaProducer<String, String>(kafkaProps);
 ```
 
@@ -166,4 +168,107 @@ The poll loop does a lot more than just get data. The first time you call poll()
 
 You can’t have multiple consumers that belong to the same group in one thread and you can’t have multiple threads safely use the same consumer. One consumer per thread is the rule. To run mul‐ tiple consumers in the same group in one application, you will need to run each in its own thread. It is useful to wrap the con‐ sumer logic in its own object and then use Java’s ExecutorService to start multiple threads each with its own consumer. The Conflu‐ ent blog has a [tutorial](https://www.confluent.io/blog/tutorial-getting-started-with-the-new-apache-kafka-0-9-consumer-client/) that shows how to do just that.
 
-### Configuration para
+### Commits and Offsets
+
+Whenever we call poll(), it returns records written to Kafka that consumers in our group have not read yet. This means that we have a way of tracking which records were read by a consumer of the group. As discussed before, one of Kafka’s unique characteristics is that it does not track acknowledgments from consumers the way many JMS queues do. Instead, it allows consumers to use Kafka to track their posi‐ tion (offset) in each partition.
+We call the action of updating the current position in the partition a commit.
+
+下一次的poll总会从offset开始, 因此会造成重复或丢失问题
+
+```java
+ try {
+    while (true) {
+        ConsumerRecords<String, String> records = consumer.poll(100);
+        for (ConsumerRecord<String, String> record : records) {
+            System.out.printf("topic = %s, partition = %s, offset = %d,
+            customer = %s, country = %s\n",
+            record.topic(), record.partition(),
+            record.offset(), record.key(), record.value());
+        }
+        consumer.commitAsync();
+    }
+} catch (Exception e) {
+    log.error("Unexpected error", e);
+} finally {
+    try {
+        consumer.commitSync();
+    } finally {
+        consumer.close();
+    }
+}
+```
+
+将offset存到数据库里, 然后通过seek方法修改partition的offset
+
+```java
+public class SaveOffsetsOnRebalance implements
+      ConsumerRebalanceListener {
+        public void onPartitionsRevoked(Collection<TopicPartition>
+          partitions) {
+                    commitDBTransaction();
+}
+        public void onPartitionsAssigned(Collection<TopicPartition>
+          partitions) {
+            for(TopicPartition partition: partitions)
+                consumer.seek(partition, getOffsetFromDB(partition));
+} }
+}
+  consumer.subscribe(topics, new SaveOffsetOnRebalance(consumer));
+consumer.poll(0);
+for (TopicPartition partition: consumer.assignment())
+  consumer.seek(partition, getOffsetFromDB(partition));
+while (true) {
+    ConsumerRecords<String, String> records =
+      consumer.poll(100);
+    for (ConsumerRecord<String, String> record : records)
+    {
+        processRecord(record);
+        storeRecordInDB(record);
+        storeOffsetInDB(record.topic(), record.partition(),
+          record.offset());
+    }
+    commitDBTransaction();
+}
+```
+
+### Close Consumer
+```java
+Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    System.out.println("Starting exit...");
+                    consumer.wakeup();
+                    try {
+                        mainThread.join();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+} });
+ ... try {
+// looping until ctrl-c, the shutdown hook will
+   cleanup on exit
+while (true) {
+    ConsumerRecords<String, String> records =
+      movingAvg.consumer.poll(1000);
+    System.out.println(System.currentTimeMillis() + "
+       --  waiting for data...");
+    for (ConsumerRecord<String, String> record :
+      records) {
+        System.out.printf("offset = %d, key = %s,
+          value = %s\n",
+          record.offset(), record.key(),
+          record.value());
+    }
+    for (TopicPartition tp: consumer.assignment())
+        System.out.println("Committing offset at
+          position:" +
+          consumer.position(tp));
+    movingAvg.consumer.commitSync();
+}
+} catch (WakeupException e) {
+    // ignore for shutdown
+} finally {
+    consumer.close();
+    System.out.println("Closed consumer and we are done");
+  } }
+```
+
