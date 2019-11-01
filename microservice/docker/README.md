@@ -44,25 +44,30 @@ sudo reboot
 
 ```docker logs -f name``` 查看运行容器的log
 
-常用参数:
--it 交互终端, t让Docker分配一个伪终端(pseudo-tty)并绑定到容器的标准输入上, i则让容器的标准输入保持打开
+```docker exec -it name bash```
+* -i, which makes sure STDIN is kept open. You need this for entering com- mands into the shell.
+* -t, which allocates a pseudo terminal (TTY).
+
+You need both if you want the use the shell like you’re used to. (If you leave out the first one, you can’t type any commands, and if you leave out the second one, the com- mand prompt won’t be displayed and some commands will complain about the TERM variable not being set.)
 
 --rm 退出后随即将其删除
 
+### stop docker
+```docker stop --name```
 ### delete docker
-```docker rmi```
-
 ```docker rm ```
 
 ```docker image rm $(docker image ls -q redis)```
 
 ```docker container prune``` 删除停止的容器
-
 ### show running docker
 ```docker ps```
 
 ### show all docker
 ```docker ps -a```
+
+### inspect docker
+```docker inspect --name```
 
 ### dockerhub
 ```docker login```如果push自己的image需要登录
@@ -87,6 +92,8 @@ sudo /etc/init.d/docker restart
 docker tag springdemo 192.168.31.132:5000/springdemo
 docker push 192.168.31.132:5000/springdemo
 docker pull 192.168.31.132:5000/springdemo
+
+如果在hub.docker.com上, 可以把ip替换成ID
 ```
 ## Docker Commit
 
@@ -120,6 +127,9 @@ FROM scrach, scrach是一个虚拟的概念, 相当于一个空白的镜像
 每run一次都会commit一次, 建立一个image, 下一层就在这层的基础上重新建立, 我们可以使用&&来连接命令
 
 ```docker build -t nginx:v3 .```
+
+The build process isn’t performed by the Docker client. Instead, the contents of the whole directory are uploaded to the **Docker daemon** and the image is built there. The client and daemon don’t need to be on the same machine at all. If you’re using Docker on a non-Linux OS, the client is on your host OS, but the daemon runs inside a VM. Because all the files in the build directory are uploaded to the daemon, if it contains many large files and the daemon isn’t running locally, the upload may take longer.
+
 
 ### Context
 可以看到上面命令的最后有一个., 这实际就是制定了上下文路径, docker build 命令其实是在docker server 上运行的, 如果想要copy 本机文件到server上, 我们就需要上下文的命令.

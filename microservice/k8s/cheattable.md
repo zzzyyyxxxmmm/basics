@@ -1,0 +1,3 @@
+
+# kubetcl
+kubectl cluster-info
