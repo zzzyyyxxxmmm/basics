@@ -68,42 +68,4 @@ for(int i=0;i<n;i++){
 注意双point方向, l和r只能相加
 # 模板
 
-## upperBound & lowerBound
-```java
-int upperBound(List<Integer> list,int x){
-    int l=0;
-    int r=list.size()-1;
-    int ans=-1;
-    while(l<=r){
-        int mid=(l+r)>>1;
-        if(list.get(mid)<=x){
-            l=mid+1;
-        } else if(list.get(mid)>x){
-            r=mid-1;
-            ans=mid;
-        }
-    }
-
-    return ans;
-}
-
-int lowerBound(List<Integer> list,int x){
-    int l=0;
-    int r=list.size()-1;
-    int ans=-1;
-    while(l<=r){
-        int mid=(l+r)>>1;
-        if(list.get(mid)<x){
-            l=mid+1;
-            ans=mid;
-        } else if(list.get(mid)>x){
-            r=mid-1;
-        } else {
-            r=mid-1;
-            ans=mid;
-        }
-    }
-
-    return ans;
-}
-```
+# STL

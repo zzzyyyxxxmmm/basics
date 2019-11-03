@@ -53,9 +53,26 @@
 ## 周进度1
 1. 读JVM    √
 2. go in action √
-3. network 
+3. network √ (没看链路层) 
 
-## 周进度1
+## 周进度2
 1. Go实战练习   
 2. network 
 3. jenkins
+
+## 周进度34
+1. Kafka
+2. K8s
+
+# Nov 计划, 2019
+1. K8S
+2. Linux内核准备
+3. TCP/IP Illustrated 
+4. Go TCP Server
+5. Nginx计划准备
+
+## Sprint 1
+1. k8s读一半
+2. Linux准备
+3. 开始阅读TCP/IP Illustrated
+4. GO TCP Server
