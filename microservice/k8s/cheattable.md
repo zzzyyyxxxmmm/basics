@@ -1,3 +1,4 @@
+[官方其实有一个cheat sheet](https://kubernetes.io/docs/reference/kubectl/cheatsheet/#deleting-resources)
 
 # kubetcl
 ```

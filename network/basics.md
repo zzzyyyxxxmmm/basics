@@ -33,7 +33,7 @@ A transport-layer protocol can also provide timing guarantees. Such a service wo
 
 
 ## TCP
-The TCP service model includes a connection-oriented service and a reliable data transfer service.
+The TCP service model includes a **connection-oriented service** and a **reliable data transfer service**.
 
 **Connection-oriented service**
 
@@ -54,22 +54,49 @@ The communicating processes can rely on TCP to deliver all data sent without err
 以上都是基于 stop-and-wait的, 一次只能发送一个, 我们需要基于pipline式的, 一次支持发送多条, 因此上面的方法需要进一步改动:
 * The range of sequence numbers must be increased, since each in-transit packet (not counting retransmissions) must have a unique sequence number and there may be multiple, in-transit, unacknowledged packets.
 * The sender and receiver sides of the protocols may have to buffer more than one packet. Minimally, the sender will have to buffer packets that have been trans- mitted but not yet acknowledged. Buffering of correctly received packets may also be needed at the receiver, as discussed below.
-* The range of sequence numbers needed and the buffering requirements will depend on the manner in which a data transfer protocol responds to lost, cor- rupted, and overly delayed packets. Two basic approaches toward pipelined error recovery can be identified: **Go-Back-N** and **selective repeat**.
+* The range of sequence numbers needed and the buffering requirements will depend on the manner in which a data transfer protocol responds to lost, corrupted, and overly delayed packets. Two basic approaches toward pipelined error recovery can be identified: **Go-Back-N** and **selective repeat**.
+
+Sequential Number 是根据窗口大小循环的鸭:stuck_out_tongue_winking_eye:~
 
 ### Go-Back-N
-[view](!https://github.com/zzzyyyxxxmmm/basics/blob/master/image/GBN.png)
+[view](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/GBN.png)
 
-发送方maintain一个大小为N的窗口,类似于一个buffer发送packet. reciever必须要按续接收, 比如上一个接收的是n, 下一个一定要接收n+1, 否则则会要求sender重发n之后的所有packet
+发送方maintain一个大小为N的窗口,类似于一个buffer发送packet. 
+
+接收方窗口大小为1, reciever必须要按续接收, 比如上一个接收的是n, 下一个一定要接收n+1, 否则则会要求sender重发n之后的所有packet
 
 缺点: 已发送的正确packet可能会重发
 
 ### Selective Repeat (SR)
-[view](!https://github.com/zzzyyyxxxmmm/basics/blob/master/image/SR.png)
+[view](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/SR.png)
+
+接收窗口的尺寸不能超过序号范围的1/2，否则可能造成帧的重叠。另外，发送窗口的尺寸一般和接收窗口的尺寸相同，发送端为每一个发送缓存设置一个定时计数器，定时器一旦超时，相应输出缓存区中的帧就被重发。
+
+This is to avoid packets being recognized incorrectly.
+
+If the windows size is greater than half the sequence number space, then if an ACK is lost, the sender may send new packets that the receiver believes are retransmissions.
+
+**Why is window size less than or equal to half the sequence number in SR protocol?**
+```
+For example, if our sequence number range is 0-3 and the window size is 3, this situation can occur.
+
+A -> 0 -> B
+A -> 1 -> B
+A -> 2 -> B
+A <- 2ack <- B (this is lost)
+A -> 0 -> B
+A -> 1 -> B
+A -> 2 -> B
+
+After the lost packet, B now expects the next packets to have sequence numbers 3, 0, and 1.
+But, the 0 and 1 that A is sending are actually retransmissions, so B receives them out of order.
+By limiting the window size to 2 in this example, we avoid this problem because B will be expecting 2 and 3, and only 0 and 1 can be retransmissions.
+```
 
 ## TCP Segment Structure
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/tcp_segment.png)
 
-Both Ethernet and PPP link-layer proto- cols have an maximum segment size of 1,500 bytes. 
+Both Ethernet and PPP link-layer protocols have an maximum segment size of 1,500 bytes. 
 
 Because the TCP header is typically 20 bytes (12 bytes more than the UDP header), segments sent by Telnet may be only 21 bytes in length.
 
@@ -83,10 +110,13 @@ Figure 3.29 shows the structure of the TCP segment. As with UDP, the header incl
 ## telnet example
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/telnet.png)
 
-## timeout
+## timeout的时间设置为多少比较合理
 **EstimatedRTT = (1 – α) • EstimatedRTT + α • SampleRTT**
 
 α = 0.125
+
+The sample RTT, denoted **SampleRTT**, for a segment is the amount of time between when the segment is sent (that is, passed to IP) and when an acknowledg- ment for the segment is received. Obviously, the SampleRTT values will fluctuate from segment to segment due to congestion in the routers and to the varying load on the end systems. Because of this fluctuation, any given SampleRTT value may be atypical. In order to estimate a typical RTT, it is therefore natural to take some sort of average of the Sam- pleRTT values. TCP maintains an average, called **EstimatedRTT**, of the SampleRTT values.
+
 
 **DevRTT = (1-β) * DevRTT + β * |SampleRTT - EstimatedRTT|**
 
@@ -94,10 +124,18 @@ Figure 3.29 shows the structure of the TCP segment. As with UDP, the header incl
 
 **TimeoutInterval = EstimatedRTT + 4*DevRTT** 
 
+Also, when a timeout occurs, the value of TimeoutInterval is doubled to avoid a premature timeout occurring for a subsequent segment that will soon be acknowledged. However, as soon as a segment is received and EstimatedRTT is updated, the TimeoutInterval is again computed using the formula above.
+
 推荐的初始TimeoutInterval为1秒。出现超时后，TimeoutInterval直接加倍。因为此次重传可能是报文确认ACK因为网络拥塞而延迟到达从而导致报文重传，重传报文后，不久，ACK到达，会导致SampleRTT变小，进而使TimeoutInterval变小，使后面的报文出现过早超时！
 
 ### Fast Retransmit
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/fast_retransmit.png)
+首先对于接收方来说，如果接收方收到一个失序的报文段，就立即回送一个 ACK 给发送方，而不是等待发送延时的 ACK. 这样做的目的是可以让发送方尽可能早的知道报文段. 快重传算法规定，如果发送方一连收到 3 个重复的确认，就应当立即传送对方未收到的报文 M3，而不必等待 M3 的重传计时器到期。
+
+
+————————————————
+版权声明：本文为CSDN博主「--Allen--」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
+原文链接：https://blog.csdn.net/q1007729991/article/details/70185266
 
 ### three-way handshake
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/three-way.png)
@@ -142,6 +180,7 @@ But when should this exponential growth end? Slow start provides several answers
 
 **Fast Recovery**
 3个ACK之后不从慢开始继续, 而是从ssthresh开始+1, 如果只是timeout那还是用慢开始
+
 ## UDP
 UDP is a no-frills, lightweight transport protocol, providing minimal services. UDP is connectionless, so there is no handshaking before the two processes start to communicate. UDP provides an unreliable data transfer service—that is, when a process sends a message into a UDP socket, UDP provides no guarantee that the message will ever reach the receiving process. Furthermore, messages that do arrive at the receiving process may arrive out of order.
 

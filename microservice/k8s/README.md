@@ -77,10 +77,147 @@ To recap how containers should be grouped into pods—when deciding whether to p
 * Must they be scaled together or individually?
 
 ## Pod definition
+```yaml
+k get po kubia-52k5b -o yaml
+
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2019-11-03T21:19:20Z"
+  generateName: kubia-
+  labels:
+    run: kubia
+  name: kubia-52k5b
+  namespace: default
+  ownerReferences:
+  - apiVersion: v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: ReplicationController
+    name: kubia
+    uid: 8979d484-ea2f-492f-bd22-2ed6da6b6a42
+  resourceVersion: "83297"
+  selfLink: /api/v1/namespaces/default/pods/kubia-52k5b
+  uid: f8cdc22d-41a4-470b-8af5-bdf685fd7c78
+spec:
+  containers:
+  - image: zzzyyyxxxmmm/kubia
+    imagePullPolicy: Always
+    name: kubia
+    ports:
+    - containerPort: 8080
+      protocol: TCP
+    resources: {}
+    terminationMessagePath: /dev/termination-log
+    terminationMessagePolicy: File
+    volumeMounts:
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: default-token-jm77n
+      readOnly: true
+  dnsPolicy: ClusterFirst
+  enableServiceLinks: true
+  nodeName: minikube
+  priority: 0
+  restartPolicy: Always
+  schedulerName: default-scheduler
+  securityContext: {}
+  serviceAccount: default
+  serviceAccountName: default
+  terminationGracePeriodSeconds: 30
+  tolerations:
+  - effect: NoExecute
+    key: node.kubernetes.io/not-ready
+    operator: Exists
+    tolerationSeconds: 300
+  - effect: NoExecute
+    key: node.kubernetes.io/unreachable
+    operator: Exists
+    tolerationSeconds: 300
+  volumes:
+  - name: default-token-jm77n
+    secret:
+      defaultMode: 420
+      secretName: default-token-jm77n
+status:
+  conditions:
+  - lastProbeTime: null
+    lastTransitionTime: "2019-11-03T21:19:20Z"
+    status: "True"
+    type: Initialized
+  - lastProbeTime: null
+    lastTransitionTime: "2019-11-03T21:19:22Z"
+    status: "True"
+    type: Ready
+  - lastProbeTime: null
+    lastTransitionTime: "2019-11-03T21:19:22Z"
+    status: "True"
+    type: ContainersReady
+  - lastProbeTime: null
+    lastTransitionTime: "2019-11-03T21:19:20Z"
+    status: "True"
+    type: PodScheduled
+  containerStatuses:
+  - containerID: docker://8ada8e065cc1f6afa834ab344cbf3b113751b93583d6cb51621f7b1bd7062dd3
+    image: kubia:latest
+    imageID: docker-pullable://zzzyyyxxxmmm/kubia@sha256:c637cdf07feeab097886f33e36c4c156a2a182f84a12191f933a404f4740ced8
+    lastState: {}
+    name: kubia
+    ready: true
+    restartCount: 0
+    started: true
+    state:
+      running:
+        startedAt: "2019-11-03T21:19:22Z"
+  hostIP: 192.168.31.132
+  phase: Running
+  podIP: 172.17.0.6
+  podIPs:
+  - ip: 172.17.0.6
+  qosClass: BestEffort
+  startTime: "2019-11-03T21:19:20Z"
+```
+
 The pod definition consists of a few parts. First, there’s the Kubernetes API version used in the YAML and the type of resource the YAML is describing. Then, three important sections are found in almost all Kubernetes resources:
 * Metadata includes the name, namespace, labels, and other information about the pod.
 * Spec contains the actual description of the pod’s contents, such as the pod’s con- tainers, volumes, and other data.
 * Status contains the current information about the running pod, such as what condition the pod is in, the description and status of each container, and the pod’s internal IP and other basic info.
+
+### custom pod yaml
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kubia-manual
+spec:
+  containers:
+  - image: luksa/kubia
+    name: kubia
+    ports:
+    - containerPort: 8080
+      protocol: TCP
+```
+
+```
+kubectl create -f kubia-manual.yaml
+kubectl get po kubia-manual -o yaml
+kubectl get po kubia-manual -o json
+kubectl logs kubia-manual
+```
+
+## 直接和pods通信
+```
+kubectl port-forward kubia-manual 8888:8080
+curl localhost:8888
+```
+
+## Labels
+
+For example, with microservices architectures, the number of deployed microser- vices can easily exceed 20 or more. Those components will probably be replicated (multiple copies of the same component will be deployed) and multiple versions or releases (stable, beta, canary, and so on) will run concurrently. This can lead to hun- dreds of pods in the system. Without a mechanism for organizing them, you end up with a big, incomprehensible mess, such as the one shown in figure 3.6. The figure shows pods of multiple microservices, with several running multiple replicas, and others running different releases of the same microservice.
+
+Labels are a simple, yet incredibly powerful, Kubernetes feature for organizing not only pods, but all other Kubernetes resources. A label is an arbitrary key-value pair you attach to a resource, which is then utilized when selecting resources using label selectors (resources are filtered based on whether they include the label specified in the selec- tor). A resource can have more than one label, as long as the keys of those labels are unique within that resource. You usually attach labels to resources when you create them, but you can also add additional labels or even modify the values of existing labels later without having to recreate the resource.
+
+[With and Without Labels](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/k8s_arch.png)
+
 
 # SERVICES
 The expose command’s output mentions a service called kubia-http. Services are objects like Pods and Nodes, so you can see the newly created Service object by run- ning the kubectl get services command
