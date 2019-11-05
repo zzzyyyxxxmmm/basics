@@ -218,9 +218,81 @@ Labels are a simple, yet incredibly powerful, Kubernetes feature for organizing 
 
 [With and Without Labels](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/k8s_arch.png)
 
+You never want to say specifically what node a pod should be scheduled to, because that would couple the application to the infrastructure, whereas the whole idea of Kubernetes is hiding the actual infrastructure from the apps that run on it. But if you want to have a say in where a pod should be scheduled, instead of specifying an exact node, you should describe the node requirements and then let Kubernetes select a node that matches those requirements. This can be done through node labels and node label selectors.
+
+### Annotating pods
+In addition to labels, pods and other objects can also contain annotations. Annotations are also key-value pairs, so in essence, they’re similar to labels, but they aren’t meant to hold identifying information. They can’t be used to group objects the way labels can. While objects can be selected through label selectors, there’s no such thing as an annotation selector.
+On the other hand, annotations can hold much larger pieces of information and are primarily meant to be used by tools. Certain annotations are automatically added to objects by Kubernetes, but others are added by users manually.
+
+### Using namespaces to group resources
+Using multiple namespaces allows you to split complex systems with numerous components into smaller distinct groups. They can also be used for separating resources in a multi-tenant environment, splitting up resources into production, development, and QA environments, or in any other way you may need. Resource names only need to be unique within a namespace. Two different namespaces can contain resources of the same name. But, while most types of resources are namespaced, a few aren’t. One of them is the Node resource, which is global and not tied to a single namespace.
+
+并不是真正意义上网络的隔离: To wrap up this section about namespaces, let me explain what namespaces don’t pro- vide—at least not out of the box. Although namespaces allow you to isolate objects into distinct groups, which allows you to operate only on those belonging to the speci- fied namespace, they don’t provide any kind of isolation of running objects.
+For example, you may think that when different users deploy pods across different namespaces, those pods are isolated from each other and can’t communicate, but that’s not necessarily the case. Whether namespaces provide network isolation depends on which networking solution is deployed with Kubernetes. When the solution doesn’t provide inter-namespace network isolation, if a pod in namespace foo knows the IP address of a pod in namespace bar, there is nothing preventing it from sending traffic, such as HTTP requests, to the other pod.
+
+# Replication and other controllers: deploying managed pods
+
+## Keeping pods healthy
+If pod crash, k8s will restart it automatically. What if they died sliently because of a infinit loop? Kubernetes can check if a container is still alive through liveness probes. You can specify a liveness probe for each container in the pod’s specification. 
+* An HTTP GET probe performs an HTTP GET request on the container’s IP address, a port and path you specify. If the probe receives a response, and the response code doesn’t represent an error (in other words, if the HTTP response code is 2xx or 3xx), the probe is considered successful. If the server returns an error response code or if it doesn’t respond at all, the probe is considered a fail- ure and the container will be restarted as a result.
+* A TCP Socket probe tries to open a TCP connection to the specified port of the container. If the connection is established successfully, the probe is successful. Otherwise, the container is restarted.
+* An Exec probe executes an arbitrary command inside the container and checks the command’s exit status code. If the status code is 0, the probe is successful. All other codes are considered failures.
+
+But for a better liveness check, you’d configure the probe to perform requests on a specific URL path (/health, for example) and have the app perform an internal sta- tus check of all the vital components running inside the app to ensure none of them has died or is unresponsive.
+
+You now understand that Kubernetes keeps your containers running by restarting them if they crash or if their liveness probes fail. This job is performed by the Kubelet on the node hosting the pod—the Kubernetes Control Plane components running on the master(s) have no part in this process.
+
+But if the node itself crashes, it’s the Control Plane that must create replacements for all the pods that went down with the node. It doesn’t do that for pods that you create directly. Those pods aren’t managed by anything except by the Kubelet, but because the Kubelet runs on the node itself, it can’t do anything if the node fails.
+To make sure your app is restarted on another node, you need to have the pod managed by a ReplicationController or similar mechanism, which we’ll discuss in the rest of this chapter.
+
+## Introducing ReplicationControllers
+A ReplicationController is a Kubernetes resource that ensures its pods are always kept running. If the pod disappears for any reason, such as in the event of a node disappearing from the cluster or because the pod was evicted from the node, the ReplicationController notices the missing pod and creates a replacement pod.
+
+Like many things in Kubernetes, a ReplicationController, although an incredibly sim- ple concept, provides or enables the following powerful features:
+* It makes sure a pod (or multiple pod replicas) is always running by starting a new pod when an existing one goes missing.
+* When a cluster node fails, it creates replacement replicas for all the pods that were running on the failed node (those that were under the Replication- Controller’s control).
+* It enables easy horizontal scaling of pods—both manual and automatic (see horizontal pod auto-scaling in chapter 15).
+
+A ReplicationController’s job is to make sure that an exact number of pods always matches its label selector. A ReplicationController has three essential parts (also shown in figure 4.3):
+* A label selector, which determines what pods are in the ReplicationController’s scope 
+* A replica count, which specifies the desired number of pods that should be running 
+* A pod template, which is used when creating new pod replicas
+
+## Using ReplicaSets instead of ReplicationControllers
+```
+selector:
+  matchExpressions:
+    - key: app
+      operator: In
+      values:
+        - kubia
+```
+You can add additional expressions to the selector. As in the example, each expression must contain a key, an operator, and possibly (depending on the operator) a list of values. You’ll see four valid operators:
+* In—Label’s value must match one of the specified values.
+* NotIn—Label’s value must not match any of the specified values.
+* Exists—Pod must include a label with the specified key (the value isn’t importannt). When using this operator, you shouldn’t specify the values field.
+* DoesNotExist—Pod must not include a label with the specified key. The values
+property must not be specified.
+
+## Running exactly one pod on each node with DaemonSets
+To run a pod on all cluster nodes, you create a DaemonSet object, which is much like a ReplicationController or a ReplicaSet, except that pods created by a Daemon- Set already have a target node specified and skip the Kubernetes Scheduler. They aren’t scattered around the cluster randomly.
+
+A DaemonSet makes sure it creates as many pods as there are nodes and deploys each one on its own node, as shown in figure 4.8.
+
+Whereas a ReplicaSet (or ReplicationController) makes sure that a desired num- ber of pod replicas exist in the cluster, a DaemonSet doesn’t have any notion of a desired replica count. It doesn’t need it because its job is to ensure that a pod match- ing its pod selector is running on each node.
+
+If a node goes down, the DaemonSet doesn’t cause the pod to be created else- where. But when a new node is added to the cluster, the DaemonSet immediately deploys a new pod instance to it. It also does the same if someone inadvertently deletes one of the pods, leaving the node without the DaemonSet’s pod. Like a Replica- Set, a DaemonSet creates the pod from the pod template configured in it.
+
+## Running pods that perform a single completable task
+Jobs
+
+## Scheduling Jobs to run periodically or once in the future
+CronJob
 
 # SERVICES
-The expose command’s output mentions a service called kubia-http. Services are objects like Pods and Nodes, so you can see the newly created Service object by run- ning the kubectl get services command
+The expose command’s output mentions a service called kubia-http. Services are objects like Pods and Nodes, so you can see the newly created Service object by run- ning the kubectl get services command. Be sure to check only the internals of the app and nothing influenced by an external factor. For example, a frontend web server’s liveness probe shouldn’t return a failure when the server can’t connect to the backend database. If the underlying cause is in the database itself, restarting the web server container will not fix the problem. Because the liveness probe will fail again, you’ll end up with the container restarting
+repeatedly until the database becomes accessible again.
+
 
 # Kubectl
 

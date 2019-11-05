@@ -96,16 +96,28 @@ By limiting the window size to 2 in this example, we avoid this problem because 
 ## TCP Segment Structure
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/tcp_segment.png)
 
+TCPsegment是包含在IPdatagram里的
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/net_tcpip.png)
+
 Both Ethernet and PPP link-layer protocols have an maximum segment size of 1,500 bytes. 
 
 Because the TCP header is typically 20 bytes (12 bytes more than the UDP header), segments sent by Telnet may be only 21 bytes in length.
 
-Figure 3.29 shows the structure of the TCP segment. As with UDP, the header includes source and destination port numbers, which are used for multiplexing/demultiplexing data from/to upper-layer applications. Also, as with UDP, the header includes a checksum field. A TCP segment header also contains the following fields:
+Figure shows the structure of the TCP segment. As with UDP, the header includes source and destination port numbers, which are used for multiplexing/demultiplexing data from/to upper-layer applications. Also, as with UDP, the header includes a checksum field. A TCP segment header also contains the following fields:
 * The 32-bit sequence number field and the 32-bit acknowledgment number field are used by the TCP sender and receiver in implementing a reliable data transfer service, as discussed below.
 * The 16-bit receive window field is used for flow control. We will see shortly that it is used to indicate the number of bytes that a receiver is willing to accept.
 * The 4-bit header length field specifies the length of the TCP header in 32-bit words. The TCP header can be of variable length due to the TCP options field. (Typically, the options field is empty, so that the length of the typical TCP header is 20 bytes.)
-* The optional and variable-length options field is used when a sender and receiver negotiate the maximum segment size (MSS) or as a window scaling fac- tor for use in high-speed networks. A time-stamping option is also defined. See RFC 854 and RFC 1323 for additional details.
-* The flag field contains 6 bits. The ACK bit is used to indicate that the value car- ried in the acknowledgment field is valid; that is, the segment contains an acknowledgment for a segment that has been successfully received. The RST, SYN, and FIN bits are used for connection setup and teardown, as we will dis- cuss at the end of this section. Setting the PSH bit indicates that the receiver should pass the data to the upper layer immediately. Finally, the URG bit is used to indicate that there is data in this segment that the sending-side upper-layer entity has marked as “urgent.” The location of the last byte of this urgent data is indicated by the 16-bit urgent data pointer field. TCP must inform the receiving-side upper-layer entity when urgent data exists and pass it a pointer to the end of the urgent data. (In practice, the PSH, URG, and the urgent data pointer are not used. However, we mention these fields for completeness.)
+* The optional and variable-length options field is used when a sender and receiver negotiate the maximum segment size (MSS) or as a window scaling factor for use in high-speed networks. A time-stamping option is also defined.
+* The flag field contains 6 bits. The ACK bit is used to indicate that the value carried in the acknowledgment field is valid; that is, the segment contains an acknowledgment for a segment that has been successfully received. The RST, SYN, and FIN bits are used for connection setup and teardown, as we will discuss at the end of this section. Setting the PSH bit indicates that the receiver should pass the data to the upper layer immediately. Finally, the URG bit is used to indicate that there is data in this segment that the sending-side upper-layer entity has marked as “urgent.” The location of the last byte of this urgent data is indicated by the 16-bit urgent data pointer field. TCP must inform the receiving-side upper-layer entity when urgent data exists and pass it a pointer to the end of the urgent data. (In practice, the PSH, URG, and the urgent data pointer are not used. However, we mention these fields for completeness.)
+
+1. CWR—Congestion Window Reduced (the sender reduced its sending rate); see Chapter 16.
+2. ECE—ECN Echo (the sender received an earlier congestion notification); see Chapter 16.
+3. URG—Urgent (the Urgent Pointer field is valid—rarely used); see Chapter 15.
+4. ACK—Acknowledgment (the Acknowledgment Number field is valid— always on after a connection is established); see Chapters 13 and 15.
+5. PSH—Push (the receiver should pass this data to the application as soon as possible—not reliably implemented or used); see Chapter 15.
+6. RST—Reset the connection (connection abort, usually because of an error); see Chapter 13.
+7. SYN—Synchronizesequencenumberstoinitiateaconnection;seeChapter13.
+8. FIN—The sender of the segment is finished sending data to its peer; see Chapter 13.
 
 ## telnet example
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/telnet.png)
@@ -131,11 +143,6 @@ Also, when a timeout occurs, the value of TimeoutInterval is doubled to avoid a 
 ### Fast Retransmit
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/fast_retransmit.png)
 首先对于接收方来说，如果接收方收到一个失序的报文段，就立即回送一个 ACK 给发送方，而不是等待发送延时的 ACK. 这样做的目的是可以让发送方尽可能早的知道报文段. 快重传算法规定，如果发送方一连收到 3 个重复的确认，就应当立即传送对方未收到的报文 M3，而不必等待 M3 的重传计时器到期。
-
-
-————————————————
-版权声明：本文为CSDN博主「--Allen--」的原创文章，遵循 CC 4.0 BY-SA 版权协议，转载请附上原文出处链接及本声明。
-原文链接：https://blog.csdn.net/q1007729991/article/details/70185266
 
 ### three-way handshake
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/three-way.png)
