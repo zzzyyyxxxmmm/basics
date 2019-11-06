@@ -225,9 +225,13 @@ In addition to labels, pods and other objects can also contain annotations. Anno
 On the other hand, annotations can hold much larger pieces of information and are primarily meant to be used by tools. Certain annotations are automatically added to objects by Kubernetes, but others are added by users manually.
 
 ### Using namespaces to group resources
+Let’s turn back to labels for a moment. We’ve seen how they organize pods and other objects into groups. Because each object can have multiple labels, those groups of objects can overlap. Plus, when working with the cluster (through kubectl for example), if you don’t explicitly specify a label selector, you’ll always see all objects. But what about times when you want to split objects into separate, non-overlapping groups? You may want to only operate inside one group at a time. For this and other reasons, Kubernetes also groups objects into namespaces.
+
+这时候就可以利用namespace建立prod, test, dev环境
+
 Using multiple namespaces allows you to split complex systems with numerous components into smaller distinct groups. They can also be used for separating resources in a multi-tenant environment, splitting up resources into production, development, and QA environments, or in any other way you may need. Resource names only need to be unique within a namespace. Two different namespaces can contain resources of the same name. But, while most types of resources are namespaced, a few aren’t. One of them is the Node resource, which is global and not tied to a single namespace.
 
-并不是真正意义上网络的隔离: To wrap up this section about namespaces, let me explain what namespaces don’t pro- vide—at least not out of the box. Although namespaces allow you to isolate objects into distinct groups, which allows you to operate only on those belonging to the speci- fied namespace, they don’t provide any kind of isolation of running objects.
+并不是真正意义上网络的隔离: To wrap up this section about namespaces, let me explain what namespaces don’t provide—at least not out of the box. Although namespaces allow you to isolate objects into distinct groups, which allows you to operate only on those belonging to the specified namespace, they don’t provide any kind of isolation of running objects.
 For example, you may think that when different users deploy pods across different namespaces, those pods are isolated from each other and can’t communicate, but that’s not necessarily the case. Whether namespaces provide network isolation depends on which networking solution is deployed with Kubernetes. When the solution doesn’t provide inter-namespace network isolation, if a pod in namespace foo knows the IP address of a pod in namespace bar, there is nothing preventing it from sending traffic, such as HTTP requests, to the other pod.
 
 # Replication and other controllers: deploying managed pods
@@ -244,6 +248,8 @@ You now understand that Kubernetes keeps your containers running by restarting t
 
 But if the node itself crashes, it’s the Control Plane that must create replacements for all the pods that went down with the node. It doesn’t do that for pods that you create directly. Those pods aren’t managed by anything except by the Kubelet, but because the Kubelet runs on the node itself, it can’t do anything if the node fails.
 To make sure your app is restarted on another node, you need to have the pod managed by a ReplicationController or similar mechanism, which we’ll discuss in the rest of this chapter.
+
+Be sure to check only the internals of the app and nothing influenced by an external factor. For example, a frontend web server’s liveness probe shouldn’t return a failure when the server can’t connect to the backend database. If the underlying cause is in the database itself, restarting the web server container will not fix the problem. Because the liveness probe will fail again, you’ll end up with the container restarting repeatedly until the database becomes accessible again.
 
 ## Introducing ReplicationControllers
 A ReplicationController is a Kubernetes resource that ensures its pods are always kept running. If the pod disappears for any reason, such as in the event of a node disappearing from the cluster or because the pod was evicted from the node, the ReplicationController notices the missing pod and creates a replacement pod.
@@ -290,10 +296,87 @@ Jobs
 CronJob
 
 # SERVICES
-The expose command’s output mentions a service called kubia-http. Services are objects like Pods and Nodes, so you can see the newly created Service object by run- ning the kubectl get services command. Be sure to check only the internals of the app and nothing influenced by an external factor. For example, a frontend web server’s liveness probe shouldn’t return a failure when the server can’t connect to the backend database. If the underlying cause is in the database itself, restarting the web server container will not fix the problem. Because the liveness probe will fail again, you’ll end up with the container restarting
-repeatedly until the database becomes accessible again.
+A Kubernetes Service is a resource you create to make a single, constant point of entry to a group of pods providing the same service. Each service has an IP address and port that never change while the service exists. Clients can open connections to that IP and port, and those connections are then routed to one of the pods backing that service. This way, clients of a service don’t need to know the location of individ- ual pods providing the service, allowing those pods to be moved around the cluster at any time.
 
+## Discovering services(Pods talk to outside)
+By creating a service, you now have a single and stable IP address and port that you can hit to access your pods. This address will remain unchanged throughout the whole lifetime of the service. Pods behind this service may come and go, their IPs may change, their number can go up or down, but they’ll always be accessible through the service’s single and constant IP address.
+But how do the client pods know the IP and port of a service? Do you need to cre- ate the service first, then manually look up its IP address and pass the IP to the config- uration options of the client pod? Not really. Kubernetes also provides ways for client pods to discover a service’s IP and port.
 
+### DISCOVERING SERVICES THROUGH ENVIRONMENT VARIABLES
+When a pod is started, Kubernetes initializes a set of environment variables pointing to each service that exists at that moment. If you create the service before creating the client pods, processes in those pods can get the IP address and port of the service by inspecting their environment variables.
+```s
+$ kubectl exec kubia-3inly env
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+HOSTNAME=kubia-3inly
+KUBERNETES_SERVICE_HOST=10.111.240.1 
+KUBERNETES_SERVICE_PORT=443
+... 
+KUBIA_SERVICE_HOST=10.111.249.153 
+KUBIA_SERVICE_PORT=80
+```
+
+### DISCOVERING SERVICES THROUGH DNS
+Remember in chapter 3 when you listed pods in the kube-system namespace? One of the pods was called kube-dns. The kube-system namespace also includes a corre- sponding service with the same name.
+
+As the name suggests, the pod runs a DNS server, which all other pods running in the cluster are automatically configured to use (Kubernetes does that by modifying each container’s /etc/resolv.conf file). Any DNS query performed by a process run- ning in a pod will be handled by Kubernetes’ own DNS server, which knows all the ser- vices running in your system.
+
+Each service gets a DNS entry in the internal DNS server, and client pods that know the name of the service can access it through its fully qualified domain name (FQDN) instead of resorting to environment variables.
+
+## Connecting to services living outside the cluster
+
+### Introducing service endpoints
+Services don’t link to pods directly. Instead, a resource sits in between—the Endpoints resource. You may have already noticed endpoints if you used the kubectl describe command on your service, as shown in the following listing.
+```s
+Name:  kubia
+Namespace: default
+Labels: <none>
+Selector: app=kubia
+Type: ClusterIP
+IP: 10.111.249.153
+Port: <unset> 80/TCP
+Endpoints: 10.108.1.4:8080,10.108.2.5:8080,10.108.2.6:8080
+Session Affinity: None
+```
+
+```
+kubectl get endpoints kubia
+```
+
+## Exposing services to external clients
+You have a few ways to make a service accessible externally:
+* Setting the service type to NodePort—For a NodePort service, each cluster node opens a port on the node itself (hence the name) and redirects traffic received on that port to the underlying service. The service isn’t accessible only at the internal cluster IP and port, but also through a dedicated port on all nodes.
+* Setting the service type to LoadBalancer, an extension of the NodePort type—This makes the service accessible through a dedicated load balancer, provisioned from the cloud infrastructure Kubernetes is running on. The load balancer redi- rects traffic to the node port across all the nodes. Clients connect to the service through the load balancer’s IP.
+* Creating an Ingress resource, a radically different mechanism for exposing multiple ser- vices through a single IP address—It operates at the HTTP level (network layer 7) and can thus offer more features than layer 4 services can. We’ll explain Ingress resources in section 5.4.
+
+## Signaling when a pod is ready to accept connections
+There’s one more thing we need to cover regarding both Services and Ingresses. You’ve already learned that pods are included as endpoints of a service if their labels match the service’s pod selector. As soon as a new pod with proper labels is created, it becomes part of the service and requests start to be redirected to the pod. But what if the pod isn’t ready to start serving requests immediately?
+
+The pod may need time to load either configuration or data, or it may need to per- form a warm-up procedure to prevent the first user request from taking too long and affecting the user experience. In such cases you don’t want the pod to start receiving requests immediately, especially when the already-running instances can process requests properly and quickly. It makes sense to not forward requests to a pod that’s in the process of starting up until it’s fully ready.
+
+Imagine that a group of pods (for example, pods running application servers) depends on a service provided by another pod (a backend database, for example). If at any point one of the frontend pods experiences connectivity problems and can’t reach the database anymore, it may be wise for its readiness probe to signal to Kuber- netes that the pod isn’t ready to serve any requests at that time. If other pod instances aren’t experiencing the same type of connectivity issues, they can serve requests nor- mally. A readiness probe makes sure clients only talk to those healthy pods and never notice there’s anything wrong with the system.
+
+Unlike liveness probes, if a container fails the readiness check, it won’t be killed or restarted. This is an important distinction between liveness and readiness probes. Liveness probes keep pods healthy by killing off unhealthy containers and replacing them with new, healthy ones, whereas readiness probes make sure that only pods that are ready to serve requests receive them. This is mostly necessary during container start up, but it’s also useful after the container has been running for a while.
+
+## Using a headless service for discovering individual pods
+You’ve seen how services can be used to provide a stable IP address allowing clients to connect to pods (or other endpoints) backing each service. Each connection to the service is forwarded to one randomly selected backing pod. But what if the client needs to connect to all of those pods? What if the backing pods themselves need to each connect to all the other backing pods? Connecting through the service clearly isn’t the way to do this. What is?
+
+For a client to connect to all pods, it needs to figure out the the IP of each individ- ual pod. One option is to have the client call the Kubernetes API server and get the list of pods and their IP addresses through an API call, but because you should always strive to keep your apps Kubernetes-agnostic, using the API server isn’t ideal.
+
+Luckily, Kubernetes allows clients to discover pod IPs through DNS lookups. Usually, when you perform a DNS lookup for a service, the DNS server returns a single IP—the service’s cluster IP. But if you tell Kubernetes you don’t need a cluster IP for your service (you do this by setting the clusterIP field to None in the service specification), the DNS server will return the pod IPs instead of the single service IP.
+Instead of returning a single DNS A record, the DNS server will return multiple A records for the service, each pointing to the IP of an individual pod backing the ser- vice at that moment. Clients can therefore do a simple DNS A record lookup and get the IPs of all the pods that are part of the service. The client can then use that infor- mation to connect to one, many, or all of them.
+
+## Troubleshooting services
+Services are a crucial Kubernetes concept and the source of frustration for many developers. I’ve seen many developers lose heaps of time figuring out why they can’t connect to their pods through the service IP or FQDN. For this reason, a short look at how to troubleshoot services is in order.
+When you’re unable to access your pods through the service, you should start by going through the following list:
+* First, make sure you’re connecting to the service’s cluster IP from within the cluster, not from the outside.
+* Don’t bother pinging the service IP to figure out if the service is accessible (remember, the service’s cluster IP is a virtual IP and pinging it will never work).
+* If you’ve defined a readiness probe, make sure it’s succeeding; otherwise the pod won’t be part of the service.
+* To confirm that a pod is part of the service, examine the corresponding End- points object with kubectl get endpoints.
+* If you’re trying to access the service through its FQDN or a part of it (for exam- ple, myservice.mynamespace.svc.cluster.local or myservice.mynamespace) and it doesn’t work, see if you can access it using its cluster IP instead of the FQDN.
+* Check whether you’re connecting to the port exposed by the service and not the target port.
+* Try connecting to the pod IP directly to confirm your pod is accepting connec- tions on the correct port.
+* If you can’t even access your app through the pod’s IP, make sure your app isn’t only binding to localhost.
+* 
 # Kubectl
 
 <div align=center>
