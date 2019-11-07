@@ -376,7 +376,65 @@ When you’re unable to access your pods through the service, you should start b
 * Check whether you’re connecting to the port exposed by the service and not the target port.
 * Try connecting to the pod IP directly to confirm your pod is accepting connec- tions on the correct port.
 * If you can’t even access your app through the pod’s IP, make sure your app isn’t only binding to localhost.
-* 
+
+# Volumns
+Kubernetes provides this by defining storage volumes. They aren’t top-level resources like pods, but are instead defined as a part of a pod and share the same lifecycle as the pod. This means a volume is created when the pod is started and is destroyed when the pod is deleted. Because of this, a volume’s contents will persist across container restarts. After a container is restarted, the new container can see all the files that were written to the volume by the previous container. Also, if a pod contains multiple con- tainers, the volume can be used by all of them at once.
+
+A volume is bound to the lifecycle of a pod and will stay in existence only while the pod exists, but depending on the volume type, the volume’s files may remain intact even after the pod and volume disappear, and can later be mounted into a new vol- ume. Let’s see what types of volumes exist.
+
+Here’s a list of several of the available volume types:
+* emptyDir—A simple empty directory used for storing transient data.
+* hostPath—Used for mounting directories from the worker node’s filesystem
+*nto the pod.
+* gitRepo—A volume initialized by checking out the contents of a Git repository.
+```
+hostPath volumes are the first type of persistent storage we’re introducing, because both the gitRepo and emptyDir volumes’ contents get deleted when a pod is torn down, whereas a hostPath volume’s contents don’t. If a pod is deleted and the next pod uses a hostPath volume pointing to the same path on the host, the new pod will see whatever was left behind by the previous pod, but only if it’s scheduled to the same node as the first pod. Remember to use hostPath volumes only if you need to read or write sys-
+tem files on the node. Never use them to persist data across pods.
+```
+* nfs—An NFS share mounted into the pod.
+* gcePersistentDisk (Google Compute Engine Persistent Disk), awsElastic-lockStore (Amazon Web Services Elastic Block Store Volume), azureDisk (Microsoft Azure Disk Volume)—Used for mounting cloud provider-specific storage.
+* cinder, cephfs, iscsi, flocker, glusterfs, quobyte, rbd, flexVolume, vsphere- Volume, photonPersistentDisk, scaleIO—Used for mounting other types of network storage.
+* configMap, secret, downwardAPI—Special types of volumes used to expose cer- tain Kubernetes resources and cluster information to the pod.
+* persistentVolumeClaim—A way to use a pre- or dynamically provisioned per- sistent storage. (We’ll talk about them in the last section of this chapter.)
+
+## Using persistent storage
+When an application running in a pod needs to persist data to disk and have that same data available even when the pod is rescheduled to another node, you can’t use any of the volume types we’ve mentioned so far. Because this data needs to be accessi- ble from any cluster node, it must be stored on some type of network-attached stor- age (NAS).
+
+## Decoupling pods from the underlying storage technology
+All the persistent volume types we’ve explored so far have required the developer of the pod to have knowledge of the actual network storage infrastructure available in the clus- ter. For example, to create a NFS-backed volume, the developer has to know the actual server the NFS export is located on. This is against the basic idea of Kubernetes, which aims to hide the actual infrastructure from both the application and its developer, leav- ing them free from worrying about the specifics of the infrastructure and making apps portable across a wide array of cloud providers and on-premises datacenters.
+
+Ideally, a developer deploying their apps on Kubernetes should never have to know what kind of storage technology is used underneath, the same way they don’t have to know what type of physical servers are being used to run their pods. Infrastruc- ture-related dealings should be the sole domain of the cluster administrator.
+
+When a developer needs a certain amount of persistent storage for their applica- tion, they can request it from Kubernetes, the same way they can request CPU, mem- ory, and other resources when creating a pod. The system administrator can configure the cluster so it can give the apps what they request.
+
+### PersistentVolumes and PersistentVolumeClaims
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/k8s_pvc.png" width="700" height="500">
+</div>
+
+Instead of the developer adding a technology-specific volume to their pod, it’s the cluster administrator who sets up the underlying storage and then registers it in Kubernetes by creating a PersistentVolume resource through the Kubernetes API server. When creating the PersistentVolume, the admin specifies its size and the access modes it supports.
+
+When a cluster user needs to use persistent storage in one of their pods, they first create a PersistentVolumeClaim manifest, specifying the minimum size and the access mode they require. The user then submits the PersistentVolumeClaim manifest to the Kubernetes API server, and Kubernetes finds the appropriate PersistentVolume and binds the volume to the claim.
+
+The PersistentVolumeClaim can then be used as one of the volumes inside a pod. Other users cannot use the same PersistentVolume until it has been released by deletng the bound PersistentVolumeClaim.
+
+We’ve already said that PersistentVolume resources are cluster-scoped and thus cannot be created in a specific namespace, but PersistentVolumeClaims can only be created in a specific namespace. They can then only be used by pods in the same namespace.
+
+[**Difference between PV and PVC**](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/k8s_pvc_pv.png)
+
+Consider how using this indirect method of obtaining storage from the infrastructure is much simpler for the application developer (or cluster user). Yes, it does require the additional steps of creating the PersistentVolume and the PersistentVolumeClaim, but the developer doesn’t have to know anything about the actual storage technology used underneath.
+Additionally, the same pod and claim manifests can now be used on many different Kubernetes clusters, because they don’t refer to anything infrastructure-specific. The claim states, “I need x amount of storage and I need to be able to read and write to it by a single client at once,” and then the pod references the claim by name in one of its volumes.
+
+### Dynamic provisioning of PersistentVolumes
+The cluster admin can create multiple storage classes with different performance or other characteristics. The developer then decides which one is most appropriate for each claim they create.
+The nice thing about StorageClasses is the fact that claims refer to them by name. The PVC definitions are therefore portable across different clusters, as long as the StorageClass names are the same across all of them.
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/k8s_pv_s.png" width="700" height="500">
+</div>
+
+# ConfigMaps and Secrets: configuring applications
+
 # Kubectl
 
 <div align=center>
