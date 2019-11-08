@@ -434,6 +434,28 @@ The nice thing about StorageClasses is the fact that claims refer to them by nam
 </div>
 
 # ConfigMaps and Secrets: configuring applications
+Regardless if you’re using a ConfigMap to store configuration data or not, you can configure your apps by
+* Passing command-line arguments to containers
+* Setting custom environment variables for each container
+* Mounting configuration files into containers through a special type of volume
+
+## Using Secrets to pass sensitive data to containers
+To store and distribute such information, Kubernetes provides a separate object called a Secret. Secrets are much like ConfigMaps—they’re also maps that hold key-value pairs. They can be used the same way as a ConfigMap. You can
+* Pass Secret entries to the container as environment variables
+* Expose Secret entries as files in a volume
+
+Kubernetes helps keep your Secrets safe by making sure each Secret is only distributed to the nodes that run the pods that need access to the Secret. Also, on the nodes themselves, Secrets are always stored in memory and never written to physical storage, which would require wiping the disks after deleting the Secrets from them.
+
+# Accessing pod metadata and other resources from applications
+
+## Passing metadata through the Downward API
+In the previous chapter you saw how you can pass configuration data to your appli- cations through environment variables or through configMap and secret volumes. This works well for data that you set yourself and that is known before the pod is scheduled to a node and run there. But what about data that isn’t known up until that point—such as the pod’s IP, the host node’s name, or even the pod’s own name (when the name is generated; for example, when the pod is created by a ReplicaSet or similar controller)? And what about data that’s already specified elsewhere, such as a pod’s labels and annotations? You don’t want to repeat the same information in multiple places.
+
+Both these problems are solved by the Kubernetes Downward API. It allows you to pass metadata about the pod and its environment through environment variables or files (in a downwardAPI volume). Don’t be confused by the name. The Downward API isn’t like a REST endpoint that your app needs to hit so it can get the data. It’s a way of having environment variables or files populated with values from the pod’s specifica- tion or status
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/k8s_download_api.png" width="700" height="500">
+</div>
 
 # Kubectl
 
