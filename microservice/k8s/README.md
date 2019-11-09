@@ -453,6 +453,16 @@ In the previous chapter you saw how you can pass configuration data to your appl
 
 Both these problems are solved by the Kubernetes Downward API. It allows you to pass metadata about the pod and its environment through environment variables or files (in a downwardAPI volume). Don’t be confused by the name. The Downward API isn’t like a REST endpoint that your app needs to hit so it can get the data. It’s a way of having environment variables or files populated with values from the pod’s specifica- tion or status
 
+## Talking to the Kubernetes API server
+We’ve seen how the Downward API provides a simple way to pass certain pod and con- tainer metadata to the process running inside them. It only exposes the pod’s own metadata and a subset of all of the pod’s data. But sometimes your app will need to know more about other pods and even other resources defined in your cluster. The Downward API doesn’t help in those cases.
+
+We can not call api server directly because of https, we can call it by kubectl proxy. The kubectl proxy command runs a proxy server that accepts HTTP connections on your local machine and proxies them to the API server while taking care of authenti- cation, so you don’t need to pass the authentication token in every request. It also makes sure you’re talking to the actual API server and not a man in the middle (by verifying the server’s certificate on each request).
+
+### Talking to the API server from within a pod
+Therefore, to talk to the API server from inside a pod, you need to take care of three things:
+* Find the location of the API server.
+* Make sure you’re talking to the API server and not something impersonating it. 
+* Authenticate with the server; otherwise it won’t let you see or do anything.
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/k8s_download_api.png" width="700" height="500">
 </div>
