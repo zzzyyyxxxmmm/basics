@@ -1,6 +1,6 @@
 # Create pod
 
-1. Craete yaml file
+1. Create yaml file
 ```yml
 apiVersion: v1
 kind: Pod

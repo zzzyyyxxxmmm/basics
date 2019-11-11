@@ -265,6 +265,12 @@ A ReplicationController’s job is to make sure that an exact number of pods alw
 * A pod template, which is used when creating new pod replicas
 
 ## Using ReplicaSets instead of ReplicationControllers
+A ReplicaSet behaves exactly like a ReplicationController, but it has more expressive pod selectors. Whereas a ReplicationController’s label selector only allows matching pods that include a certain label, a ReplicaSet’s selector also allows matching pods that lack a certain label or pods that include a certain label key, regardless of its value.
+
+Also, for example, a single ReplicationController can’t match pods with the label env=production and those with the label env=devel at the same time. It can only match either pods with the env=production label or pods with the env=devel label. But a sin- gle ReplicaSet can match both sets of pods and treat them as a single group.
+
+Similarly, a ReplicationController can’t match pods based merely on the presence of a label key, regardless of its value, whereas a ReplicaSet can. For example, a Replica- Set can match all pods that include a label with the key env, whatever its actual value is (you can think of it as env=*).
+
 ```
 selector:
   matchExpressions:
@@ -281,13 +287,13 @@ You can add additional expressions to the selector. As in the example, each expr
 property must not be specified.
 
 ## Running exactly one pod on each node with DaemonSets
-To run a pod on all cluster nodes, you create a DaemonSet object, which is much like a ReplicationController or a ReplicaSet, except that pods created by a Daemon- Set already have a target node specified and skip the Kubernetes Scheduler. They aren’t scattered around the cluster randomly.
+To run a pod on all cluster nodes, you create a DaemonSet object, which is much like a ReplicationController or a ReplicaSet, except that pods created by a DaemonSet already have a target node specified and skip the Kubernetes Scheduler. They aren’t scattered around the cluster randomly.
 
-A DaemonSet makes sure it creates as many pods as there are nodes and deploys each one on its own node, as shown in figure 4.8.
+A DaemonSet makes sure it creates as many pods as there are nodes and deploys each one on its own node.
 
-Whereas a ReplicaSet (or ReplicationController) makes sure that a desired num- ber of pod replicas exist in the cluster, a DaemonSet doesn’t have any notion of a desired replica count. It doesn’t need it because its job is to ensure that a pod match- ing its pod selector is running on each node.
+Whereas a ReplicaSet (or ReplicationController) makes sure that a desired number of pod replicas exist in the cluster, a DaemonSet doesn’t have any notion of a desired replica count. It doesn’t need it because its job is to ensure that a pod matching its pod selector is running on each node. 
 
-If a node goes down, the DaemonSet doesn’t cause the pod to be created else- where. But when a new node is added to the cluster, the DaemonSet immediately deploys a new pod instance to it. It also does the same if someone inadvertently deletes one of the pods, leaving the node without the DaemonSet’s pod. Like a Replica- Set, a DaemonSet creates the pod from the pod template configured in it.
+If a node goes down, the DaemonSet doesn’t cause the pod to be created elsewhere. But when a new node is added to the cluster, the DaemonSet immediately deploys a new pod instance to it. It also does the same if someone inadvertently deletes one of the pods, leaving the node without the DaemonSet’s pod. Like a ReplicaSet, a DaemonSet creates the pod from the pod template configured in it.
 
 ## Running pods that perform a single completable task
 Jobs
@@ -296,15 +302,15 @@ Jobs
 CronJob
 
 # SERVICES
-A Kubernetes Service is a resource you create to make a single, constant point of entry to a group of pods providing the same service. Each service has an IP address and port that never change while the service exists. Clients can open connections to that IP and port, and those connections are then routed to one of the pods backing that service. This way, clients of a service don’t need to know the location of individ- ual pods providing the service, allowing those pods to be moved around the cluster at any time.
+A Kubernetes Service is a resource you create to make a single, constant point of entry to a group of pods providing the same service. Each service has an IP address and port that never change while the service exists. Clients can open connections to that IP and port, and those connections are then routed to one of the pods backing that service. This way, clients of a service don’t need to know the location of individual pods providing the service, allowing those pods to be moved around the cluster at any time.
 
 ## Discovering services(Pods talk to outside)
 By creating a service, you now have a single and stable IP address and port that you can hit to access your pods. This address will remain unchanged throughout the whole lifetime of the service. Pods behind this service may come and go, their IPs may change, their number can go up or down, but they’ll always be accessible through the service’s single and constant IP address.
-But how do the client pods know the IP and port of a service? Do you need to cre- ate the service first, then manually look up its IP address and pass the IP to the config- uration options of the client pod? Not really. Kubernetes also provides ways for client pods to discover a service’s IP and port.
+But how do the client pods know the IP and port of a service? Do you need to create the service first, then manually look up its IP address and pass the IP to the config- uration options of the client pod? Not really. Kubernetes also provides ways for client pods to discover a service’s IP and port.
 
 ### DISCOVERING SERVICES THROUGH ENVIRONMENT VARIABLES
 When a pod is started, Kubernetes initializes a set of environment variables pointing to each service that exists at that moment. If you create the service before creating the client pods, processes in those pods can get the IP address and port of the service by inspecting their environment variables.
-```s
+```
 $ kubectl exec kubia-3inly env
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 HOSTNAME=kubia-3inly
@@ -316,16 +322,16 @@ KUBIA_SERVICE_PORT=80
 ```
 
 ### DISCOVERING SERVICES THROUGH DNS
-Remember in chapter 3 when you listed pods in the kube-system namespace? One of the pods was called kube-dns. The kube-system namespace also includes a corre- sponding service with the same name.
+Remember in chapter 3 when you listed pods in the kube-system namespace? One of the pods was called kube-dns. The kube-system namespace also includes a corresponding service with the same name.
 
-As the name suggests, the pod runs a DNS server, which all other pods running in the cluster are automatically configured to use (Kubernetes does that by modifying each container’s /etc/resolv.conf file). Any DNS query performed by a process run- ning in a pod will be handled by Kubernetes’ own DNS server, which knows all the ser- vices running in your system.
+As the name suggests, the pod runs a DNS server, which all other pods running in the cluster are automatically configured to use (Kubernetes does that by modifying each container’s /etc/resolv.conf file). Any DNS query performed by a process running in a pod will be handled by Kubernetes’ own DNS server, which knows all the services running in your system.
 
 Each service gets a DNS entry in the internal DNS server, and client pods that know the name of the service can access it through its fully qualified domain name (FQDN) instead of resorting to environment variables.
 
 ## Connecting to services living outside the cluster
 
 ### Introducing service endpoints
-Services don’t link to pods directly. Instead, a resource sits in between—the Endpoints resource. You may have already noticed endpoints if you used the kubectl describe command on your service, as shown in the following listing.
+Services don’t link to pods directly. Instead, a resource sits in between the Endpoints resource. You may have already noticed endpoints if you used the kubectl describe command on your service, as shown in the following listing.
 ```s
 Name:  kubia
 Namespace: default
@@ -345,25 +351,26 @@ kubectl get endpoints kubia
 ## Exposing services to external clients
 You have a few ways to make a service accessible externally:
 * Setting the service type to NodePort—For a NodePort service, each cluster node opens a port on the node itself (hence the name) and redirects traffic received on that port to the underlying service. The service isn’t accessible only at the internal cluster IP and port, but also through a dedicated port on all nodes.
-* Setting the service type to LoadBalancer, an extension of the NodePort type—This makes the service accessible through a dedicated load balancer, provisioned from the cloud infrastructure Kubernetes is running on. The load balancer redi- rects traffic to the node port across all the nodes. Clients connect to the service through the load balancer’s IP.
+* Setting the service type to LoadBalancer, an extension of the NodePort type—This makes the service accessible through a dedicated load balancer, provisioned from the cloud infrastructure Kubernetes is running on. The load balancer redirects traffic to the node port across all the nodes. Clients connect to the service through the load balancer’s IP.
 * Creating an Ingress resource, a radically different mechanism for exposing multiple ser- vices through a single IP address—It operates at the HTTP level (network layer 7) and can thus offer more features than layer 4 services can. We’ll explain Ingress resources in section 5.4.
 
 ## Signaling when a pod is ready to accept connections
 There’s one more thing we need to cover regarding both Services and Ingresses. You’ve already learned that pods are included as endpoints of a service if their labels match the service’s pod selector. As soon as a new pod with proper labels is created, it becomes part of the service and requests start to be redirected to the pod. But what if the pod isn’t ready to start serving requests immediately?
 
-The pod may need time to load either configuration or data, or it may need to per- form a warm-up procedure to prevent the first user request from taking too long and affecting the user experience. In such cases you don’t want the pod to start receiving requests immediately, especially when the already-running instances can process requests properly and quickly. It makes sense to not forward requests to a pod that’s in the process of starting up until it’s fully ready.
+The pod may need time to load either configuration or data, or it may need to perform a warm-up procedure to prevent the first user request from taking too long and affecting the user experience. In such cases you don’t want the pod to start receiving requests immediately, especially when the already-running instances can process requests properly and quickly. It makes sense to not forward requests to a pod that’s in the process of starting up until it’s fully ready.
 
-Imagine that a group of pods (for example, pods running application servers) depends on a service provided by another pod (a backend database, for example). If at any point one of the frontend pods experiences connectivity problems and can’t reach the database anymore, it may be wise for its readiness probe to signal to Kuber- netes that the pod isn’t ready to serve any requests at that time. If other pod instances aren’t experiencing the same type of connectivity issues, they can serve requests nor- mally. A readiness probe makes sure clients only talk to those healthy pods and never notice there’s anything wrong with the system.
+Imagine that a group of pods (for example, pods running application servers) depends on a service provided by another pod (a backend database, for example). If at any point one of the frontend pods experiences connectivity problems and can’t reach the database anymore, it may be wise for its readiness probe to signal to Kubernetes that the pod isn’t ready to serve any requests at that time. If other pod instances aren’t experiencing the same type of connectivity issues, they can serve requests normally. A readiness probe makes sure clients only talk to those healthy pods and never notice there’s anything wrong with the system.
 
-Unlike liveness probes, if a container fails the readiness check, it won’t be killed or restarted. This is an important distinction between liveness and readiness probes. Liveness probes keep pods healthy by killing off unhealthy containers and replacing them with new, healthy ones, whereas readiness probes make sure that only pods that are ready to serve requests receive them. This is mostly necessary during container start up, but it’s also useful after the container has been running for a while.
+Unlike liveness probes, if a container fails the readiness check, it won’t be killed or restarted. This is an important distinction between liveness and readiness probes.
 
 ## Using a headless service for discovering individual pods
 You’ve seen how services can be used to provide a stable IP address allowing clients to connect to pods (or other endpoints) backing each service. Each connection to the service is forwarded to one randomly selected backing pod. But what if the client needs to connect to all of those pods? What if the backing pods themselves need to each connect to all the other backing pods? Connecting through the service clearly isn’t the way to do this. What is?
 
-For a client to connect to all pods, it needs to figure out the the IP of each individ- ual pod. One option is to have the client call the Kubernetes API server and get the list of pods and their IP addresses through an API call, but because you should always strive to keep your apps Kubernetes-agnostic, using the API server isn’t ideal.
+For a client to connect to all pods, it needs to figure out the the IP of each individual pod. One option is to have the client call the Kubernetes API server and get the list of pods and their IP addresses through an API call, but because you should always strive to keep your apps Kubernetes-agnostic, using the API server isn’t ideal.
 
 Luckily, Kubernetes allows clients to discover pod IPs through DNS lookups. Usually, when you perform a DNS lookup for a service, the DNS server returns a single IP—the service’s cluster IP. But if you tell Kubernetes you don’t need a cluster IP for your service (you do this by setting the clusterIP field to None in the service specification), the DNS server will return the pod IPs instead of the single service IP.
-Instead of returning a single DNS A record, the DNS server will return multiple A records for the service, each pointing to the IP of an individual pod backing the ser- vice at that moment. Clients can therefore do a simple DNS A record lookup and get the IPs of all the pods that are part of the service. The client can then use that infor- mation to connect to one, many, or all of them.
+
+Instead of returning a single DNS A record, the DNS server will return multiple A records for the service, each pointing to the IP of an individual pod backing the service at that moment. Clients can therefore do a simple DNS A record lookup and get the IPs of all the pods that are part of the service. The client can then use that information to connect to one, many, or all of them.
 
 ## Troubleshooting services
 Services are a crucial Kubernetes concept and the source of frustration for many developers. I’ve seen many developers lose heaps of time figuring out why they can’t connect to their pods through the service IP or FQDN. For this reason, a short look at how to troubleshoot services is in order.
@@ -465,6 +472,12 @@ Therefore, to talk to the API server from inside a pod, you need to take care of
 * Authenticate with the server; otherwise it won’t let you see or do anything.
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/k8s_download_api.png" width="700" height="500">
+</div>
+
+# StatefulSets: deploying replicated stateful applications
+ReplicaSets create multiple pod replicas from a single pod template. These replicas don’t differ from each other, apart from their name and IP address. If the pod tem- plate includes a volume, which refers to a specific PersistentVolumeClaim, all replicas of the ReplicaSet will use the exact same PersistentVolumeClaim and therefore the same PersistentVolume bound by the claim.
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/k8s_stateless.png" width="700" height="500">
 </div>
 
 # Kubectl

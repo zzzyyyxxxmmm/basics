@@ -10,3 +10,7 @@ kubectl describe pod
 kubectl delete po --all
 
 ```
+
+```
+kubectl edit rc kubia
+```
