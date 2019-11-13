@@ -475,11 +475,21 @@ Therefore, to talk to the API server from inside a pod, you need to take care of
 </div>
 
 # StatefulSets: deploying replicated stateful applications
-ReplicaSets create multiple pod replicas from a single pod template. These replicas don’t differ from each other, apart from their name and IP address. If the pod tem- plate includes a volume, which refers to a specific PersistentVolumeClaim, all replicas of the ReplicaSet will use the exact same PersistentVolumeClaim and therefore the same PersistentVolume bound by the claim.
+ReplicaSets create multiple pod replicas from a single pod template. These replicas don’t differ from each other, apart from their name and IP address. If the pod template includes a volume, which refers to a specific PersistentVolumeClaim, all replicas of the ReplicaSet will use the exact same PersistentVolumeClaim and therefore the same PersistentVolume bound by the claim.
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/k8s_stateless.png" width="700" height="500">
 </div>
 
+Because the reference to the claim is in the pod template, which is used to stamp out multiple pod replicas, you can’t make each replica use its own separate Persistent- VolumeClaim. You can’t use a ReplicaSet to run a distributed data store, where each instance needs its own separate storage—at least not by using a single ReplicaSet. To be honest, none of the API objects you’ve seen so far make running such a data store possible. You need something else.
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/k8s_stateful.png" width="700" height="500">
+</div>
+
+删除stateful的pod不会导致volumn一起被删, 需要手动删除
+
+
+How can a pod discover its peers without talking to the API? Is there an existing, well-known technology you can use that makes this possible? How about the Domain Name System (DNS)? 
 # Kubectl
 
 <div align=center>
