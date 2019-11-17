@@ -1,4 +1,16 @@
+# Advanved Go
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/go_init.png" width="700" height="500">
+</div>
+
+不用关心Go语言中函数栈和堆的问题, 编译器和运行时会帮我们搞定; 同样不要假设变量在内存中的位置是固定不变的, 指针随时可能变化, 特别是在你不期望它变化的时候
+
+Go线程之所以快的原因:
+1. 线程的栈大小是动态而不是固定的
+2. 调度器可以在n个系统级线程上调度m个goroutine
+
 # GO Basics
+
 之前只是快速的略读了go的语法，最近在学分布式系统时觉得代码读起来很困难，因此还是再次系统性的学习一下吧
 
 学习一个语言，第一个代码一定是hello world，那先写个hello world吧:
