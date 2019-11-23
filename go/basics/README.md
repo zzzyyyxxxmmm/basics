@@ -319,3 +319,8 @@ buffered <- "Gopher"       //send
 
 value := <-buffered        //recieve
 ```
+
+
+# Interface
+
+The interface in go doesn't need to implement all methods like Java, so it's convenient to add methods in golang.
