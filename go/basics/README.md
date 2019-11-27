@@ -127,8 +127,11 @@ func foo(slice []int) []int {
     return slice
 }
 ```
-
 slice本身就是类似于指正, 底部指向数组, 因此slice就不用像数组一样传递
+
+### Advanced Slice
+
+先简单看一下下面两个
 
 ## Map
 ```go
