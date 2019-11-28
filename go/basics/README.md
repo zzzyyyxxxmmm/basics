@@ -130,8 +130,9 @@ func foo(slice []int) []int {
 slice本身就是类似于指正, 底部指向数组, 因此slice就不用像数组一样传递
 
 ### Advanced Slice
+Slice每次扩容会重新调整指针的地址
 
-先简单看一下下面两个
+基本扩容上可以按照小于1024 double, 大于1024按1.25来
 
 ## Map
 ```go
