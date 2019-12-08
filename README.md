@@ -27,4 +27,5 @@
 ### DEC, 2019
 1. nomad + consul + vault 源码级学习 预计耗时3个月
 2. 分布式论文(调度算法, raft, 文件存储算法)
-3. TCP/IP Illustrated
+3. TCP/IP Illustrated (真的是很好的一本书!!!解决了我很多年的一些疑惑)
+4. go的一些高级特性

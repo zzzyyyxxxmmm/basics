@@ -1,6 +1,6 @@
 # Advanved Go
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/go_init.png" width="700" height="500">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/go_init.png" width="900" height="500">
 </div>
 
 不用关心Go语言中函数栈和堆的问题, 编译器和运行时会帮我们搞定; 同样不要假设变量在内存中的位置是固定不变的, 指针随时可能变化, 特别是在你不期望它变化的时候
@@ -10,21 +10,6 @@ Go线程之所以快的原因:
 2. 调度器可以在n个系统级线程上调度m个goroutine
 
 # GO Basics
-
-之前只是快速的略读了go的语法，最近在学分布式系统时觉得代码读起来很困难，因此还是再次系统性的学习一下吧
-
-学习一个语言，第一个代码一定是hello world，那先写个hello world吧:
-
-```go
-package main
-import "fmt"
-func main() {
-	fmt.Println("hello world")
-}
-```
-
-命令行运行：go run hello.go 
-编译并运行：go build hello.go   ->   ./hello 
 
 ## Go Package
 Let’s take a look at an example. If Go was installed under ```/usr/local/go``` and your GOPATH was set to ```/home/myproject:/home/mylibraries```, the compiler would look for the net/http package in the following order:
@@ -56,6 +41,9 @@ var a int = 8
 // a:=8
 ```
 这两种方式是一样的，注意:=左边一定是还没被声明的变量，如果声明的时候不指定值，那么默认为0
+
+## String
+字符串在Go语言内存模型中用一个2字长的数据结构表示。它包含一个指向字符串存储数据的指针和一个长度数据。因为string类型是不可变的，对于多字符串共享同一个存储数据是安全的。切分操作str[i:j]会得到一个新的2字长结构，一个可能不同的但仍指向同一个字节序列(即上文说的存储数据)的指针和长度数据。这意味着字符串切分可以在不涉及内存分配或复制操作。这使得字符串切分的效率等同于传递下标。
 
 ## 函数
 
@@ -129,10 +117,17 @@ func foo(slice []int) []int {
 ```
 slice本身就是类似于指正, 底部指向数组, 因此slice就不用像数组一样传递
 
-### Advanced Slice
+### Slice的扩容
 Slice每次扩容会重新调整指针的地址
 
-基本扩容上可以按照小于1024 double, 大于1024按1.25来
+* 如果新的大小是当前大小2倍以上, 则大小增长为新大小
+* 否则循环以下操作: 如果当前大小小于1024, 按每次2倍增长, 否则每次按当前大小1/4增长, 直到增长的大小超过或等于新大小
+
+## new和make的区别
+new(T) 为一个 T 类型新值分配空间并将此空间初始化为 T 的零值，返回的是新值的地址，也就是 T 类型的指针 *T，该指针指向 T 的新分配的零值。
+
+The make built-in function allocates and initializes an object（分配空间 + 初始化） of type slice, map or chan **only**. Like new , the first arguement is a type, not a value. Unlike new, make’s return type is the same as the type of its argument, not a pointer to it. 
+实际上返回的是引用
 
 ## Map
 ```go
