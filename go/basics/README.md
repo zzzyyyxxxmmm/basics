@@ -177,6 +177,8 @@ delete(colors, "Coral")
 
 **map是传递地址的**, 因此可以修改元素
 
+map基本和java的map是相同的, 不过扩容是拷贝旧bucket的内容到新bucket上, 因此在拷贝的过程中会是无法读取的. Concurrent read (read only) is ok. Concurrent write and/or read is not ok.
+
 # 结构体
 ```go
 type struct_variable_type struct {
@@ -321,5 +323,8 @@ value := <-buffered        //recieve
 
 
 # Interface
-
 The interface in go doesn't need to implement all methods like Java, so it's convenient to add methods in golang.
+
+# Defer
+
+## defer使用时的坑
