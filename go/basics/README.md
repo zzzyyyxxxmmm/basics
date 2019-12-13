@@ -326,5 +326,71 @@ value := <-buffered        //recieve
 The interface in go doesn't need to implement all methods like Java, so it's convenient to add methods in golang.
 
 # Defer
+越后面的defer表达式越先被调用
 
 ## defer使用时的坑
+```go
+func f() (result int) {
+    defer func(){
+        result++
+    }()
+    return 0
+}
+
+func f() (r int){
+    t:=5
+    defer func(){
+        t = t+5
+    }()
+    return t
+}
+
+func f() (r int) {
+    defer func (r int){
+        r=r+5
+    }(r)
+    return 1
+}
+```
+
+defer是在return之前执行的, return语句并不是一条原子指令.
+
+函数返回的过程是这样的: 先给返回值赋值, 然后调用defer表达式, 最后才是返回到调用函数中. 如下
+```
+func () (返回值 int)
+返回值 = xxx
+调用defer函数
+空的return
+```
+
+因此, 改写上面的
+
+```go
+func f() (result int){
+    result = 0
+    func() {
+        result++
+    }()
+    return
+}
+//1
+
+func f() (r int){
+    t:=5
+    r=t
+    func(){
+        t=t+5
+    }
+    return
+}
+//5
+
+func f() (r int){
+    r=1
+    func (r int){
+        r=r+5
+    }(r)
+    return
+}
+1
+```
