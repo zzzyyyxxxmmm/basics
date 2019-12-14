@@ -255,59 +255,12 @@ type admin struct{
 When an identifier starts with a lowercase letter, the identifier is unexported or unknown to code outside the package. When an identifier starts with an uppercase let- ter, it’s exported or known to code outside the package. 
 
 # Goroutines
+Go语言支持goroutine, 每个goroutine需要能够运行, 所以它们都有自己的栈. 假如每个goroutine分配固定栈大小并且不能增长, 太小则会导致溢出, 太大又会浪费空间, 无法存在许多的goroutinue.
 
-```go
-package main
+为了解决这个问题, goroutine可以初始时只给栈分配很小的空间, 然后随着使用过程中的需要自动增长. 这就是为什么Go可以开千千万万个goroutine而不会耗尽内存.
 
-import (
-	"fmt"
-	"runtime"
-	"sync"
-)
-
-func main() {
-
-	runtime.GOMAXPROCS(2)
-
-	var wg sync.WaitGroup
-	wg.Add(2)
-
-	fmt.Println("Start Goroutines")
-
-	go func() {
-		defer wg.Done()
-		for count := 0; count < 3; count++ {
-			for char := 'a'; char < 'a'+26; char++ {
-				fmt.Printf("%c ",char)
-            }
-            
-		}
-	}()
-
-
-	go func() {
-		defer wg.Done()
-		for count := 0; count < 3; count++ {
-			for char := 'A'; char < 'A'+26; char++ {
-				fmt.Printf("%c ",char)
-			}
-		}
-	}()
-
-	fmt.Println("Waiting To Finish")
-	wg.Wait();
-
-	fmt.Println("\nTerminating Program")
-}
-```
-
-```go
-mutex.Lock()
-{
-
-}
-mutex.Unlock()
-```
+### 基本原理
+每次执行函数调用Go的runtime都会进行检每次执行函数调用时Go的runtime都会进行检测，若当前栈的大小不够用，则会触发“中断”，从当前函数进入到Go的运行时库，Go的运行时库会保存此时的函数上下文环境，然后分配一个新的足够大的栈空间，将旧栈的内容拷贝到新栈中，并做一些设置，使得当函数恢复运行时，函数会在新分配的栈中继续执行，仿佛整个过程都没发生过一样，这个函数会觉得自己使用的是一块大小“无限”的栈空间。
 
 ## channels
 ```go

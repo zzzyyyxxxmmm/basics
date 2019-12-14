@@ -1,15 +1,3 @@
-# install docker
-
-```
-sudo apt install docker.io
-
-docker version
-
-sudo usermod -a -G docker $USER
-
-sudo reboot
-```
-
 # 一些基础操作
 
 **关闭防火墙:**  ```sudo ufw disable```

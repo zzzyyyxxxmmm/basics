@@ -5,7 +5,7 @@
 
 ### Master
 * **The Kubernetes API Server**, which you and the other Control Plane components communicate with.
-* **The Scheduler**, which schedules your apps (assigns a worker node to each deploy- able component of your application)
+* **The Scheduler**, which schedules your apps (assigns a worker node to each deployable component of your application)
 * **The Controller Manager**, which performs cluster-level functions, such as replicating components, keeping track of worker nodes, handling node failures, and so on
 * **etcd**, a reliable distributed data store that persistently stores the cluster configuration.
 
@@ -22,7 +22,7 @@ To run an application in Kubernetes, you first need to package it up into one or
 
 2. **Post a description of your app to the Kubernetes API server.**
 
-The description includes information such as the container image or images that contain your application components, how those components are related to each other, and which ones need to be run co-located (together on the same node) and which don’t. For each component, you can also specify how many copies (or replicas) you want to run. Additionally, the description also includes which of those compo- nents provide a service to either internal or external clients and should be exposed through a single IP address and made discoverable to the other components.
+The description includes information such as the container image or images that contain your application components, how those components are related to each other, and which ones need to be run co-located (together on the same node) and which don’t. For each component, you can also specify how many copies (or replicas) you want to run. Additionally, the description also includes which of those components provide a service to either internal or external clients and should be exposed through a single IP address and made discoverable to the other components.
 
 3. **Scheduler schedules according to the description**
 
