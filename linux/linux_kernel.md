@@ -50,3 +50,16 @@ Linux Cgroup(Control Groups)提供了对一组进程及将来子进程的资源�
 * 一个hierarchy可以附加多个subsystem
 * 一个进程可以作为多个cgroup的成员，但是这些cgroup必须是在不同的hierarchy中
 * 一个进程fork出子进程的时候，子进程是和父进程在同一个cgroup中的，也可以根据需要将其移动到其他的cgroup中。
+
+### Kernel接口
+l 首先， 要创建并挂载一个 hierarchy Ccgroup树)，如下。
+```mkdir cgroup-test #创建一个 hierarchy 挂载点```
+```sudo mount -t cgroup -o none,name=cgroup-test cgroup-test ./cgroup-test #挂载 一个 hierarchy```
+```ls ./cgroup test #挂载后我们就可以看到系统在这个目录下生成了一些默认文件```
+
+```cgroup. clone children cgroup. procs cgroup. sane_behavior notify_on_release release agent tasks```
+这些文件就是这个 hierarchy 中 cgroup 根节点的配置项，上面这些文件的含义分别如下。
+* cgroup.clone_children, cpuset 的 subsystem 会读取这个配置文件，如果这个值是 I C默 认是 0)，子 cgroup 才会继承父 cgroup 的 cpuset 的配置 。
+* cgroup.procs 是树中 当前节点 cgroup 中的进程组 ID，现在的位置是在根节点，这个文 件中会有现在系统中所有进程组的 ID。
+* notify_on_release和release_agent会一起使用。 notify_on_release标识当这个cgroup最 后一个进程退出的时候是否执行了release_agent; release_agent则是一个路径，通常用作进程退出之后自动清理掉不再使用的cgroup。
+* tasks标识该 cgroup下面的进程 ID，如果把一个进程ID写到tasks文件中，便会将相应的进程加入到这个cgroup中。
