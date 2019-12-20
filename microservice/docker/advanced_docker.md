@@ -85,3 +85,5 @@ func main() {
 }
 ```
 
+# UFS
+每一个Docker image都是由一系列read-only layer组成的。image layer的内容都存储在Docker hosts filesystem的/var/lib/docker/aufs/diff目录下。而/var/lib/docker/aufs/layers 目录，则存储着image layer如何堆找这些layer的metadata。

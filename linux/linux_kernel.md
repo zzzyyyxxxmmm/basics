@@ -63,3 +63,43 @@ l 首先， 要创建并挂载一个 hierarchy Ccgroup树)，如下。
 * cgroup.procs 是树中 当前节点cgroup中的进程组ID，现在的位置是在根节点，这个文件中会有现在系统中所有进程组的ID。
 * notify_on_release和release_agent会一起使用。 notify_on_release标识当这个cgroup最 后一个进程退出的时候是否执行了release_agent; release_agent则是一个路径，通常用作进程退出之后自动清理掉不再使用的cgroup。
 * tasks标识该cgroup下面的进程ID，如果把一个进程ID写到tasks文件中，便会将相应的进程加入到这个cgroup中。
+
+# /proc
+Linux下的/proc文件系统是由内核提供的，它其实不是一个真正的文件系统, 只包含了系统运行时的信息(比如系统内存、mount设备信息、一些硬件配直等)，它只存在于内存中，而不占用外存空间。它以文件系统的形式，为访问内核数据的操作提供接口。实际上，很多系统工具都是简单地去读取这个文件系统的某个文件内容，比如lsmod，其实就是cat /proc/modules。
+
+```
+wjk32111@ubuntu:~$ ls /proc/
+1       13    174   187    19659  212   2246  2628  33    565  72         diskstats    loadavg       swaps
+10      1324  175   188    197    213   225   2638  334   567  793        dma          locks         sys
+1002    1327  176   189    198    2131  226   27    34    57   798        driver       mdstat        sysrq-trigger
+1012    1330  177   19     199    2135  227   2717  341   58   8          execdomains  meminfo       sysvipc
+1015    1361  178   190    2      214   228   2729  35    59   85         fb           misc          thread-self
+1018    1383  1789  1901   20     215   229   2762  36    60   86         filesystems  modules       timer_list
+102423  1384  179   191    200    216   23    28    3838  61   863        fs           mounts        timer_stats
+102855  15    1790  1914   201    217   230   285   384   62   86519      interrupts   mpt           tty
+104543  150   1796  1915   202    218   231   2853  3862  63   9          iomem        mtrr          uptime
+107384  151   1797  1919   203    2182  232   286   391   64   acpi       ioports      net           version
+107881  1515  18    192    204    219   24    29    394   647  asound     irq          pagetypeinfo  version_signature
+11      152   180   193    205    22    25    2924  489   648  buddyinfo  kallsyms     partitions    vmallocinfo
+110185  153   1800  194    206    220   2544  3     5     65   bus        kcore        sched_debug   vmstat
+110216  154   181   195    207    2206  2577  3030  52    651  cgroups    keys         schedstat     zoneinfo
+110225  155   182   1953   208    221   26    3056  54    656  cmdline    key-users    scsi
+110805  156   183   196    209    222   260   3074  55    66   consoles   kmsg         self
+110806  16    184   19601  21     223   2612  3085  56    661  cpuinfo    kpagecgroup  slabinfo
+110816  17    185   19622  210    2237  262   3135  563   683  crypto     kpagecount   softirqs
+12      173   186   19639  211    224   2624  316   564   7    devices    kpageflags   stat
+```
+| /proc/N         | PID为N的进程信息                     |
+|-----------------|--------------------------------------|
+| /proc/N/cmdline | 进程启动命令                         |
+| /proc/N/cwd     | 链接到进程当前工作目录               |
+| /proc/N/environ | 进程环境变量列表                     |
+| /proc/N/exe     | 链接到进程的执行命令文件             |
+| /proc/N/fd      | 包含进程相关的所有文件描述符         |
+| /proc/N/maps    | 与进程相关的内存映射信息             |
+| /proc/N/mem     | 指代进程持有的内存，不可读           |
+| /proc/N/root    | 链接到进程的根目录                   |
+| /proc/N/stat    | 进程的状态                           |
+| /proc/N/statm   | 进程使用的内存状态                   |
+| /proc/N/status  | 进程状态信息，比stat/statm更具可读性 |
+| /proc/self/     | 链接到当前正在运行的进程             |

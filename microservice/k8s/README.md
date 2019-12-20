@@ -213,7 +213,7 @@ curl localhost:8888
 ```
 
 ## Termination of a pod
-Because Pods represent running processes on nodes in the cluster, it is important to allow those processes to gracefully terminate when they are no longer needed (vs being violently killed with a KILL signal and having no chance to clean up). Users should be able to request deletion and know when processes terminate, but also be able to ensure that deletes eventually complete. When a user requests deletion of a Pod, the system records the intended grace period before the Pod is allowed to be forcefully killed, and a TERM signal is sent to the main process in each container. Once the grace period has expired, the KILL signal is sent to those processes, and the Pod is then deleted from the API server. If the Kubelet or the container manager is restarted while waiting for processes to terminate, the termination will be retried with the full grace period.
+Because Pods represent running processes on nodes in the cluster, it is important to allow those processes to gracefully terminate when they are no longer needed (vs being violently killed with a KILL signal and having no chance to clean up). Users should be able to request deletion and know when processes terminate, but also be able to ensure that deletes eventually complete. **When a user requests deletion of a Pod, the system records the intended grace period before the Pod is allowed to be forcefully killed, and a TERM signal is sent to the main process in each container. Once the grace period has expired, the KILL signal is sent to those processes, and the Pod is then deleted from the API server.** If the Kubelet or the container manager is restarted while waiting for processes to terminate, the termination will be retried with the full grace period.
 
 An example flow:
 
@@ -285,9 +285,9 @@ A ReplicationController is a Kubernetes resource that ensures its pods are alway
 Like many things in Kubernetes, a ReplicationController, although an incredibly sim- ple concept, provides or enables the following powerful features:
 * It makes sure a pod (or multiple pod replicas) is always running by starting a new pod when an existing one goes missing.
 * When a cluster node fails, it creates replacement replicas for all the pods that were running on the failed node (those that were under the Replication- Controller’s control).
-* It enables easy horizontal scaling of pods—both manual and automatic (see horizontal pod auto-scaling in chapter 15).
+* It enables easy horizontal scaling of pods—both manual and automatic.
 
-A ReplicationController’s job is to make sure that an exact number of pods always matches its label selector. A ReplicationController has three essential parts (also shown in figure 4.3):
+A ReplicationController’s job is to make sure that an exact number of pods always matches its label selector. A ReplicationController has three essential parts:
 * A label selector, which determines what pods are in the ReplicationController’s scope 
 * A replica count, which specifies the desired number of pods that should be running 
 * A pod template, which is used when creating new pod replicas
@@ -295,7 +295,7 @@ A ReplicationController’s job is to make sure that an exact number of pods alw
 ## Using ReplicaSets instead of ReplicationControllers
 A ReplicaSet behaves exactly like a ReplicationController, but it has more expressive pod selectors. Whereas a ReplicationController’s label selector only allows matching pods that include a certain label, a ReplicaSet’s selector also allows matching pods that lack a certain label or pods that include a certain label key, regardless of its value.
 
-Also, for example, a single ReplicationController can’t match pods with the label env=production and those with the label env=devel at the same time. It can only match either pods with the env=production label or pods with the env=devel label. But a sin- gle ReplicaSet can match both sets of pods and treat them as a single group.
+Also, for example, a single ReplicationController can’t match pods with the label env=production and those with the label env=dev at the same time. It can only match either pods with the env=production label or pods with the env=devel label. But a single ReplicaSet can match both sets of pods and treat them as a single group.
 
 Similarly, a ReplicationController can’t match pods based merely on the presence of a label key, regardless of its value, whereas a ReplicaSet can. For example, a Replica- Set can match all pods that include a label with the key env, whatever its actual value is (you can think of it as env=*).
 
@@ -310,7 +310,7 @@ selector:
 You can add additional expressions to the selector. As in the example, each expression must contain a key, an operator, and possibly (depending on the operator) a list of values. You’ll see four valid operators:
 * In—Label’s value must match one of the specified values.
 * NotIn—Label’s value must not match any of the specified values.
-* Exists—Pod must include a label with the specified key (the value isn’t importannt). When using this operator, you shouldn’t specify the values field.
+* Exists—Pod must include a label with the specified key (the value isn’t importannt. When using this operator, you shouldn’t specify the values field.
 * DoesNotExist—Pod must not include a label with the specified key. The values
 property must not be specified.
 
@@ -331,6 +331,9 @@ CronJob
 
 # SERVICES
 A Kubernetes Service is a resource you create to make a single, constant point of entry to a group of pods providing the same service. Each service has an IP address and port that never change while the service exists. Clients can open connections to that IP and port, and those connections are then routed to one of the pods backing that service. This way, clients of a service don’t need to know the location of individual pods providing the service, allowing those pods to be moved around the cluster at any time.
+* 提供固定的 IP。由于 Pod 可以随时启停，Pod IP 可能随时都会变化，例如上面 nginx pod 重启之后 IP 可能不再是 172.17.0.11。Service 为 Pods 提供的固定 IP，其他服务可以通过 Service IP 找到提供服务的 Pods。
+* 提供负载均衡。Service 由多个 Pods 组成，kubernetes 对组成 Service 的 Pods 提供的负载均衡方案，例如随机访问、基于 Client IP 的 session affinity。
+* 服务发现。集群中其他服务可以通过 Service 名字访问后端服务（DNS），也可以通过环境变量访问。
 
 ## Discovering services(Pods talk to outside)
 By creating a service, you now have a single and stable IP address and port that you can hit to access your pods. This address will remain unchanged throughout the whole lifetime of the service. Pods behind this service may come and go, their IPs may change, their number can go up or down, but they’ll always be accessible through the service’s single and constant IP address.
