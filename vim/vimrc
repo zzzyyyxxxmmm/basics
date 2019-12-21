@@ -1,0 +1,6 @@
+autocmd bufwritepost .vimrc source $MYVIMRC
+:imap jj <Esc>
+:map <S-J> <S-}>
+:map <S-K> <S-{>
+:map <S-H> <S-^>
+:map <S-L> <S-$>
