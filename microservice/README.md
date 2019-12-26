@@ -142,3 +142,22 @@ Parition break the table into multiple entities, but it's still a unbroken table
 上面主要解决存储压力, 主从同步用于解决读写压力,
 
 每个服务器上存储的数据相同, 读性能提升, 写性能不变, 需要进行数据同步
+
+# Zipkin
+Zipkin用于分布式追踪
+* Reporter 即用于发送span的目的地址, 本地测试一般是```"http://localhost:9411/api/v2/spans"```
+* endpoint 用于记录由本地发送的span的出口, ```ServiceName: "my_service", Port: 8080}```
+
+### Server端流程
+1. 首先基于上面的信息初始化tracer
+2. 以go中的echo举例, echo会建立一个middleware, 每次request经过的时候会server.Handler下的servehttp方法, 这个handler持有一个tracer的引用
+3. 在serveHttp方法里, 会开始记录span, 并且把span context封装在request的context里
+
+### 无状态Client端流程
+1. 基于tracer初始化一个client
+2. ```func (c *Client) DoWithAppSpan(req *http.Request, name string) (res *http.Response, err error) {```这个方法会自动创建span的, 所以不用自己提取啦
+
+### 有状态Client端流程
+1. 从request里的context提取span```span := zipkin.SpanFromContext(r.Context())```
+2. 打上新的tag or annotate
+3. 重新放到request里, 然后发送
