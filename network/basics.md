@@ -3,6 +3,187 @@
 值得一提的是, socket是作用在application layer和transportation layer中间的一个抽象层
 socket is the interface between the application process and the transport-layer protocol.
 
+### Session Layer
+Sessions represent ongoing interactions between applications (e.g., when “cookies” are used with a Web browser during a Web login session), and session-layer protocols may provide capabilities such as connection initiation and restart, plus checkpointing (saving work that has been accomplished so far).
+
+### presentation layer
+Above the session layer we find the presentation layer, which is responsible for format conversions and standard encodings for information. As we shall see, the Internet protocols do not include a formal session or presentation protocol layer, so these functions are implemented by applications if needed.
+
+### Multiplexing, Demultiplexing, and Encapsulation in Layered Implementations
+Multiplexing can occur at different layers, and at each layer a different sort of identifier is used for determining which protocol or stream of information belongs together. For example, at the link layer, most link technologies (such as Ethernet and Wi-Fi) include a protocol identifier field value in each packet to indicate which protocol is being carried in the link-layer frame (IP is one such protocol). When an object (packet, message, etc.), called a protocol data unit (PDU), at one layer is carried by a lower layer, it is said to be encapsulated (as opaque data) by the next layer down. Thus, multiple objects at layer N can be multiplexed together using encapsulation in layer N - 1.
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/network_layer.png" width="700" height="500">
+</div>
+
+Although we show only two hosts communicating, the link- and physical- layer networks (labeled as D and G) might have multiple hosts attached. If so, then communication is possible between any pair of systems that implement the appropriate higher-layer protocols. In Figure 1-4 we can differentiate between an end system (the two hosts on either side) and an intermediate system (the router in the middle) for a particular protocol suite. Layers above the network layer use end- to-end protocols. In our picture these layers are needed only on the end systems. The network layer, however, provides a hop-by-hop protocol and is used on the two end systems and every intermediate system. The switch or bridge is not ordinarily considered an intermediate system because it is not addressed using the internet- working protocol’s addressing format, and it operates in a fashion that is largely transparent to the network-layer protocol. From the point of view of the routers and end systems, the switch or bridge is essentially invisible.
+
+每一层的传输都有不同的抽象方法
+
+### Port Number
+Standard port numbers are assigned by the Internet Assigned Numbers Authority (IANA). The set of numbers is divided into special ranges, including the well-known port numbers (0–1023), the registered port numbers (1024–49151), and the dynamic/private port numbers (49152–65535). Traditionally, servers wishing to bind to (i.e., offer service on) a well-known port require special privileges such as administrator or “root” access.
+
+The range of well-known ports is used for identifying many well-known ser- vices such as the Secure Shell Protocol (SSH, port 22), FTP (ports 20 and 21), Telnet remote terminal protocol (port 23), e-mail/Simple Mail Transfer Protocol (SMTP, port 25), Domain Name System (DNS, port 53), the Hypertext Transfer Protocol or Web (HTTP and HTTPS, ports 80 and 443), Interactive Mail Access Protocol (IMAP and IMAPS, ports 143 and 993), Simple Network Management Protocol (SNMP, ports 161 and 162), Lightweight Directory Access Protocol (LDAP, port 389), and several others. Protocols with multiple ports (e.g., HTTP and HTTPS) often have different port numbers depending on whether Transport Layer Security (TLS) is being used with the base application-layer protocol (see Chapter 18).
+
+# Link Layer
+
+### Frame
+This basic frame format includes 48-bit (6-byte) Destination (DST) and Source (SRC) Address fields. These addresses are sometimes known by other names such as “MAC address,” “link-layer address,” “802 address,” “hardware address,” or “physical address.” The destination address in an Ethernet frame is also allowed to address more than one station (called “broadcast” or “multicast”; . The broadcast capability is used by the ARP protocol and multicast capability is used by the ICMPv6 protocol to convert between network-layer and link-layer addresses.
+
+Following the source address is a Type field that doubles as a Length field. Ordi- narily, it identifies the type of data that follows the header. Popular values used with TCP/IP networks include IPv4 (0x0800), IPv6 (0x86DD), and ARP (0x0806).  The size of a basic Ethernet frame is **1518** bytes, but the more recent standard extended this size to 2000 bytes. The minimum is 64 bytes, requiring a minimum data area (payload) length of 48 bytes (no tags).  In order to send a larger message, multiple frames are required
+
+### Ethernet
+A basic shared Ethernet network consists of one or more stations (e.g., workstations, supercomputers) attached to a shared cable segment. Link-layer PDUs (frames) can be sent from one station to one or more others when the medium is determined to be free. If multiple stations send at the same time, possibly because of signal propagation delays, a collision occurs. Collisions can be detected, and they cause sending stations to wait a random amount of time before retrying. This common scheme is called carrier sense, multiple access with collision detection.
+
+# ARP
+Address resolution is the process of discovering the mapping from one address to another. For the TCP/IP protocol suite using IPv4, this is accomplished by run- ning the ARP. ARP is a generic protocol, in the sense that it is designed to sup- port mapping between a wide variety of address types. In practice, however, it is almost always used to map between 32-bit IPv4 addresses and Ethernet-style 48-bit MAC addresses. For this chapter, we shall use the terms Ethernet address and MAC address interchangeably.
+
+ARP provides a dynamic mapping from a network-layer address to a corre- sponding hardware address. We use the term dynamic because it happens auto- matically and adapts to changes over time without requiring reconfiguration by a system administrator. That is, if a host were to have its network interface card changed, thereby changing its hardware address (but retaining its assigned IP address), ARP would continue to operate properly after some delay. ARP operation is normally not a concern of either the application user or the system administrator.
+
+## Example
+In this section, we enumerate the steps taken in direct delivery, focusing on the operation of ARP. Direct delivery takes place when an IP datagram is sent to an IP address with the same IP prefix as the sender’s. It plays an important role in the general method of forwarding of IP datagrams (see Chapter 5). The following list captures the basic operation of direct delivery with IPv4, using the previous example:
+
+1. The application, in this case a Web browser, calls a special function to parse the URL to see if it contains a host name. Here it does not, so the application uses the 32-bit IPv4 address 10.0.0.1.
+2. The application asks the TCP protocol to establish a connection with 10.0.0.1.
+3. TCP attempts to send a connection request segment to the remote host by sending an IPv4 datagram to 10.0.0.1.
+4. Because we are assuming that the address 10.0.0.1 is using the same net- work prefix as our sending host, the datagram can be sent directly to that address without going through a router.
+5. Assuming that Ethernet-compatible addressing is being used on the IPv4 subnet, the sending host must convert the 32-bit IPv4 destination address into a 48-bit Ethernet-style address. Using the terminology from [RFC0826], a translation is required from the logical Internet address to its correspond- ing physical hardware address. This is the function of ARP. ARP works in its normal form only for broadcast networks, where the link layer is able to deliver a single message to all attached network devices. This is an important requirement imposed by the operation of ARP. On non-broadcast networks (sometimes called NBMA for non-broadcast multiple access), other, more complex mapping protocols may be required [RFC2332].
+6. ARP sends an Ethernet frame called an ARP request to every host on the shared link-layer segment. This is called a link-layer broadcast. We show the broadcast domain in Figure 4-1 with a crosshatched box. The ARP request contains the IPv4 address of the destination host (10.0.0.1) and seeks an answer to the following question: “If you are configured with IPv4 address 10.0.0.1 as one of your own, please respond to me with your MAC address.”
+7. With ARP, all systems in the same broadcast domain receive ARP requests. This includes systems that may not be running the IPv4 or IPv6 protocols at all but does not include systems on different VLANs, if they are supported (see Chapter 3 for details on VLANs). Provided there exists an attached sys- tem using the IPv4 address specified in the request, it alone responds with an ARP reply. This reply contains the IPv4 address (for matching with the request) and the corresponding MAC address. The reply does not ordinar- ily use broadcast but is directed only to the sender. The host receiving the ARP request also learns of the sender’s IPv4-to-MAC address mapping at this time and records it in memory for later use.
+8. The ARP reply is then received by the original sender of the request, and the datagram that forced the ARP request/reply to be exchanged can now be sent.
+9. The sender now sends the datagram directly to the destination host by encapsulating it in an Ethernet frame and using the Ethernet address learned by the ARP exchange as the destination Ethernet address. Because the Ethernet address refers only to the correct destination host, no other hosts or routers receive the datagram. Thus, when only direct delivery is used, no router is required.
+
+# IPv4
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/Ipv4.png)
+
+Although it is possible to send a 65,535-byte IP datagram, most link layers (such as Ethernet) are not able to carry one this large without fragmenting it (chopping it up) into smaller pieces. When an IPv4 datagram is fragmented into multiple smaller fragments, each of which itself is an independent IP datagram.
+
+The **Time-to-Live** field, or TTL, sets an upper limit on the number of routers through which a datagram can pass. It is initialized by the sender to some value (64 is recommended [RFC1122], although 128 or 255 is not uncommon) and decre- mented by 1 by every router that forwards the datagram. When this field reaches 0, the datagram is thrown away, and the sender is notified with an ICMP message (see Chapter 8). This prevents packets from getting caught in the network forever should an unwanted routing loop occur.
+
+The Protocol field in the IPv4 header contains a number indicating the type of data found in the payload portion of the datagram. The most common values are 17 (for UDP) and 6 (for TCP). 
+
+The Header Checksum field is calculated over the IPv4 header only. This is impor- tant to understand because it means that the payload of the IPv4 datagram (e.g., TCP or UDP data) is not checked for correctness by the IP protocol. To help ensure that the payload portion of an IP datagram has been correctly delivered, other protocols must cover any important data that follows the header with their own data-integrity-checking mechanisms. We shall see that almost all protocols encap- sulated in IP (ICMP, IGMP, UDP, and TCP) have a checksum in their own headers to cover their header and data and also to cover certain parts of the IP header they deem important (a form of “layering violation”). Perhaps surprisingly, the IPv6 header does not have any checksum field.
+
+## IP Fowarding
+The role of the network layer is thus deceptively simple—to move packets from a sending host to a receiving host.
+
+* **Forwarding**. When a packet arrives at a router’s input link, the router must move the packet to the appropriate output link. For example, a packet arriving from Host H1 to Router R1 must be forwarded to the next router on a path to H2. In Section 4.3, we’ll look inside a router and examine how a packet is actually for- warded from an input link to an output link within a router.
+* **Routing**. The network layer must determine the route or path taken by packets as they flow from a sender to a receiver. The algorithms that calculate these paths are referred to as routing algorithms. A routing algorithm would determine, for example, the path along which packets flow from H1 to H2.
+
+Forwarding refers to the router-local action of transferring a packet from an input link interface to the appropriate output link interface. Routing refers to the network-wide process that determines the end-to-end paths that packets take from source to destina- tion.
+
+Every router has a **forwarding table**.
+
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/route.png)
+
+可以看到table是由routing algorithm 决定的, the routing algorithm determines the values that are inserted into the routers’ forwarding tables.
+
+匹配是根据最长前缀匹配
+
+packet进入到route会被拆开, 根据from address 经过 input port, 通过table得知进入哪个output port, 然后通过Switch fabric分发到对于的output port上, 两个port都会有queue, 如果队列满了, 就会发生packet loss现象.
+
+## Difference between Route and Switch
+工作层次不同：交换机主要工作在数据链路层（第二层）路由器工作在网络层（第三层）。
+
+转发依据不同：交换机转发所依据的对象时：MAC地址。（物理地址）路由转发所依据的对象是：IP地址。（网络地址）
+
+主要功能不同：交换机主要用于组建局域网，而路由主要功能是将由交换机组好的局域网相互连接起来，或者接入Internet。交换机能做的，路由都能做。交换机不能分割广播域，路由可以。路由还可以提供防火墙的功能。路由配置比交换机复杂。
+## Routing Algorithms
+The purpose of a routing algorithm is then simple: given a set of routers, with links connecting the routers, a routing algorithm finds a “good” path from source router to destination router.
+* **A global routing algorithm** computes the least-cost path between a source and destination using complete, global knowledge about the network.
+
+The Link-State (LS) Routing Algorithm (Dijkstra’s algorithm)
+* **In a decentralized routing algorithm**, the calculation of the least-cost path is carried out in an iterative, distributed manner. 
+
+The Distance-Vector (DV) Routing Algorithm (BF算法)
+
+* **In a load-sensitive algorithm**, link costs vary dynami- cally to reflect the current level of congestion in the underlying link. If a high cost is associated with a link that is currently congested, a routing algorithm will tend to choose routes around such a congested link. 
+
+以上算法遇到的问题:
+* 每个路由存储大量信息; 迭代的目标太多, 难以converge
+* 公司自己想建自己的route algo, 不和外面一致
+
+Both of these problems can be solved by organizing routers into autonomous sys- tems (ASs), with each AS consisting of a group of routers that are typically under the same administrative control (e.g., operated by the same ISP or belonging to the same company network). Routers within the same AS all run the same routing algo- rithm (for example, an LS or DV algorithm) and have information about each other—exactly as was the case in our idealized model in the preceding section. The routing algorithm running within an autonomous system is called an intra- autonomous system routing protocol. It will be necessary, of course, to connect ASs to each other, and thus one or more of the routers in an AS will have the added task of being responsible for forwarding packets to destinations outside the AS; these routers are called **gateway routers**. gateway了解去别的block的path, internal的route只要知道去gateway就行.
+
+## Routing Information Protocol RIP
+RIP is a distance-vector protocol. The version of RIP specified in RFC 1058 uses hop count as a cost metric; that is, each link has a cost of 1. The maximum cost of a path is limited to 15, thus limiting the use of RIP to autonomous systems that are fewer than 15 hops in diameter.
+
+### Intra-AS Routing in the Internet: OSPF
+At its heart, however, OSPF is a link-state protocol that uses flooding of link-state information and a Dijkstra least-cost path algorithm. With OSPF, a router constructs a complete topological map (that is, a graph) of the entire autonomous system. 
+
+### Inter-AS Routing: BGP
+We just learned how ISPs use RIP and OSPF to determine optimal paths for source- destination pairs that are internal to the same AS. Let’s now examine how paths are determined for source-destination pairs that span multiple ASs. The Border Gate- way Protocol version 4. 很复杂
+
+## Broadcast and Multicast Routing
+Broadcast是不需要目的地址的
+主要还是flooding或者spanning tree算法, 实际用的是flooding算法
+
+## Multicast
+We’ve seen in the previous section that with broadcast service, packets are delivered to each and every node in the network. In this section we turn our attention to multicast service, in which a multicast packet is delivered to only a subset of network nodes. A number of emerging network applications require the delivery of packets from one or more senders to a group of receivers. These applications include bulk data transfer (for example, the transfer of a software upgrade from the software developer to users needing the upgrade), streaming continuous media (for example, the transfer of the audio, video, and text of a live lecture to a set of distributed lec- ture participants), shared data applications (for example, a whiteboard or teleconfer- encing application that is shared among many distributed participants), data feeds (for example, stock quotes), Web cache updating, and interactive gaming (for exam- ple, distributed interactive virtual environments or multiplayer games).
+
+Multicast需要多个地址, 所以有一个identity来确定一个group, 每个destination IP就是这个identity里的成员, 至于成员如何加入这个组, 组又是如何管理成员, 则是通过IGMP.
+
+# DHCP Dynamic Host Configuration Protocol
+For a newly arriving host, the DHCP protocol is a four-step process, as shown in Figure 4.21 for the network setting shown in Figure 4.20. In this figure, yiaddr (as in “your Internet address”) indicates the address being allocated to the newly arriving client. The four steps are:
+* **DHCP server discovery**. The first task of a newly arriving host is to find a DHCP server with which to interact. This is done using a DHCP discover message, which a client sends within a UDP packet to port 67. The UDP packet is encap- sulated in an IP datagram. But to whom should this datagram be sent? The host doesn’t even know the IP address of the network to which it is attaching, much less the address of a DHCP server for this network. Given this, the DHCP client creates an IP datagram containing its DHCP discover message along with the broadcast destination IP address of 255.255.255.255 and a “this host” source IP address of 0.0.0.0. The DHCP client passes the IP datagram to the link layer, which then broadcasts this frame to all nodes attached to the subnet.
+* **DHCP server offer(s)**. A DHCP server receiving a DHCP discover message responds to the client with a DHCP offer message that is broadcast to all nodes on the subnet, again using the IP broadcast address of 255.255.255.255. (You might want to think about why this server reply must also be broadcast). Since several DHCP servers can be present on the subnet, the client may find itself in the enviable position of being able to choose from among several offers. Each server offer message contains the transaction ID of the received discover mes- sage, the proposed IP address for the client, the network mask, and an IP address lease time—the amount of time for which the IP address will be valid. It is com- mon for the server to set the lease time to several hours or days [Droms 2002].
+* **DHCP request**. The newly arriving client will choose from among one or more server offers and respond to its selected offer with a DHCP request message, echoing back the configuration parameters.
+* **DHCP ACK**. The server responds to the DHCP request message with a DHCP ACK message, confirming the requested parameters.
+
+# Network Address Translation (NAT)
+Suppose a user sitting in a home network behind host 10.0.0.1 requests a Web page on some Web server (port 80) with IP address 128.119.40.186. The host 10.0.0.1 assigns the (arbitrary) source port num- ber 3345 and sends the datagram into the LAN. The NAT router receives the data- gram, generates a new source port number 5001 for the datagram, replaces the source IP address with its WAN-side IP address 138.76.29.7, and replaces the origi- nal source port number 3345 with the new source port number 5001. When generat- ing a new source port number, the NAT router can select any source port number that is not currently in the NAT translation table. (Note that because a port number field is 16 bits long, the NAT protocol can support over 60,000 simultaneous con- nections with a single WAN-side IP address for the router!) NAT in the router also adds an entry to its NAT translation table. The Web server, blissfully unaware that the arriving datagram containing the HTTP request has been manipulated by the NAT router, responds with a datagram whose destination address is the IP address of the NAT router, and whose destination port number is 5001. When this datagram arrives at the NAT router, the router indexes the NAT translation table using the des- tination IP address and destination port number to obtain the appropriate IP address (10.0.0.1) and destination port number (3345) for the browser in the home network. The router then rewrites the datagram’s destination address and destination port number, and forwards the datagram into the home network.
+
+### Universal Plug and Play (UPnP)
+解决host behind NAT不能直接和另一个host直接通信的问题
+As an example, suppose your host, behind a UPnP-enabled NAT, has private address 10.0.0.1 and is running BitTorrent on port 3345. Also suppose that the public IP address of the NAT is 138.76.29.7. Your BitTorrent application naturally wants to be able to accept connections from other hosts, so that it can trade chunks with them. To this end, the BitTorrent application in your host asks the NAT to cre- ate a “hole” that maps (10.0.0.1, 3345) to (138.76.29.7, 5001). (The public port number 5001 is chosen by the application.) The BitTorrent application in your host could also advertise to its tracker that it is available at (138.76.29.7, 5001). In this manner, an external host running BitTorrent can contact the tracker and learn that your BitTorrent application is running at (138.76.29.7, 5001). The external host can send a TCP SYN packet to (138.76.29.7, 5001). When the NAT receives the SYN packet, it will change the destination IP address and port number in the packet to (10.0.0.1, 3345) and forward the packet through the NAT.
+
+# Internet Control Message Protocol (ICMP)
+ICMP is used by hosts and routers to communicate net- work-layer information to each other. The most typical use of ICMP is for error reporting. For example, when running a Telnet, FTP, or HTTP session, you may have encountered an error message such as “Destination network unreachable.” This message had its origins in ICMP. At some point, an IP router was unable to find a path to the host specified in your Telnet, FTP, or HTTP application. That router cre- ated and sent a type-3 ICMP message to your host indicating the error.
+
+ICMP is often considered part of IP but architecturally it lies just above IP, as ICMP messages are carried inside IP datagrams. That is, ICMP messages are carried as IP payload, just as TCP or UDP segments are carried as IP payload. Similarly, when a host receives an IP datagram with ICMP specified as the upper-layer proto- col, it demultiplexes the datagram’s contents to ICMP, just as it would demultiplex a datagram’s content to TCP or UDP.
+
+The well-known ping program sends an ICMP type 8 code 0 message to the specified host. The destination host, seeing the echo request, sends back a type 0 code 0 ICMP echo reply. (ICMP具体数据类型查看ICMP message types)
+
+ICMP也有congestion的作用, 不过是作用在网络层, 不常用
+
+# IPv6
+[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/IPv6.png)
+区别:
+
+* Expanded addressing capabilities. IPv6 increases the size of the IP address from 32 to 128 bits.
+* A streamlined 40-byte header. As discussed below, a number of IPv4 fields have been dropped or made optional. The resulting 40-byte fixed-length header allows for faster processing of the IP datagram. A new encoding of options allows for more flexible options processing.
+* Flow labeling and priority. For example, audio and video transmission might likely be treated as a flow. On the other hand, the more traditional applications, such as file transfer and e-mail, might not be treated as flows.
+* Fragmentation/Reassembly. IPv6 does not allow for fragmentation and reassem- bly at intermediate routers;  
+# DNS
+DNS is based on UDP
+DNS is a distributed database of IP to domain name mappings. Its basic job is to turn a user-friendly domain name like "howstuffworks.com" into an Internet Protocol (IP) address like 70.42.251.42 that computers use to identify each other on the network.
+
+To understand how these three classes of servers interact, suppose a DNS client wants to determine the IP address for the hostname www.amazon.com. To a first approximation, the following events will take place. The client first contacts one of the root servers, which returns IP addresses for TLD servers for the top-level domain com. The client then contacts one of these TLD servers, which returns the IP address of an authoritative server for amazon.com. Finally, the client contacts one of the authoritative servers for amazon.com, which returns the IP address
+
+1. Request information
+The process begins when you ask your computer to resolve a hostname, such as visiting http://dyn.com. The first place your computer looks is its local DNS cache, which stores information that your computer has recently retrieved.
+If your computer doesn’t already know the answer, it needs to perform a DNS query to find out.
+2. Ask the recursive DNS servers
+If the information is not stored locally, your computer queries (contacts) your ISP’s recursive DNS servers. These specialized computers perform the legwork of a DNS query on your behalf. Recursive servers have their own caches, so the process usually ends here and the information is returned to the user. TLD的地址也可以被缓存, 因此有可能会跳过第三步
+3. Ask the root nameservers
+If the recursive servers don’t have the answer, they query the root nameservers. A nameserver is a computer that answers questions about domain names, such as IP addresses. The thirteen root nameservers act as a kind of telephone switchboard for DNS. They don’t know the answer, but they can direct our query to someone that knows where to find it.
+4. Ask the TLD nameservers
+The root nameservers will look at the first part of our request, reading from right to left — www.dyn.com — and direct our query to the Top-Level Domain (TLD) nameservers for .com. Each TLD, such as .com, .org, and .us, have their own set of nameservers, which act like a receptionist for each TLD. These servers don’t have the information we need, but they can refer us directly to the servers that do have the information.
+5. Ask the authoritative DNS servers
+The TLD nameservers review the next part of our request — www.dyn.com — and direct our query to the nameservers responsible for this specific domain. These authoritative nameservers are responsible for knowing all the information about a specific domain, which are stored in DNS records. There are many types of records, which each contain a different kind of information. In this example, we want to know the IP address for www.dyndns.com, so we ask the authoritative nameserver for the Address Record (A).
+6. Retrieve the record
+The recursive server retrieves the A record for dyn.com from the authoritative nameservers and stores the record in its local cache. If anyone else requests the host record for dyn.com, the recursive servers will already have the answer and will not need to go through the lookup process again. All records have a time-to-live value, which is like an expiration date. After a while, the recursive server will need to ask for a new copy of the record to make sure the information doesn’t become out-of-date.
+7. Receive the answer
+Armed with the answer, recursive server returns the A record back to your computer. Your computer stores the record in its cache, reads the IP address from the record, then passes this information to your browser. The browser then opens a connection to the webserver and receives the website.
+This entire process, from start to finish, takes only milliseconds to complete.
+
+### DNS Records and Messages
+The DNS servers that together implement the DNS distributed database store resource records (RRs), including RRs that provide hostname-to-IP address map- pings. A resource record is a four-tuple that contains the following fields:
+
+(Name, Value, Type, TTL)
+
+TTL is the time to live of the resource record
+
 # TCP vs UDP
 
 ### Reliable Data Transfer
@@ -30,6 +211,7 @@ A transport-layer protocol can also provide timing guarantees. Such a service wo
 | Streaming stored audio/video           | Loss-tolerant | Same as above                               | Yes: few seconds  |
 | Interactive games                      | Loss-tolerant | Few kbps–10 kbps                            | Yes: 100s of msec |
 | Instant messaging                      | No loss       | Elastic                                     | Yes and no        |
+
 
 
 ## TCP
@@ -399,122 +581,7 @@ With port numbers assigned to UDP sockets, we can now precisely describe UDP mul
 5. 只有一个在监听socket，只做监听；
 6. 接收到(accept)连接后把该请求分配到线程或子进程(fork)去处理；
 
-# NetWork Layer
-The role of the network layer is thus deceptively simple—to move packets from a sending host to a receiving host.
 
-* **Forwarding**. When a packet arrives at a router’s input link, the router must move the packet to the appropriate output link. For example, a packet arriving from Host H1 to Router R1 must be forwarded to the next router on a path to H2. In Section 4.3, we’ll look inside a router and examine how a packet is actually for- warded from an input link to an output link within a router.
-* **Routing**. The network layer must determine the route or path taken by packets as they flow from a sender to a receiver. The algorithms that calculate these paths are referred to as routing algorithms. A routing algorithm would determine, for example, the path along which packets flow from H1 to H2.
-
-Forwarding refers to the router-local action of transferring a packet from an input link interface to the appropriate output link interface. Routing refers to the network-wide process that determines the end-to-end paths that packets take from source to destina- tion.
-
-Every router has a **forwarding table**.
-
-[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/route.png)
-
-可以看到table是由routing algorithm 决定的, the routing algorithm determines the values that are inserted into the routers’ forwarding tables.
-
-匹配是根据最长前缀匹配
-
-packet进入到route会被拆开, 根据from address 经过 input port, 通过table得知进入哪个output port, 然后通过Switch fabric分发到对于的output port上, 两个port都会有queue, 如果队列满了, 就会发生packet loss现象.
-
-## Routing Algorithms
-The purpose of a routing algorithm is then simple: given a set of routers, with links connecting the routers, a routing algorithm finds a “good” path from source router to destination router.
-* **A global routing algorithm** computes the least-cost path between a source and destination using complete, global knowledge about the network.
-
-The Link-State (LS) Routing Algorithm (Dijkstra’s algorithm)
-* **In a decentralized routing algorithm**, the calculation of the least-cost path is carried out in an iterative, distributed manner. 
-
-The Distance-Vector (DV) Routing Algorithm (BF算法)
-
-* **In a load-sensitive algorithm**, link costs vary dynami- cally to reflect the current level of congestion in the underlying link. If a high cost is associated with a link that is currently congested, a routing algorithm will tend to choose routes around such a congested link. 
-
-以上算法遇到的问题:
-* 每个路由存储大量信息; 迭代的目标太多, 难以converge
-* 公司自己想建自己的route algo, 不和外面一致
-
-Both of these problems can be solved by organizing routers into autonomous sys- tems (ASs), with each AS consisting of a group of routers that are typically under the same administrative control (e.g., operated by the same ISP or belonging to the same company network). Routers within the same AS all run the same routing algo- rithm (for example, an LS or DV algorithm) and have information about each other—exactly as was the case in our idealized model in the preceding section. The routing algorithm running within an autonomous system is called an intra- autonomous system routing protocol. It will be necessary, of course, to connect ASs to each other, and thus one or more of the routers in an AS will have the added task of being responsible for forwarding packets to destinations outside the AS; these routers are called **gateway routers**. gateway了解去别的block的path, internal的route只要知道去gateway就行.
-
-## Routing Information Protocol RIP
-RIP is a distance-vector protocol. The version of RIP specified in RFC 1058 uses hop count as a cost metric; that is, each link has a cost of 1. The maximum cost of a path is limited to 15, thus limiting the use of RIP to autonomous systems that are fewer than 15 hops in diameter.
-
-### Intra-AS Routing in the Internet: OSPF
-At its heart, however, OSPF is a link-state protocol that uses flooding of link-state information and a Dijkstra least-cost path algorithm. With OSPF, a router constructs a complete topological map (that is, a graph) of the entire autonomous system. 
-
-### Inter-AS Routing: BGP
-We just learned how ISPs use RIP and OSPF to determine optimal paths for source- destination pairs that are internal to the same AS. Let’s now examine how paths are determined for source-destination pairs that span multiple ASs. The Border Gate- way Protocol version 4. 很复杂
-
-## Broadcast and Multicast Routing
-Broadcast是不需要目的地址的
-主要还是flooding或者spanning tree算法, 实际用的是flooding算法
-
-## Multicast
-We’ve seen in the previous section that with broadcast service, packets are delivered to each and every node in the network. In this section we turn our attention to multicast service, in which a multicast packet is delivered to only a subset of network nodes. A number of emerging network applications require the delivery of packets from one or more senders to a group of receivers. These applications include bulk data transfer (for example, the transfer of a software upgrade from the software developer to users needing the upgrade), streaming continuous media (for example, the transfer of the audio, video, and text of a live lecture to a set of distributed lec- ture participants), shared data applications (for example, a whiteboard or teleconfer- encing application that is shared among many distributed participants), data feeds (for example, stock quotes), Web cache updating, and interactive gaming (for exam- ple, distributed interactive virtual environments or multiplayer games).
-
-Multicast需要多个地址, 所以有一个identity来确定一个group, 每个destination IP就是这个identity里的成员, 至于成员如何加入这个组, 组又是如何管理成员, 则是通过IGMP.
-
-# IPv4
-[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/ipv4.png)
-
-# DHCP Dynamic Host Configuration Protocol
-For a newly arriving host, the DHCP protocol is a four-step process, as shown in Figure 4.21 for the network setting shown in Figure 4.20. In this figure, yiaddr (as in “your Internet address”) indicates the address being allocated to the newly arriving client. The four steps are:
-* **DHCP server discovery**. The first task of a newly arriving host is to find a DHCP server with which to interact. This is done using a DHCP discover message, which a client sends within a UDP packet to port 67. The UDP packet is encap- sulated in an IP datagram. But to whom should this datagram be sent? The host doesn’t even know the IP address of the network to which it is attaching, much less the address of a DHCP server for this network. Given this, the DHCP client creates an IP datagram containing its DHCP discover message along with the broadcast destination IP address of 255.255.255.255 and a “this host” source IP address of 0.0.0.0. The DHCP client passes the IP datagram to the link layer, which then broadcasts this frame to all nodes attached to the subnet.
-* **DHCP server offer(s)**. A DHCP server receiving a DHCP discover message responds to the client with a DHCP offer message that is broadcast to all nodes on the subnet, again using the IP broadcast address of 255.255.255.255. (You might want to think about why this server reply must also be broadcast). Since several DHCP servers can be present on the subnet, the client may find itself in the enviable position of being able to choose from among several offers. Each server offer message contains the transaction ID of the received discover mes- sage, the proposed IP address for the client, the network mask, and an IP address lease time—the amount of time for which the IP address will be valid. It is com- mon for the server to set the lease time to several hours or days [Droms 2002].
-* **DHCP request**. The newly arriving client will choose from among one or more server offers and respond to its selected offer with a DHCP request message, echoing back the configuration parameters.
-* **DHCP ACK**. The server responds to the DHCP request message with a DHCP ACK message, confirming the requested parameters.
-
-# Network Address Translation (NAT)
-Suppose a user sitting in a home network behind host 10.0.0.1 requests a Web page on some Web server (port 80) with IP address 128.119.40.186. The host 10.0.0.1 assigns the (arbitrary) source port num- ber 3345 and sends the datagram into the LAN. The NAT router receives the data- gram, generates a new source port number 5001 for the datagram, replaces the source IP address with its WAN-side IP address 138.76.29.7, and replaces the origi- nal source port number 3345 with the new source port number 5001. When generat- ing a new source port number, the NAT router can select any source port number that is not currently in the NAT translation table. (Note that because a port number field is 16 bits long, the NAT protocol can support over 60,000 simultaneous con- nections with a single WAN-side IP address for the router!) NAT in the router also adds an entry to its NAT translation table. The Web server, blissfully unaware that the arriving datagram containing the HTTP request has been manipulated by the NAT router, responds with a datagram whose destination address is the IP address of the NAT router, and whose destination port number is 5001. When this datagram arrives at the NAT router, the router indexes the NAT translation table using the des- tination IP address and destination port number to obtain the appropriate IP address (10.0.0.1) and destination port number (3345) for the browser in the home network. The router then rewrites the datagram’s destination address and destination port number, and forwards the datagram into the home network.
-
-### Universal Plug and Play (UPnP)
-解决host behind NAT不能直接和另一个host直接通信的问题
-As an example, suppose your host, behind a UPnP-enabled NAT, has private address 10.0.0.1 and is running BitTorrent on port 3345. Also suppose that the public IP address of the NAT is 138.76.29.7. Your BitTorrent application naturally wants to be able to accept connections from other hosts, so that it can trade chunks with them. To this end, the BitTorrent application in your host asks the NAT to cre- ate a “hole” that maps (10.0.0.1, 3345) to (138.76.29.7, 5001). (The public port number 5001 is chosen by the application.) The BitTorrent application in your host could also advertise to its tracker that it is available at (138.76.29.7, 5001). In this manner, an external host running BitTorrent can contact the tracker and learn that your BitTorrent application is running at (138.76.29.7, 5001). The external host can send a TCP SYN packet to (138.76.29.7, 5001). When the NAT receives the SYN packet, it will change the destination IP address and port number in the packet to (10.0.0.1, 3345) and forward the packet through the NAT.
-
-# Internet Control Message Protocol (ICMP)
-ICMP is used by hosts and routers to communicate net- work-layer information to each other. The most typical use of ICMP is for error reporting. For example, when running a Telnet, FTP, or HTTP session, you may have encountered an error message such as “Destination network unreachable.” This message had its origins in ICMP. At some point, an IP router was unable to find a path to the host specified in your Telnet, FTP, or HTTP application. That router cre- ated and sent a type-3 ICMP message to your host indicating the error.
-
-ICMP is often considered part of IP but architecturally it lies just above IP, as ICMP messages are carried inside IP datagrams. That is, ICMP messages are carried as IP payload, just as TCP or UDP segments are carried as IP payload. Similarly, when a host receives an IP datagram with ICMP specified as the upper-layer proto- col, it demultiplexes the datagram’s contents to ICMP, just as it would demultiplex a datagram’s content to TCP or UDP.
-
-The well-known ping program sends an ICMP type 8 code 0 message to the specified host. The destination host, seeing the echo request, sends back a type 0 code 0 ICMP echo reply. (ICMP具体数据类型查看ICMP message types)
-
-ICMP也有congestion的作用, 不过是作用在网络层, 不常用
-
-# IPv6
-[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/IPv6.png)
-区别:
-
-* Expanded addressing capabilities. IPv6 increases the size of the IP address from 32 to 128 bits.
-* A streamlined 40-byte header. As discussed below, a number of IPv4 fields have been dropped or made optional. The resulting 40-byte fixed-length header allows for faster processing of the IP datagram. A new encoding of options allows for more flexible options processing.
-* Flow labeling and priority. For example, audio and video transmission might likely be treated as a flow. On the other hand, the more traditional applications, such as file transfer and e-mail, might not be treated as flows.
-* Fragmentation/Reassembly. IPv6 does not allow for fragmentation and reassem- bly at intermediate routers;  
-# DNS
-DNS is based on UDP
-DNS is a distributed database of IP to domain name mappings. Its basic job is to turn a user-friendly domain name like "howstuffworks.com" into an Internet Protocol (IP) address like 70.42.251.42 that computers use to identify each other on the network.
-
-To understand how these three classes of servers interact, suppose a DNS client wants to determine the IP address for the hostname www.amazon.com. To a first approximation, the following events will take place. The client first contacts one of the root servers, which returns IP addresses for TLD servers for the top-level domain com. The client then contacts one of these TLD servers, which returns the IP address of an authoritative server for amazon.com. Finally, the client contacts one of the authoritative servers for amazon.com, which returns the IP address
-
-1. Request information
-The process begins when you ask your computer to resolve a hostname, such as visiting http://dyn.com. The first place your computer looks is its local DNS cache, which stores information that your computer has recently retrieved.
-If your computer doesn’t already know the answer, it needs to perform a DNS query to find out.
-2. Ask the recursive DNS servers
-If the information is not stored locally, your computer queries (contacts) your ISP’s recursive DNS servers. These specialized computers perform the legwork of a DNS query on your behalf. Recursive servers have their own caches, so the process usually ends here and the information is returned to the user. TLD的地址也可以被缓存, 因此有可能会跳过第三步
-3. Ask the root nameservers
-If the recursive servers don’t have the answer, they query the root nameservers. A nameserver is a computer that answers questions about domain names, such as IP addresses. The thirteen root nameservers act as a kind of telephone switchboard for DNS. They don’t know the answer, but they can direct our query to someone that knows where to find it.
-4. Ask the TLD nameservers
-The root nameservers will look at the first part of our request, reading from right to left — www.dyn.com — and direct our query to the Top-Level Domain (TLD) nameservers for .com. Each TLD, such as .com, .org, and .us, have their own set of nameservers, which act like a receptionist for each TLD. These servers don’t have the information we need, but they can refer us directly to the servers that do have the information.
-5. Ask the authoritative DNS servers
-The TLD nameservers review the next part of our request — www.dyn.com — and direct our query to the nameservers responsible for this specific domain. These authoritative nameservers are responsible for knowing all the information about a specific domain, which are stored in DNS records. There are many types of records, which each contain a different kind of information. In this example, we want to know the IP address for www.dyndns.com, so we ask the authoritative nameserver for the Address Record (A).
-6. Retrieve the record
-The recursive server retrieves the A record for dyn.com from the authoritative nameservers and stores the record in its local cache. If anyone else requests the host record for dyn.com, the recursive servers will already have the answer and will not need to go through the lookup process again. All records have a time-to-live value, which is like an expiration date. After a while, the recursive server will need to ask for a new copy of the record to make sure the information doesn’t become out-of-date.
-7. Receive the answer
-Armed with the answer, recursive server returns the A record back to your computer. Your computer stores the record in its cache, reads the IP address from the record, then passes this information to your browser. The browser then opens a connection to the webserver and receives the website.
-This entire process, from start to finish, takes only milliseconds to complete.
-
-### DNS Records and Messages
-The DNS servers that together implement the DNS distributed database store resource records (RRs), including RRs that provide hostname-to-IP address map- pings. A resource record is a four-tuple that contains the following fields:
-
-(Name, Value, Type, TTL)
-
-TTL is the time to live of the resource record
 # URL vs URI
 For starters, URI stands for uniform resource identifier and URL stands for uniform resource locator.
 
