@@ -8,8 +8,37 @@ Docker容器具有以下3个特点:
 
 Docker是一个使用了Linux Namespace和Cgroup的虚拟化工具
 
+### 通过cgroup来限制stress进程的资源
+1. ```mkdir cgroup-test```
+2. ```sudo mount -t cgroup -o none,name=cgroup-test cgroup-test ./cgroup-test```
+3. ```ls ./cgroup-test```
+
+```
+jikangwang@ubuntu:~/cgroup-test$ ls
+cgroup.clone_children  #cpuset的subsystem会读取这个配置文件, 如果这个值是1(默认是0), 子cgroup才会继承父cgroup的cpuset的配置
+
+cgroup.sane_behavior   
+cgroup.procs     #cgroup.procs是树中当前节点cgroup的groupid, 现在的位置是在根节点, 这个文件中会有现在系统中所有进程组的ID     
+notify_on_release #notify_on_realease标识当这个cgroup最后一个进程退出的时候是否执行了release_agent; release_agent则是一个路径, 通常用作进程退出之后自动清理掉不再使用的cgroup
+release_agent     
+tasks #标识该cgroup下面的进程ID, 如果把一个进程ID写到tasks文件中, 便会将相应的进程加入到这个cgroup中
+```
+
+4. 在上面创建hierarchy的时候, 这个hierarchy并没有关联到任何的subsystem, 所以没办法通过那个hierarchy中的cgroup节点限制进程的资源占用, 其实系统默认已经为每个subsystem创建了一个默认的hierarchy, 比如memory的hierarchy.
+
+```
+mount | grep memory
+cgroup on /sys/fs/cgroup/memory type cgroup (rw,nosuid,nodev,noexec,relatime,memory)
+```
+5. ```cd /sys/fs/cgroup/memory```
+6. ```stress --vm-bytes 200m --vm-keep -m 1```
+7. ```sudo mkdir test-limit-memory && cd test-limit-memory```
+8. ```sudo sh -c "echo "100m" > memory.limit_in_bytes"```
+9. ```sudo sh -c "echo $$ > tasks"```
+10. ```stress --vm-bytes 200m --vm-keep -m 1```
+
 ### 用Go语言实现通过cgroup限制容器的资源
-我们知道 Docker是通过 Cgroups实现容器资源限制和监控的，下面以一个实际的容器实 例来看一下 Docker 是如何配置 Cgroups 的。
+我们知道 Docker是通过 Cgroups实现容器资源限制和监控的，下面以一个实际的容器实例来看一下Docker是如何配置 Cgroups 的。
 ```
 docker run -m 设置内存限制
 
@@ -46,6 +75,11 @@ import (
 const cgroupMemoryHierarchyMount = "/sys/fs/cgroup/memory"
 
 func main() {
+	/*
+	sudo ls -lt /proc/self/exe
+	lrwxrwxrwx 1 root root 0 Dec 26 16:06 /proc/self/exe -> /bin/ls
+	正在运行的进程的软连接
+	*/
 	if os.Args[0] == "/proc/self/exe" {
 		// 容器进程
 		fmt.Printf("current pid %d\n", syscall.Getpid())
@@ -86,4 +120,20 @@ func main() {
 ```
 
 # UFS
-每一个Docker image都是由一系列read-only layer组成的。image layer的内容都存储在Docker hosts filesystem的/var/lib/docker/aufs/diff目录下。而/var/lib/docker/aufs/layers 目录，则存储着image layer如何堆找这些layer的metadata。
+每一个Docker image都是由一系列read-only layer组成的。image layer的内容都存储在Docker hosts filesystem的/var/lib/docker/aufs/diff目录下。而/var/lib/docker/aufs/layers 目录, 则存储着image layer如何堆找这些layer的metadata。
+
+启动一个container的时候, Docker会为其创建一个read-only的init layer, 用来存储与这个容器内环境相关的内容; Docker还会为其创建一个read-write的layer来执行所有的写操作.
+
+container layer的mount目录也是/var/lib/docker/aufs/mnt. container的metadata和配置文件都存放在/var/lib/docker/containers/container-id目录中. container的read-write layer存储在/var/lib/docker/aufs/diff/目录下. 即使容器停止, 这个可读写层依然存在, 因而重启容器不会丢失数据, 只有当一个容器被删除的时候, 这个可读写层才会一起删除.
+
+# 构造容器
+
+## 构造实现run命令版本的容器
+```
+git clone https://github.com/xianlubird/mydocker.git 
+git checkout code-3.1
+```
+
+./mydocker run -ti /bin/sh
+
+cmd.Start()会根据参数fork出一个shell进程, 这个时候/proc/self/exe就是指向这个进程(mydocker), 这时候再执行自己+init初始化, 挂载proc系统, 方便通过ps查看当前进程资源情况
