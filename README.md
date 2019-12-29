@@ -22,7 +22,7 @@
 2. Linux内核准备 还是先读鸟哥 ○
 3. TCP/IP Illustrated 需要从头细细品味 ○
 4. Go TCP Server √
-5. Nginx计划准备
+5. Nginx计划准备 无限延期, 等待unix network programming看完....
 
 ### DEC, 2019
 1. K8S源码级学习 ○
@@ -35,3 +35,4 @@
 2. The Linux Programming Interface 基于这本书开始学习linux
 3. Intellij Plugin Development
 4. 鸟哥
+5. K8S源码级学习 ○

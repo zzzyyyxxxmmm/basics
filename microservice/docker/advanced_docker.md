@@ -136,4 +136,34 @@ git checkout code-3.1
 
 ./mydocker run -ti /bin/sh
 
-cmd.Start()会根据参数fork出一个shell进程, 这个时候/proc/self/exe就是指向这个进程(mydocker), 这时候再执行自己+init初始化, 挂载proc系统, 方便通过ps查看当前进程资源情况
+如果我们直接执行sh命令, 执行ps -ef的时候还是会显示parent process的进程, 因此我们需要在这个进程内重新挂载/proc, 由之前所学我们知道可以在新开的shell里执行```mount -t proc proc /proc```来挂载, 这是一个初始化步骤, 因此我们可以新在进程里新开一个init命令, 挂载完之后再运行shell. 不过, 由于我们不希望init作为第一个进程, 因此可以通过syscall.Exec来覆盖掉当前的init进程.
+
+因此整体流程:
+1. ./Jocker run /bin/sh
+2. 调用/proc/self/exe 即./Jocker init /bin/sh
+3. 挂载, 然后syscall.exec执行sh
+
+## 增加容器资源限制
+```mydocker run -ti -m 100m -cpuset 1 -cpushare 512 /bin/sh```
+
+核心:
+
+1. ```sudo mkdir test-limit-memory && cd test-limit-memory```
+2. ```sudo sh -c "echo "100m" > memory.limit_in_bytes"```
+3. ```sudo sh -c "echo $$ > tasks"```
+
+其实主要步骤就是找到对应的subsystem目录, 然后创建group, 在group里写入限制和pid, 那么如何找到挂载了subsystem的hierarchy的挂载目录的呢? 之前我们是通过```mount | grep memory```来找的, 现在来看看另一种方法:
+
+```
+cat /proc/self/mountinfo
+
+41 31 0:36 / /sys/fs/cgroup/rdma rw,nosuid,nodev,noexec,relatime shared:20 - cgroup cgroup rw,rdma
+42 31 0:37 / /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime shared:21 - cgroup cgroup rw,freezer
+43 31 0:38 / /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:22 - cgroup cgroup rw,memory
+44 31 0:39 / /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime shared:23 - cgroup cgroup rw,cpu,cpuacct
+45 31 0:40 / /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime shared:24 - cgroup cgroup rw,cpuset
+46 23 0:41 / /proc/sys/fs/binfmt_misc rw,relatime shared:25 - autofs systemd-1 rw,fd=31,pgrp=1,timeout=0,minproto=5,maxproto=
+```
+
+通过这个命令可以找到当前进程相关的mount信息
+
