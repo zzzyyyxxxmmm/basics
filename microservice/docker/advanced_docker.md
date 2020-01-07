@@ -167,3 +167,22 @@ cat /proc/self/mountinfo
 
 通过这个命令可以找到当前进程相关的mount信息
 
+## 增加管道及环境识别变量
+在3.2节中实现的那个简单版本的run命令有一个缺陷，就是传递参数。在父进程和子进程之间传参，是通过调用命令后面跟上参数，也就是/proc/self/exe init args这种方式进行的，然后，在init进程内去解析这个参数，执行相应的命令。但是，这有一个缺点就是，如果用户输入的参数很长，或者其中带有一些特殊字符，那么这种方案就会失败了。其实，runC 实现的方案是通过匿名管道来实现父子进程之间通信的，下面就会修改上一版本的代码，增加这个功能。
+
+```go
+func NewPipe() (*os.File, *os.File, error) {
+	read, write, err := os.Pipe()
+	if err != nil {
+		return nil, nil, err
+	}
+	return read, write, nil
+}
+```
+
+在创建父进程的时候创建好管道, 运行的时候把读管道通过fd传给子进程
+
+# 构造镜像
+
+## 使用busybox创建容器
+
