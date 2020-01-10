@@ -145,3 +145,83 @@ wjk32111@ubuntu:~$ ls /proc/
 | /proc/N/statm   | 进程使用的内存状态                   |
 | /proc/N/status  | 进程状态信息，比stat/statm更具可读性 |
 | /proc/self/     | 链接到当前正在运行的进程             |
+
+# AUFS
+```
+mkdir aufs && \
+cd aufs && \
+mkdir container-layer && \
+mkdir image-layer1 && \
+mkdir image-layer2 && \
+mkdir image-layer3 && \
+mkdir image-layer4 && \
+mkdir mnt
+
+echo "I am container layer" > container-layer/container-layer.txt
+echo "I am image layer 1" > image-layer1/image-layer1.txt
+echo "I am image layer 2" > image-layer2/image-layer2.txt
+echo "I am image layer 3" > image-layer3/image-layer3.txt
+echo "I am image layer 4" > image-layer4/image-layer4.txt
+
+sudo mount -t aufs -o dirs=./container-layer:./image-layer4:./image-layer3:./image-layer2:./image-layer1 none ./mnt
+
+
+jikangwang@ubuntu:~/aufs$ tree
+.
+├── container-layer
+│   └── container-layer.txt
+├── image-layer1
+│   └── image-layer1.txt
+├── image-layer2
+│   └── image-layer2.txt
+├── image-layer3
+│   └── image-layer3.txt
+├── image-layer4
+│   └── image-layer4.txt
+└── mnt
+    ├── container-layer.txt
+    ├── image-layer1.txt
+    ├── image-layer2.txt
+    ├── image-layer3.txt
+    └── image-layer4.txt
+
+6 directories, 10 filesa
+
+查看aufs系统读写权限
+jikangwang@ubuntu:/sys/fs/aufs$ cat si_7f5c402df8f6a9ed/*
+/home/jikangwang/aufs/container-layer=rw
+/home/jikangwang/aufs/image-layer4=ro
+/home/jikangwang/aufs/image-layer3=ro
+/home/jikangwang/aufs/image-layer2=ro
+/home/jikangwang/aufs/image-layer1=ro
+64
+65
+66
+67
+68
+/home/jikangwang/aufs/container-layer/.aufs.xino
+
+echo -e "\nwrite to mnt's image-layer1.txt" >> ./mnt/image-layer4.txt
+
+jikangwang@ubuntu:~/aufs$ cat mnt/image-layer4.txt 
+I am image layer 4
+
+write to mnt's image-layer1.txt
+
+此处, mnt只是一个虚拟挂载点, 因此, 接下来还需要继续去寻找文件修改到底在什么位置
+
+jikangwang@ubuntu:~/aufs$ cat image-layer4/image-layer4.txt 
+I am image layer 4
+
+原文件内容没有变化
+
+jikangwang@ubuntu:~/aufs/container-layer$ ls
+container-layer.txt  image-layer4.txt
+
+jikangwang@ubuntu:~/aufs/container-layer$ cat image-layer4.txt 
+I am image layer 4
+
+write to mnt's image-layer1.txt
+
+也就是说, 当尝试向mnt/image-layer4.txt文件进行写操作的时候, 系统首先在mnt目录下查找名为image-layer4.txt的文件, 将其拷贝到read-write层的container-layer目录中, 接着对container-layer目录中的image-layer4.txt文件进行写操作. 
+```

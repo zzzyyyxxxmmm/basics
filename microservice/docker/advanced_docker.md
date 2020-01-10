@@ -185,4 +185,14 @@ func NewPipe() (*os.File, *os.File, error) {
 # 构造镜像
 
 ## 使用busybox创建容器
+```
+docker pull busybox
+docker run -d busybox top -b
+docker export -o busybox.tar 428137198312(容器id)
+tar -xvf busybox.tar -C busybox/
+```
 
+## 使用AUFS包装busybox
+Docker在使用镜像启动一个容器时，会新建2个layer: write layer和container-init layer。 write layer是容器唯一的可读写层: 而container-init layer是为容器新建的只读层，用来存储容器启动时传入的系统信息(前面也提到过，在实际的场景下，它们并不是以write layer container-init layer命名的)。最后把write layer、container-init layer和相关镜像的layers都mount到一个mnt目录下，然后把这个mnt目录作为容器启动的根目录。
+
+在4.1节中己经实现了使用宿主机/root/busybox 目录作为文件的根目录，但在容器内对文件的操作仍然会直接影响到宿主机的/root/busybox目录。本节要进一步进行容器和镜像隔离，实现在容器中进行的操作不会对镜像产生任何影响的功能。 
