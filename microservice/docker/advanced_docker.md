@@ -196,3 +196,17 @@ tar -xvf busybox.tar -C busybox/
 Docker在使用镜像启动一个容器时，会新建2个layer: write layer和container-init layer。 write layer是容器唯一的可读写层: 而container-init layer是为容器新建的只读层，用来存储容器启动时传入的系统信息(前面也提到过，在实际的场景下，它们并不是以write layer container-init layer命名的)。最后把write layer、container-init layer和相关镜像的layers都mount到一个mnt目录下，然后把这个mnt目录作为容器启动的根目录。
 
 在4.1节中己经实现了使用宿主机/root/busybox 目录作为文件的根目录，但在容器内对文件的操作仍然会直接影响到宿主机的/root/busybox目录。本节要进一步进行容器和镜像隔离，实现在容器中进行的操作不会对镜像产生任何影响的功能。 
+
+使用AUFS创建容器文件系统的实现过程如下。启动容器的时候:
+1. 创建只读层(busybox) ;
+2. 创建容器读写层(writeLayer) ;
+3. 创建挂载点(mnt)，井把只读层和读写层挂载到挂载点:
+4. 将挂载点作为容器的根目录。 
+
+容器退出的时候:
+1. 卸载挂载点(mnt)的文件系统;
+1. 删除挂载点; 
+2. 删除读写层(writeLayer)。
+## 实现volume数据卷
+
+

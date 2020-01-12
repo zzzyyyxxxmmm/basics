@@ -147,6 +147,8 @@ wjk32111@ubuntu:~$ ls /proc/
 | /proc/self/     | 链接到当前正在运行的进程             |
 
 # AUFS
+
+
 ```
 mkdir aufs && \
 cd aufs && \
@@ -165,6 +167,7 @@ echo "I am image layer 4" > image-layer4/image-layer4.txt
 
 sudo mount -t aufs -o dirs=./container-layer:./image-layer4:./image-layer3:./image-layer2:./image-layer1 none ./mnt
 
+sudo mount -t aufs -o dirs=./write-layer:./busybox none ./mnt
 
 jikangwang@ubuntu:~/aufs$ tree
 .
