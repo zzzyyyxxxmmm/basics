@@ -207,6 +207,27 @@ Docker在使用镜像启动一个容器时，会新建2个layer: write layer和c
 1. 卸载挂载点(mnt)的文件系统;
 1. 删除挂载点; 
 2. 删除读写层(writeLayer)。
+
 ## 实现volume数据卷
+启动一个容器，把宿主机的 /root/volume挂载到容器的 /containerVolume 目录下。
 
+```
+./mydocker run -ti -v /root/volume:/containerVolume sh
+```
 
+挂载数据卷的过程如下。
+1. 首先，读取宿主机文件目录URL，创建宿主机文件目录(/root/${parentUrl})。
+2. 然后，读取容器挂载点URL，在容器文件系统里创建挂载点 (/root/rnnt/${containerUrl})。
+3. 最后，把宿主机文件目录挂载到容器挂载点。这样启动容器的过程，对数据卷的处理也就完成了。
+
+DeleteMountPointWithVolume函数的处理逻辑如下。
+1. 首先，卸载volume挂载点的文件系统(/root/mnt/${containerUrl})，保证整个容器的挂载点没有被使用。
+1. 然后，再卸载整个容器文件系统的挂载点 (/root/mnt)。
+2. 最后，删除容器文件系统挂载点。整个容器退出过程中的文件系统处理就结束了。
+
+## 实现简单镜像打包
+```
+./mydocker run -ti sh
+
+./mydocker commit image
+```

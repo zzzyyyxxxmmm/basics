@@ -36,3 +36,6 @@
 3. Intellij Plugin Development √
 4. 鸟哥 √
 5. Kafka definitive guide
+
+### FEB, 2020
+1. 6.824 Lab3: Fault-tolerant Key/Value Service
