@@ -231,3 +231,17 @@ DeleteMountPointWithVolume函数的处理逻辑如下。
 
 ./mydocker commit image
 ```
+
+# 构建容器进阶
+
+## 实现容器的后台运行
+由mydocker fork出一个进程, 然后detach掉父进程, init进程会接管子进程
+
+## 实现查看运行中的容器
+
+## 实现查看容器日志
+
+## 实现进入容器Namespace
+setns是一个系统调用，可以根据提供的 PID再次进入到指定的 Namespace 中。它需要先 打开/proc/[pid]/ns/文件夹下对应的文件，然后使当前进程进入到指定的 Namespace 中。系统 调用描述非常简单，但是有一点对于 Go 来说很麻烦。对于 Mount Namespace来说， 一个具有多线程的进程是无法使用setns调用进入到对应的命名空间的。但是， Go每启动一个程序就会进入多线程状态，因此无法简简单单地在 Go里面直接调用系统调用，使当前的进程进入对应的Mount Namespace。这里需要借助C来实现这个功能.
+
+## 实现停止容器

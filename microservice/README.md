@@ -161,3 +161,11 @@ Zipkin用于分布式追踪
 1. 从request里的context提取span```span := zipkin.SpanFromContext(r.Context())```
 2. 打上新的tag or annotate
 3. 重新放到request里, 然后发送
+
+### Span的发送流程
+startspan会开始记录
+span.finish会结束, 然后发送span信息
+
+DoWithAppSpan的实现就是startspan, 然后在response里attach span, 我们close了response其实就是结束span.
+
+如果startspan之后在startspan, 那么第二个span就是第一个span的子span.
