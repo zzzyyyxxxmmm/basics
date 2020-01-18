@@ -28,10 +28,10 @@
 1. K8S源码级学习 ○ suspend中,等待Docker kernel结束
 2. 分布式论文(调度算法, raft √, 文件存储算法)
 3. TCP/IP Illustrated (真的是很好的一本书!!!解决了我很多年的一些疑惑) √ 还差所有TCP章节, 等以后看到unix network的时候再看
-4. go的一些高级特性 √
+4. go的一些高级特性 √ 
 
 ### JAN, 2020
-1. Docker Kernel
+1. Docker Kernel 
 2. The Linux Programming Interface 基于这本书开始学习linux
 3. Intellij Plugin Development √
 4. 鸟哥 √
