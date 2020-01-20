@@ -18,7 +18,7 @@
 4. 每天三道题
 
 ### Nov, 2019
-1. K8S √
+1. K8S in action√
 2. Linux内核准备 还是先读鸟哥 ○
 3. TCP/IP Illustrated 需要从头细细品味 ○
 4. Go TCP Server √
@@ -26,7 +26,7 @@
 
 ### DEC, 2019
 1. K8S源码级学习 ○ suspend中,等待Docker kernel结束
-2. 分布式论文(调度算法, raft √, 文件存储算法)
+2. 6.824 Lab 2: Raft
 3. TCP/IP Illustrated (真的是很好的一本书!!!解决了我很多年的一些疑惑) √ 还差所有TCP章节, 等以后看到unix network的时候再看
 4. go的一些高级特性 √ 
 
@@ -36,6 +36,10 @@
 3. Intellij Plugin Development √
 4. 鸟哥 √
 5. Kafka definitive guide
+6. 基于反射实现一个go sort library. TDD开发
 
 ### FEB, 2020
 1. 6.824 Lab3: Fault-tolerant Key/Value Service
+2. HTTP - The Definitive Guide
+3. MongoDB Definitive Guide, 顺便温习数据库
+4. Pro Git
