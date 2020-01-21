@@ -1,3 +1,5 @@
+[TOC]
+
 # Kafka
 We’ve come to think of Kafka as a streaming platform: a system that lets you publish and subscribe to streams of data, store them, and process them. 
 
@@ -371,7 +373,8 @@ This property controls the maximum number of bytes the server will return per pa
 The amount of time a consumer can be out of contact with the brokers while still considered alive defaults to 3 seconds. If more than session.timeout.ms passes without the consumer sending a heartbeat to the group coordinator, it is considered dead and the group coordinator will trigger a rebalance of the consumer group to allocate partitions from the dead consumer to the other consumers in the group. This property is closely related to heartbeat.interval.ms. heartbeat.interval.ms con‐ trols how frequently the KafkaConsumer poll() method will send a heartbeat to the group coordinator, whereas session.timeout.ms controls how long a consumer can go without sending a heartbeat. Therefore, those two properties are typically modi‐ fied together—heatbeat.interval.ms must be lower than session.timeout.ms, and is usually set to one-third of the timeout value. So if session.timeout.ms is 3 sec‐ onds, heartbeat.interval.ms should be 1 second. Setting session.timeout.ms lower than the default will allow consumer groups to detect and recover from failure sooner, but may also cause unwanted rebalances as a result of consumers taking longer to complete the poll loop or garbage collection. Setting session.timeout.ms higher will reduce the chance of accidental rebalance, but also means it will take longer to detect a real failure.
 
 **auto.offset.reset**
-This property controls the behavior of the consumer when it starts reading a partition for which it doesn’t have a committed offset or if the committed offset it has is invalid (usually because the consumer was down for so long that the record with that offset was already aged out of the broker). The default is “latest,” which means that lacking a valid offset, the consumer will start reading from the newest records (records that were written after the consumer started running). The alternative is “earliest,” which means that lacking a valid offset, the consumer will read all the data in the partition, starting from the very beginning.
+
+This property controls the behavior of the consumer when it starts reading a partition for which it doesn’t have a committed offset or if the committed offset it has is invalid (usually because the consumer was down for so long that the record with that offset was already aged out of the broker). The default is “latest,” which means that lacking a valid offset, the consumer will start reading from the newest records (records that were written after the consumer started running). The alternative is “earliest,” which means that lacking a valid offset, the consumer will read all the data in the partition, starting from the very beginning. 
 
 **enable.auto.commit**
 
@@ -892,3 +895,101 @@ As we’ve seen, there are cases where even though we configured a topic to have
 If you would like to be sure that committed data is written to more than one replica, you need to set the minimum number of in-sync replicas to a higher value. If a topic has three replicas and you set min.insync.replicas to 2, then you can only write to a partition in the topic if at least two out of the three replicas are in-sync.
 
 When all three replicas are in-sync, everything proceeds normally. This is also true if one of the replicas becomes unavailable. However, if two out of three replicas are not available, the brokers will no longer accept produce requests. Instead, producers that attempt to send data will receive NotEnoughReplicasException. Consumers can con‐ tinue reading existing data. In effect, with this configuation, a single in-sync replica becomes read-only. This prevents the undesirable situation where data is produced and consumed, only to disappear when unclean election occurs. In order to recover from this read-only situation, we must make one of the two unavailable partitions available again (maybe restart the broker) and wait for it to catch up and get in-sync.
+
+## Using Producers in a Reliable System
+Even if we configure the brokers in the most reliable configuration possible, the sys‐ tem as a whole can still accidentally lose data if we don’t configure the producers to be reliable as well.
+Here are two example scenarios to demonstrate this:
+
+* We configured the brokers with three replicas, and unclean leader election is dis‐ abled. So we should never lose a single message that was committed to the Kafka cluster. However, we configured the producer to send messages with acks=1. We send a message from the producer and it was written to the leader, but not yet to the in-sync replicas. The leader sent back a response to the producer saying “Message was written successfully” and immediately crashes before the data was replicated to the other replicas. The other replicas are still considered in-sync (remember that it takes a while before we declare a replica out of sync) and one of them will become the leader. Since the message was not written to the replicas, it will be lost. But the producing application thinks it was written successfully. The system is consistent because no consumer saw the message (it was never committed because the replicas never got it), but from the producer perspective, a message was lost.
+
+* We configured the brokers with three replicas, and unclean leader election is dis‐ abled. We learned from our mistakes and started producing messages with acks=all. Suppose that we are attempting to write a message to Kafka, but the leader for the partition we are writing to just crashed and a new one is still get‐ ting elected. Kafka will respond with “Leader not Available.” At this point, if the producer doesn’t handle the error correctly and doesn’t retry until the write is successful, the message may be lost. Once again, this is not a broker reliability issue because the broker never got the message; and it is not a consistency issue because the consumers never got the message either. But if producers don’t han‐ dle errors correctly, they may cause message loss.
+
+So how do we avoid these tragic results? As the examples show, there are two impor‐ tant things that everyone who writes applications that produce to Kafka must pay attention to:
+* Use the correct acks configuration to match reliability requirements
+* Handle errors correctly both in configuration and in code
+  
+### Configuring Producer Retries
+The producer can handle retriable errors that are returned by the broker for you. When the producer sends messages to a broker, the broker can return either a success or an error code. Those error codes belong to two categories—errors that can be resolved after retrying and errors that won’t be resolved. For example, if the broker returns the error code LEADER_NOT_AVAILABLE, the producer can try sending the error again—maybe a new broker was elected and the second attempt will succeed. This means that LEADER_NOT_AVAILABLE is a retriable error. On the other hand, if a broker returns an INVALID_CONFIG exception, trying the same message again will not change the configuration. This is an example of a nonretriable error.
+
+通常retry要设置一个up limit, drop掉并不是一个很好的做法
+
+kafka保证message被store至少一次, 但不保证exactly once, 不过会有unique identifier 来检测重复
+
+
+### ffective strategy to avoid duplicate messages in kafka consumer
+kafka本身没有解决这个问题的能力, 总会产生duplicate, 因此需要在consumer和producer我们自己这一端解决才行
+
+The short answer is, no.
+
+What you're looking for is exactly-once processing. While it may often seem feasible, it should never be relied upon because there are always caveats.
+
+Even in order to attempt to prevent duplicates you would need to use the simple consumer. How this approach works is for each consumer, when a message is consumed from some partition, write the partition and offset of the consumed message to disk. When the consumer restarts after a failure, read the last consumed offset for each partition from disk.
+
+But even with this pattern the consumer can't guarantee it won't reprocess a message after a failure. What if the consumer consumes a message and then fails before the offset is flushed to disk? If you write to disk before you process the message, what if you write the offset and then fail before actually processing the message? This same problem would exist even if you were to commit offsets to ZooKeeper after every message.
+
+Exactly once semantics has two parts: avoiding duplication during data production and avoiding duplicates during data consumption.
+
+There are two approaches to getting exactly once semantics during data production:
+
+* Use a single-writer per partition and every time you get a network error check the last message in that partition to see if your last write succeeded
+* Include a primary key (UUID or something) in the message and deduplicate on the consumer.
+
+**Other applications make the messages idempotent—meaning that even if the same message is sent twice, it has no negative impact on correctness.**
+
+## Using Consumers in a Reliable System
+The main way consumers can lose messages is when committing offsets for events they’ve read but didn’t completely process yet. This way, when another consumer picks up the work, it will skip those events and they will never get processed. This is why paying careful attention to when and how offsets get committed is critical.
+
+### Important Consumer Configuration Properties for Reliable Processing
+There are four consumer configuration properties that are important to understand in order to configure your consumer for a desired reliability behavior.
+
+The first is group.id, as explained in great detail in Chapter 4. The basic idea is that if two consumers have the same group ID and subscribe to the same topic, each will be assigned a subset of the partitions in the topic and will therefore only read a subset of the messages individually (but all the messages will be read by the group as a whole). If you need a consumer to see, on its own, every single message in the topics it is sub‐ scribed to—it will need a unique group.id.
+
+The second relevant configuration is auto.offset.reset. This parameter controls what the consumer will do when no offsets were committed (e.g., when the consumer first starts) or when the consumer asks for offsets that don’t exist in the broker (Chap‐ ter 4 explains how this can happen). There are only two options here. If you choose earliest, the consumer will start from the beginning of the partition whenever it doesn’t have a valid offset. This can lead to the consumer processing a lot of messages twice, but it guarantees to minimize data loss. If you choose latest, the consumer will start at the end of the partition. This minimizes duplicate processing by the con‐ sumer but almost certainly leads to some messages getting missed by the consumer.
+
+The third relevant configuration is enable.auto.commit. This is a big decision: are you going to let the consumer commit offsets for you based on schedule, or are you planning on committing offsets manually in your code? The main benefit of auto‐ matic offset commits is that it’s one less thing to worry about when implementing your consumers. If you do all the processing of consumed records within the con‐ sumer poll loop, then the automatic offset commit guarantees you will never commit an offset that you didn’t process. (If you are not sure what the consumer poll loop is, refer back to Chapter 4.) The main drawbacks of automatic offset commits is that you have no control over the number of duplicate records you may need to process (because your consumer stopped after processing some records but before the auto‐ mated commit kicked in). If you do anything fancy like pass records to another thread to process in the background, the automatic commit may commit offsets for records the consumer has read but perhaps did not process yet.
+
+The fourth relevant configuration is tied to the third, and is auto.com mit.interval.ms. If you choose to commit offsets automatically, this configuration lets you configure how frequently they will be committed. The default is every five seconds. In general, committing more frequently adds some overhead but reduces the number of duplicates that can occur when a consumer stops.
+
+### Explicitly Committing Offsets in Consumers
+**Always commit offsets after events were processed**
+If you do all the processing within the poll loop and don’t maintain state between poll loops (e.g., for aggregation), this should be easy. You can use the auto-commit config‐ uration or commit events at the end of the poll loop.
+
+**Commit frequency is a trade-off between performance and number of duplicates in the event of a crash**
+
+Even in the simplest case where you do all the processing within the poll loop and don’t maintain state between poll loops, you can choose to commit multiple times within a loop (perhaps even after every event) or choose to only commit every several loops. Committing has some performance overhead (similar to produce with acks=all), so it all depends on the trade-offs that work for you.
+
+**Make sure you know exactly what offsets you are committing**
+
+A common pitfall when committing in the middle of the poll loop is accidentally committing the last offset read when polling and not the last offset processed. Remember that it is critical to always commit offsets for messages after they were processed—committing offsets for messages read but not processed can lead to the consumer missing messages. Chapter 4 has examples that show how to do just that.
+
+**Rebalances**
+
+When designing your application, remember that consumer rebalances will happen and you need to handle them properly. Chapter 4 contains a few examples, but the bigger picture is that this usually involves committing offsets before partitions are revoked and cleaning any state you maintain when you are assigned new partitions.
+
+**Consumers may need to retry**
+
+In some cases, after calling poll and processing records, some records are not fully processed and will need to be processed later. For example, you may try to write records from Kafka to a database, but find that the database is not available at that moment and you may wish to retry later. Note that unlike traditional pub/sub mes‐ saging systems, you commit offsets and not ack individual messages. This means that if you failed to process record #30 and succeeded in processing record #31, you should not commit record #31—this would result in committing all the records up to #31 including #30, which is usually not what you want. Instead, try following one of the following two patterns.
+
+One option, when you encounter a retriable error, is to commit the last record you processed successfully. Then store the records that still need to be processed in a buffer (so the next poll won’t override them) and keep trying to process the records. You may need to keep polling while trying to process all the records (refer to Chap‐ ter 4 for an explanation). You can use the consumer pause() method to ensure that additional polls won’t return additional data to make retrying easier.
+
+A second option is, when encountering a retriable error, to write it to a separate topic and continue. A separate consumer group can be used to handle retries from the retry topic, or one consumer can subscribe to both the main topic and to the retry topic, but pause the retry topic between retries. This pattern is similar to the dead- letter-queue system used in many messaging systems.
+
+**Consumers may need to maintain state**
+
+In some applications, you need to maintain state across multiple calls to poll. For example, if you want to calculate moving average, you’ll want to update the average after every time you poll Kafka for new events. If your process is restarted, you will need to not just start consuming from the last offset, but you’ll also need to recover the matching moving average. One way to do this is to write the latest accumulated value to a “results” topic at the same time you are committing the offset. This means that when a thread is starting up, it can pick up the latest accumulated value when it starts and pick up right where it left off. However, this doesn’t completely solve the problem, as Kafka does not offer transactions yet. You could crash after you wrote the latest result and before you committed offsets, or vice versa. In general, this is a rather complex problem to solve, and rather than solving it on your own, we recommend looking at a library like Kafka Streams, which provides high level DSL-like APIs for aggregation, joins, windows, and other complex analytics.
+
+**Handling long processing times**
+
+Sometimes processing records takes a long time. Maybe you are interacting with a service that can block or doing a very complex calculation, for example. Remember that in some versions of the Kafka consumer, you can’t stop polling for more than a few seconds (see Chapter 4 for details). Even if you don’t want to process additional records, you must continue polling so the client can send heartbeats to the broker. A common pattern in these cases is to hand off the data to a thread-pool when possible with multiple threads to speed things up a bit by processing in parallel. After handing off the records to the worker threads, you can pause the consumer and keep polling without actually fetching additional data until the worker threads finish. Once they are done, you can resume the consumer. Because the consumer never stops polling, the heartbeat will be sent as planned and rebalancing will not be triggered.
+
+**Exactly-once delivery**
+Some applications require not just at-least-once semantics (meaning no data loss), but also exactly-once semantics. While Kafka does not provide full exactly-once sup‐ port at this time, consumers have few tricks available that allow them to guarantee that each message in Kafka will be written to an external system exactly once (note that this doesn’t handle duplications that may have occurred while the data was pro‐ duced into Kafka).
+
+The easiest and probably most common way to do exactly-once is by writing results to a system that has some support for unique keys. This includes all key-value stores, all relational databases, Elasticsearch, and probably many more data stores. When writing results to a system like a relational database or Elastic search, either the record itself contains a unique key (this is fairly common), or you can create a unique key using the topic, partition, and offset combination, which uniquely identifies a Kafka record. If you write the record as a value with a unique key, and later you acci‐ dentally consume the same record again, you will just write the exact same key and value. The data store will override the existing one, and you will get the same result that you would without the accidental duplicate. This pattern is called idempotent writes and is very common and useful.
+
+Another option is available when writing to a system that has transactions. Relational databases are the easiest example, but HDFS has atomic renames that are often used for the same purpose. The idea is to write the records and their offsets in the same transaction so they will be in-sync. When starting up, retrieve the offsets of the latest records written to the external store and then use consumer.seek() to start consuming again from those offsets. Chapter 4 contains an example of how this can be done.
+
+# Question:
+1. 怎么rebalance的, 在poll的过程中, partition down了, poll不到然后就自动换了?
+
+
