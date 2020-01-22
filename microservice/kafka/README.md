@@ -989,6 +989,49 @@ The easiest and probably most common way to do exactly-once is by writing result
 
 Another option is available when writing to a system that has transactions. Relational databases are the easiest example, but HDFS has atomic renames that are often used for the same purpose. The idea is to write the records and their offsets in the same transaction so they will be in-sync. When starting up, retrieve the offsets of the latest records written to the external store and then use consumer.seek() to start consuming again from those offsets. Chapter 4 contains an example of how this can be done.
 
+# Building Data Pipelines
+The main value Kafka provides to data pipelines is its ability to serve as a very large, reliable buffer between various stages in the pipeline, effectively decoupling produc‐ ers and consumers of data within the pipeline. This decoupling, combined with relia‐ bility security and efficiency, makes Kafka a good fit for most data pipelines.
+
+## Considerations When Building Data Pipelines
+
+### Timeliness
+Some systems expect their data to arrive in large bulks once a day; others expect the data to arrive a few milliseconds after it is generated. A useful way to look at Kafka in this context is that it acts as a giant buffer that decou‐ ples the time-sensitivity requirements between producers and consumers. Producers can write events in real-time while consumers process batches of events, or vice versa. This also makes it trivial to apply back-pressure—Kafka itself applies back-pressure on producers (by delaying acks when needed) since consumption rate is driven entirely by the consumers.
+
+### Reliability
+We want to avoid single points of failure and allow for fast and automatic recovery from all sorts of failure events. Data pipelines are often the way data arrives to busi‐ ness critical systems; failure for more than a few seconds can be hugely disruptive, especially when the timeliness requirement is closer to the few-milliseconds end of the spectrum. Another important consideration for reliability is delivery guarantees —some systems can afford to lose data, but most of the time there is a requirement for at-least-once delivery, which means every event from the source system will reach its destination, but sometimes retries will cause duplicates. Often, there is even a requirement for exactly-once delivery—every event from the source system will reach the destination with no possibility for loss or duplication.
+
+We discussed Kafka’s availability and reliability guarantees in depth in Chapter 6. As we discussed, Kafka can provide at-least-once on its own, and exactly-once when combined with an external data store that has a transactional model or unique keys. Since many of the end points are data stores that provide the right semantics for exactly-once delivery, a Kafka-based pipeline can often be implemented as exactly- once. It is worth highlighting that Kafka’s Connect APIs make it easier for connectors to build an end-to-end exactly-once pipeline by providing APIs for integrating with the external systems when handling offsets. Indeed, many of the available open source connectors support exactly-once delivery.
+
+### High and Varying Throughput
+The data pipelines we are building should be able to scale to very high throughputs as is often required in modern data systems. Even more importantly, they should be able to adapt if throughput suddenly increases.
+
+With Kafka acting as a buffer between producers and consumers, we no longer need to couple consumer throughput to the producer throughput. We no longer need to implement a complex back-pressure mechanism because if producer throughput exceeds that of the consumer, data will accumulate in Kafka until the consumer can catch up. Kafka’s ability to scale by adding consumers or producers independently allows us to scale either side of the pipeline dynamically and independently to match the changing requirements.
+
+### Data Formats
+One of the most important considerations in a data pipeline is reconciling different data formats and data types. The data types supported vary among different databases and other storage systems. You may be loading XMLs and relational data into Kafka, using Avro within Kafka, and then need to convert data to JSON when writing it to Elasticsearch, to Parquet when writing to HDFS, and to CSV when writing to S3.
+
+Kafka itself and the Connect APIs are completely agnostic when it comes to data for‐ mats. As we’ve seen in previous chapters, producers and consumers can use any seri‐ alizer to represent data in any format that works for you. Kafka Connect has its own in-memory objects that include data types and schemas, but as we’ll soon discuss, it allows for pluggable converters to allow storing these records in any format. This means that no matter which data format you use for Kafka, it does not restrict your choice of connectors.
+
+### Transformations
+Transformations are more controversial than other requirements. There are generally two schools of building data pipelines: ETL and ELT. ETL, which stands for Extract- Transform-Load, means the data pipeline is responsible for making modifications to the data as it passes through. It has the perceived benefit of saving time and storage because you don’t need to store the data, modify it, and store it again. 
+
+ELT stands for Extract-Load-Transform and means the data pipeline does only mini‐ mal transformation (mostly around data type conversion), with the goal of making sure the data that arrives at the target is as similar as possible to the source data.
+
+### Security
+* Can we make sure the data going through the pipe is encrypted? This is mainly a concern for data pipelines that cross datacenter boundaries.
+* Who is allowed to make modifications to the pipelines?
+* If the data pipeline needs to read or write from access-controlled locations, can it authenticate properly?
+
+## Kafka Connect
+Kafka Connect ships with Apache Kafka, so there is no need to install it separately. For production use, especially if you are planning to use Connect to move large amounts of data or run many connectors, you should run Connect on separate servers. In this case, install Apache Kafka on all the machines, and simply start the brokers on some servers and start Connect on other servers.
+Starting a Connect worker is very similar to starting a broker—you call the start script with a properties file:
+
+```bin/connect-distributed.sh config/connect-distributed.properties```
+
+There are a few key configurations for Connect workers:
+* bootstrap.servers:: A list of Kafka brokers that Connect will work with. Connectors will pipe their data either to or from those brokers. You don’t need to specify every broker in the cluster, but it’s recommended to specify at least three.
+* group.id:: All workers with the same group ID are part of the same Connect cluster. A connector started on the cluster will run on any worker and so will its tasks.
+* key.converter and value.converter:: Connect can handle multiple data for‐ mats stored in Kafka. The two configurations set the converter for the key and value part of the message that will be stored in Kafka. The default is JSON format using the JSONConverter included in Apache Kafka. These configurations can also be set to AvroConverter, which is part of the Confluent Schema Registry.
 # Question:
 1. 怎么rebalance的, 在poll的过程中, partition down了, poll不到然后就自动换了?
 
