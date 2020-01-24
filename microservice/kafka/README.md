@@ -1162,6 +1162,11 @@ This type of multiphase processing is very familiar to those who write map-reduc
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_stream_p3.png.png" width="700" height="500">
 </div>
 
+### Processing with External Lookup: Stream-Table Join
+
+
+
+
 # Question:
 1. 怎么rebalance的, 在poll的过程中, partition down了, poll不到然后就自动换了?
 
