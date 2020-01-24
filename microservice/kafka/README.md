@@ -1032,6 +1032,136 @@ There are a few key configurations for Connect workers:
 * bootstrap.servers:: A list of Kafka brokers that Connect will work with. Connectors will pipe their data either to or from those brokers. You don’t need to specify every broker in the cluster, but it’s recommended to specify at least three.
 * group.id:: All workers with the same group ID are part of the same Connect cluster. A connector started on the cluster will run on any worker and so will its tasks.
 * key.converter and value.converter:: Connect can handle multiple data for‐ mats stored in Kafka. The two configurations set the converter for the key and value part of the message that will be stored in Kafka. The default is JSON format using the JSONConverter included in Apache Kafka. These configurations can also be set to AvroConverter, which is part of the Confluent Schema Registry.
+
+## A Deeper Look at Connect
+The best way to understand workers is to realize that connectors and tasks are responsible for the “moving data” part of data integration, while the workers are responsible for the REST API, configuration management, reliability, high availabil‐ ity, scaling, and load balancing.
+
+This separation of concerns is the main benefit of using Connect APIs versus the clas‐ sic consumer/producer APIs. Experienced developers know that writing code that reads data from Kafka and inserts it into a database takes maybe a day or two, but if you need to handle configuration, errors, REST APIs, monitoring, deployment, scal‐ ing up and down, and handling failures, it can take a few months to get right. If you implement data copying with a connector, your connector plugs into workers that handle a bunch of complicated operational issues that you don’t need to worry about.
+
+# Cross-Cluster Data Mirroring
+In this chapter we will discuss cross-cluster mirroring of all or part of the data. We’ll start by discussing some of the common use cases for cross-cluster mirroring. Then we’ll show a few architectures that are used to implement these use cases and discuss the pros and cons of each architecture pattern. We’ll then discuss MirrorMaker itself and how to use it. 
+
+## Use Cases of Cross-Cluster Mirroring
+The following is a list of examples of when cross-cluster mirroring would be used.
+
+**Regional and central clusters**
+
+In some cases, the company has one or more datacenters in different geographi‐ cal regions, cities, or continents. Each datacenter has its own Kafka cluster. Some applications can work just by communicating with the local cluster, but some applications require data from multiple datacenters (otherwise, you wouldn’t be looking at cross data-center replication solutions). There are many cases when this is a requirement, but the classic example is a company that modifies prices based on supply and demand. This company can have a datacenter in each city in which it has a presence, collects information about local supply and demand, and adjusts prices accordingly. All this information will then be mirrored to a central cluster where business analysts can run company-wide reports on its revenue.
+
+**Redundancy (DR)**
+
+The applications run on just one Kafka cluster and don’t need data from other locations, but you are concerned about the possibility of the entire cluster becoming unavailable for some reason. You’d like to have a second Kafka cluster with all the data that exists in the first cluster, so in case of emergency you can direct your applications to the second cluster and continue as usual.
+
+**Cloud migrations**
+
+Many companies these days run their business in both an on-premise datacenter and a cloud provider. Often, applications run on multiple regions of the cloud provider, for redundancy, and sometimes multiple cloud providers are used. In these cases, there is often at least one Kafka cluster in each on-premise datacenter and each cloud region. Those Kafka clusters are used by applications in each datacenter and region to transfer data efficiently between the datacenters. For example, if a new application is deployed in the cloud but requires some data that is updated by applications running in the on-premise datacenter and stored in an on-premise database, you can use Kafka Connect to capture database changes to the local Kafka cluster and then mirror these changes to the cloud Kafka cluster where the new application can use them. This helps control the costs of cross- datacenter traffic as well as improve governance and security of the traffic.
+
+We’ll talk more about tuning Kafka for cross-datacenter communication, but the fol‐ lowing principles will guide most of the architectures we’ll discuss next:
+
+* No less than one cluster per datacenter
+* Replicate each event exactly once (barring retries due to errors) between each pair of datacenters
+* When possible, consume from a remote datacenter rather than produce to a remote datacenter
+
+# Stream Processing
+
+## What Is Stream Processing?
+Let’s start at the beginning: What is a data stream (also called an event stream or streaming data)? First and foremost, a data stream is an abstraction representing an unbounded dataset. Unbounded means infinite and ever growing. The dataset is unbounded because over time, new records keep arriving. This definition is used by Google, Amazon, and pretty much everyone else.
+
+Note that this simple model (a stream of events) can be used to represent pretty much every business activity we care to analyze. We can look at a stream of credit card transactions, stock trades, package deliveries, network events going through a switch, events reported by sensors in manufacturing equipment, emails sent, moves in a game, etc. The list of examples is endless because pretty much everything can be seen as a sequence of events.
+
+There are few other attributes of event streams model, in addition to their unboun‐ ded nature:
+
+**Event streams are ordered**
+
+There is an inherent notion of which events occur before or after other events. This is clearest when looking at financial events. A sequence in which I first put money in my account and later spend the money is very different from a sequence at which I first spend the money and later cover my debt by depositing money back. The latter will incur overdraft charges while the former will not. Note that this is one of the differences between an event stream and a database table—records in a table are always considered unordered and the “order by” clause of SQL is not part of the relational model; it was added to assist in reporting.
+
+**Immutable data records**
+
+Events, once occured, can never be modified. A financial transaction that is can‐ celled does not disapear. Instead, an additional event is written to the stream, recording a cancellation of previous transaction. When a customer returns mer‐ chandise to a shop, we don’t delete the fact that the merchandise was sold to him earlier, rather we record the return as an additional event. This is another differ‐ ence between a data stream and a database table—we can delete or update records in a table, but those are all additional transactions that occur in the data‐ base, and as such can be recorded in a stream of events that records all transac‐ tions. If you are familiar with binlogs, WALs, or redo logs in databases you can see that if we insert a record into a table and later delete it, the table will no longer contain the record, but the redo log will contain two transactions—the insert and the delete.
+
+**Event streams are replayable**
+
+This is a desirable property. While it is easy to imagine nonreplayable streams (TCP packets streaming through a socket are generally nonreplayable), for most business applications, it is critical to be able to replay a raw stream of events that occured months (and sometimes years) earlier. This is required in order to cor‐ rect errors, try new methods of analysis, or perform audits. This is the reason we believe Kafka made stream processing so successful in modern businesses—it allows capturing and replaying a stream of events. Without this capability, stream processing would not be more than a lab toy for data scientists.
+
+
+**Stream processing**
+
+This is a contentious and nonblocking option. Filling the gap between the request-response world where we wait for events that take two milliseconds to process and the batch processing world where data is processed once a day and takes eight hours to complete. Most business processes don’t require an immedi‐ ate response within milliseconds but can’t wait for the next day either. Most busi‐ ness processes happen continuously, and as long as the business reports are updated continuously and the line of business apps can continuously respond, the processing can proceed without anyone waiting for a specific response within milliseconds. Business processes like alerting on suspicious credit transactions or network activity, adjusting prices in real-time based on supply and demand, or tracking deliveries of packages are all natural fit for continuous but nonblocking processing.
+
+It is important to note that the definition doesn’t mandate any specific framework, API, or feature. As long as you are continuously reading data from an unbounded dataset, doing something to it, and emitting output, you are doing stream processing. But the processing has to be continuous and ongoing. A process that starts every day at 2:00 A.M., reads 500 records from the stream, outputs a result, and goes away doesn’t quite cut it as far as stream processing goes.
+
+## Stream-Processing Concepts
+
+### Time
+**Event time**
+
+This is the time the events we are tracking occurred and the record was created— the time a measurement was taken, an item at was sold at a shop, a user viewed a page on our website, etc. In versions 0.10.0 and later, Kafka automatically adds the current time to producer records at the time they are created. If this does not match your application’s notion of event time, such as in cases where the Kafka record is created based on a database record some time after the event occurred, you should add the event time as a field in the record itself. Event time is usually the time that matters most when processing stream data.
+
+**Log append time**
+
+This is the time the event arrived to the Kafka broker and was stored there. In versions 0.10.0 and higher, Kafka brokers will automatically add this time to records they receive if Kafka is configured to do so or if the records arrive from older producers and contain no timestamps. This notion of time is typically less relevant for stream processing, since we are usually interested in the times the events occurred. For example, if we calculate number of devices produced per day, we want to count devices that were actually produced on that day, even if there were network issues and the event only arrived to Kafka the following day. However, in cases where the real event time was not recorded, log append time can still be used consistently because it does not change after the record was created.
+
+**Processing time**
+
+This is the time at which a stream-processing application received the event in order to perform some calculation. This time can be milliseconds, hours, or days after the event occurred. This notion of time assigns different timestamps to the same event depending on exactly when each stream processing application hap‐ pened to read the event. It can even differ for two threads in the same applica‐ tion! Therefore, this notion of time is highly unreliable and best avoided.
+
+### State
+As long as you only need to process each event individually, stream processing is a very simple activity. For example, if all you need to do is read a stream of online shop‐ ping transactions from Kafka, find the transactions over $10,000 and email the rele‐ vant salesperson, you can probably write this in just few lines of code using a Kafka consumer and SMTP library.
+
+Stream processing becomes really interesting when you have operations that involve multiple events: counting the number of events by type, moving averages, joining two streams to create an enriched stream of information, etc. In those cases, it is not enough to look at each event by itself; you need to keep track of more information— how many events of each type did we see this hour, all events that require joining, sums, averages, etc. We call the information that is stored between events a state.
+
+It is often tempting to store the state in variables that are local to the stream- processing app, such as a simple hash-table to store moving counts. In fact, we did just that in many examples in this book. However, this is not a reliable approach for managing state in stream processing because when the stream-processing application is stopped, the state is lost, which changes the results. This is usually not the desired outcome, so care should be taken to persist the most recent state and recover it when starting the application.
+Stream processing refers to several types of state:
+
+**Local or internal state**
+
+State that is accessible only by a specific instance of the stream-processing appli‐ cation. This state is usually maintained and managed with an embedded, in- memory database running within the application. The advantage of local state is that it is extremely fast. The disadvantage is that you are limited to the amount of memory available. As a result, many of the design patterns in stream processing focus on ways to partition the data into substreams that can be processed using a limited amount of local state.
+
+**External state**
+
+State that is maintained in an external datastore, often a NoSQL system like Cas‐ sandra. The advantages of an external state are its virtually unlimited size and the fact that it can be accessed from multiple instances of the application or even from different applications. The downside is the extra latency and complexity introduced with an additional system. Most stream-processing apps try to avoid having to deal with an external store, or at least limit the latency overhead by caching information in the local state and communicating with the external store as rarely as possible. This usually introduces challenges with maintaining consis‐ tency between the internal and external state.
+
+### Stream-Table Duality
+We are all familiar with database tables. A table is a collection of records, each identi‐ fied by its primary key and containing a set of attributes as defined by a schema. Table records are mutable (i.e., tables allow update and delete operations). Querying a table allows checking the state of the data at a specific point in time. For example, by querying the CUSTOMERS_CONTACTS table in a database, we expect to find cur‐ rent contact details for all our customers. Unless the table was specifically designed to include history, we will not find their past contacts in the table.
+
+Unlike tables, streams contain a history of changes. Streams are a string of events wherein each event caused a change. A table contains a current state of the world, which is the result of many changes. From this description, it is clear that streams and tables are two sides of the same coin—the world always changes, and sometimes we are interested in the events that caused those changes, whereas other times we are interested in the current state of the world. Systems that allow you to transition back and forth between the two ways of looking at data are more powerful than systems that support just one.
+
+In order to convert a table to a stream, we need to capture the changes that modify the table. Take all those insert, update, and delete events and store them in a stream. Most databases offer change data capture (CDC) solutions for capturing these changes and there are many Kafka connectors that can pipe those changes into Kafka where they will be available for stream processing.
+
+In order to convert a stream to a table, we need to apply all the changes that the stream contains. This is also called materializing the stream. We create a table, either in memory, in an internal state store, or in an external database, and start going over all the events in the stream from beginning to end, changing the state as we go. When we finish, we have a table representing a state at a specific time that we can use.
+
+### Time Windows
+Most operations on streams are windowed operations—operating on slices of time: moving averages, top products sold this week, 99th percentile load on the system, etc. Join operations on two streams are also windowed—we join events that occurred at the same slice of time. Very few people stop and think about the type of window they want for their operations. For example, when calculating moving averages, we want to know:
+* Size of the window: do we want to calculate the average of all events in every five- minute window? Every 15-minute window? Or the entire day? Larger windows are smoother but they lag more—if price increases, it will take longer to notice than with a smaller window.
+* How often the window moves (advance interval): five-minute averages can update every minute, second, or every time there is a new event. When the advance interval is equal to the window size, this is sometimes called a tumbling window. When the window moves on every record, this is sometimes called a sliding window.
+* How long the window remains updatable: our five-minute moving average calcu‐ lated the average for 00:00-00:05 window. Now an hour later, we are getting a few more results with their event time showing 00:02. Do we update the result for the 00:00-00:05 period? Or do we let bygones be bygones? Ideally, we’ll be able to define a certain time period during which events will get added to their respec‐ tive time-slice. For example, if the events were up to four hours late, we should recalculate the results and update. If events arrive later than that, we can ignore them.
+
+## Stream-Processing Design Patterns
+
+### Single-Event Processing
+The most basic pattern of stream processing is the processing of each event in isola‐ tion. This is also known as a map/filter pattern because it is commonly used to filter unnecessary events from the stream or transform each event. (The term “map” is based on the map/reduce pattern in which the map stage transforms events and the reduce stage aggregates them.)
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_stream_p1.png.png" width="700" height="500">
+</div>
+
+### Processing with Local State
+Most stream-processing applications are concerned with aggregating information, especially time-window aggregation. An example of this is finding the minimum and maximum stock prices for each day of trading and calculating a moving average.
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_stream_p1.png.png" width="700" height="500">
+</div>
+
+### Multiphase Processing/Repartitioning
+Local state is great if you need a group by type of aggregate. But what if you need a result that uses all available information? For example, suppose we want to publish the top 10 stocks each day—the 10 stocks that gained the most from opening to clos‐ ing during each day of trading. Obviously, nothing we do locally on each application instance is enough because all the top 10 stocks could be in partitions assigned to other instances. What we need is a two-phase approach. First, we calculate the daily gain/loss for each stock symbol. We can do this on each instance with a local state. Then we write the results to a new topic with a single partition. This partition will be read by a single application instance that can then find the top 10 stocks for the day. The second topic, which contains just the daily summary for each stock symbol, is obviously much smaller with significantly less traffic than the topics that contain the trades themselves, and therefore it can be processed by a single instance of the application.
+
+This type of multiphase processing is very familiar to those who write map-reduce code, where you often have to resort to multiple reduce phases. If you’ve ever written map-reduce code, you’ll remember that you needed a separate app for each reduce step. Unlike MapReduce, most stream-processing frameworks allow including all steps in a single app, with the framework handling the details of which application instance (or worker) will run reach step.
+
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_stream_p3.png.png" width="700" height="500">
+</div>
+
 # Question:
 1. 怎么rebalance的, 在poll的过程中, partition down了, poll不到然后就自动换了?
 
