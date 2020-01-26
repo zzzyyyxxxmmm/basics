@@ -35,11 +35,14 @@
 2. The Linux Programming Interface 基于这本书开始学习linux
 3. Intellij Plugin Development √
 4. 鸟哥 √
-5. Kafka definitive guide
+5. Kafka definitive guide √
 6. 基于反射实现一个go sort library. TDD开发
 
 ### FEB, 2020
 1. 6.824 Lab3: Fault-tolerant Key/Value Service
 2. HTTP - The Definitive Guide
-3. MongoDB Definitive Guide, 顺便温习数据库
-4. Pro Git
+3. Pro Git
+4. Docker Kernel 
+
+### MAR, 2019
+1. MongoDB Definitive Guide, 顺便温习数据库
