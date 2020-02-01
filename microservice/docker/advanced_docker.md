@@ -265,3 +265,23 @@ stopContainer 的主要步骤如下。
 ## 实现通过容器制作镜像
 1. 为每个容器分配单独的隔离文件
 2. 修改mydocker commit命令, 实现对不同容器进行打包镜像的功能
+
+```
+sudo ./main run -d --name container1 -v /root/from1:/to1 busybox top
+sudo ./main run -d --name container2 -v /root/from2:/to2 busybox top
+
+tree writeLayer
+
+sudo ./main exec container1 sh
+echo -e "hello container1" >> /to1/test1.txt
+
+mkdir to1-1
+echo -e "hello container1,to1-1,test1" > /to1-1/test1.txt
+
+sudo ./main commit container1 image1
+
+sudo ./main run -d --name container3 -v /root/from1:/to1 container1 top
+sudo ./main exec container2 sh
+```
+
+# 容器网络

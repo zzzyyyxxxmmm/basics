@@ -26,23 +26,25 @@
 
 ### DEC, 2019
 1. K8S源码级学习 ○ suspend中,等待Docker kernel结束
-2. 6.824 Lab 2: Raft
+2. 6.824 Lab 2: Raft √
 3. TCP/IP Illustrated (真的是很好的一本书!!!解决了我很多年的一些疑惑) √ 还差所有TCP章节, 等以后看到unix network的时候再看
 4. go的一些高级特性 √ 
 
 ### JAN, 2020
-1. Docker Kernel 
-2. The Linux Programming Interface 基于这本书开始学习linux
+1. Docker Kernel (容器网络前所有部分) √
+2. The Linux Programming Interface 基于这本书开始学习linux ○
 3. Intellij Plugin Development √
 4. 鸟哥 √
 5. Kafka definitive guide √
-6. 基于反射实现一个go sort library. TDD开发
+6. 基于反射实现一个go sort library. TDD开发 √
 
 ### FEB, 2020
 1. 6.824 Lab3: Fault-tolerant Key/Value Service
 2. HTTP - The Definitive Guide
-3. Pro Git
-4. Docker Kernel 
+3. Pro Git 
+4. Docker Kernel
+5. The Linux Programming Interface 
+6. Pratical Vim
 
 ### MAR, 2019
 1. MongoDB Definitive Guide, 顺便温习数据库
