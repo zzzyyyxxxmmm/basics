@@ -120,6 +120,19 @@ Local ref configured for 'git push':
 master pushes to master (up to date)
 ```
 
+## git branch
+
+```
+jikangs-MBP:gitTest jikangwang$ git branch -d branch1
+Deleted branch branch1 (was 75765bf).
+
+jikangs-MBP:gitTest jikangwang$ git branch -v
+  branch3 d1cc24e branch3
+* master  b20bb00 [ahead 4] Merge branch 'branch1'
+
+
+```
+
 
 # .gitignore
 ```

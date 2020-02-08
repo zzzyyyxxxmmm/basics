@@ -393,71 +393,6 @@ checksum就是所有数据加到一起 然后反转 010 -> 101, 接收端接收�
 3. No connection state. 通常可以比TCP支持更多的client
 4. Small packet header overhead. The TCP segment has 20 bytes of header over- head in every segment, whereas UDP has only 8 bytes of overhead.
 
-
-
-# HTTP
-The HyperText Transfer Protocol (HTTP), the Web’s application-layer protocol, is at the heart of the Web. HTTP is implemented in two programs: a client program and a server program. The client program and server program, executing on different end systems, talk to each other by exchanging HTTP messages. HTTP defines the structure of these messages and how the client and server exchange the messages.
-
-It is important to note that the server sends requested files to clients without stor- ing any state information about the client. If a particular client asks for the same object twice in a period of a few seconds, the server does not respond by saying that it just served the object to the client; instead, the server resends the object, as it has com- pletely forgotten what it did earlier. Because an HTTP server maintains no informa- tion about the clients, HTTP is said to be a **stateless protocol**.
-
-### request 10 images
-normally build 5-10 parallel TCP connections
-
-## HTTP Request Message
-```
-GET /somedir/page.html HTTP/1.1             --request line (method, URL, HTTP version)
-Host: www.someschool.edu                    --request header
-Connection: close 
-User-agent: Mozilla/5.0 
-Accept-language: fr
-                                            -- blank line
-                                            --request body
-```
-
-The HEAD method is similar to the GET method. When a server receives a request with the HEAD method, it responds with an HTTP message but it leaves out the requested object. Application developers often use the HEAD method for debug- ging. The PUT method is often used in conjunction with Web publishing tools. It allows a user to upload an object to a specific path (directory) on a specific Web server. The PUT method is also used by applications that need to upload objects to Web servers. The DELETE method allows a user, or an application, to delete an object on a Web server.
-
-## HTTP Response Message
-```
-HTTP/1.1 200 OK                             --(protocal verion, status code, corresponding status message)            
-Connection: close
-Date: Tue, 09 Aug 2011 15:44:04 GMT
-Server: Apache/2.2.3 (CentOS)
-Last-Modified: Tue, 09 Aug 2011 15:11:03 GMT Content-Length: 6821
-Content-Type: text/html
-
-(data data data data data ...)
-```
-### http response code
-* 1** : 服务器收到请求，需要请求者继续执行操作**
-
-* 2** : 成功**
-
-* 3** : 重定向**
-
-**301 Moved Permanently:** Requested object has been permanently moved; the new URL is specified in Location:header of the response message.The client software will automatically retrieve the new URL.
-
-**304 Not Modified**
-
-* 4** : 客户端错误，请求包含语法错误或无法完成请求
-
-**400 Bad Request:** This is a generic error code indicating that the request could not be understood by the server.
-
-**404 Not Found:** The requested document does not exist on this server.
-
-
-* 5** : 服务器错误
-
-**505 HTTP Version Not Supported:** The requested HTTP protocol
-version is not supported by the server.
-
-## Cache
-
-client first sends a request, it will first check whether the local storage (local storage is established by local ISP)has cache or not. If yes, it just return the cache in response. If not, it will send the request to the server, and when response return, it will be cached for the next time request. The response has a header called Last-Modified which indicate the last time the object was modified.
-
-What if the content they cache is modified on server? The send a request with a header called If-modified-since. The request will go to the server and check if the Last-Modified is same with If-modified-since. If yes, it will return 304 to tell the client to get the cache directly. If not, it will return a normall response and the response will be cached again.
-
-[https建立过程](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/https.png)
-
 # File Transfer: FTP
 The most striking **difference** is that FTP uses two parallel TCP connections to transfer a file, a **control connection** and a d**ata connection**. The control connection is used for sending control information between the two hosts—information such as user identification, password, commands to change remote directory, and commands to “put” and “get” files. The data connection is used to actually send a file. 
 
@@ -580,45 +515,6 @@ With port numbers assigned to UDP sockets, we can now precisely describe UDP mul
 
 5. 只有一个在监听socket，只做监听；
 6. 接收到(accept)连接后把该请求分配到线程或子进程(fork)去处理；
-
-
-# URL vs URI
-For starters, URI stands for uniform resource identifier and URL stands for uniform resource locator.
-
-Most of the confusion with these two is because they are related. You see, a URI can be a name, locator, or both for an online resource where a URL is just the locator. URLs are a subset of URIs. 
-
-# Cookie & Session
-客户想去银存钱，如果他是第一次去，那么银行就需要给他开户，办一张卡给他，这里银行就类似于server，客户就是client，client获得了银行给他的卡，那么下次他再去的时候，
-就不需要重新办卡存钱了，这个卡就是这个人在银行的身份凭证，只要出示这个卡，银行就可以帮他存钱。
-
-同时，银行这里会有这个人的账户，如果这个人存完钱了，还想要继续转钱，通常我们是在柜台（session）进行操作，在出示银行卡之后，柜台会暂时帮你进行操作，这时候客户就可以一直进行操作而不需要每次都出示银行卡之后才能进行操作。
-
-另外，如果这时候这个人离开了，第二天再来重新进行操作，依旧需要重新出示银行卡，因为过了这么久，你和柜台建立的关系已经失效了，这时候需要重新出示银行卡。
-
-## Cookie
-当client向server发送请求的时候，server会创建一个cookie，并通过response发送给client，client会保存cookie，下次client发送的request里会附加上这个server的所有cookie,这时候server就会读取cookie里的信息，而不用每次都需要client发送所有信息。
-
-Cookie的缺点：
-
-1. Cookie数量和长度的限制。每个domain最多只能有20条cookie，每个cookie长度不能超过4KB，否则会被截掉。
-2. 安全性问题。如果cookie被人拦截了，那人就可以取得所有的session信息。即使加密也与事无补，因为拦截者并不需要知道cookie的意义，他只要原样转发cookie就可以达到目的了。
-3. 有些状态不可能保存在客户端。例如，为了防止重复提交表单，我们需要在服务器端保存一个计数器。如果我们把这个计数器保存在客户端，那么它起不到任何作用。
-
-常见的remember me就是用cookie实现的
-
-## Session
-
-当client访问server时，server通过getSession方法创建或获得session，如果创建了一个session，server会同时创建一个jsessionId的cookie，里面包含了这个session的id，下次client发送请求时候，getsession会通过jsessionId获得对应的session。
-
-session会针对不同浏览器持有多份，因此当你打开不同浏览器时，实际上不会保留上一个浏览器的内容，同样，携带不同的cookie也会
-
-Session默认的生命周期是20分钟，可以手动设置更长或更短的时间。
-
-持久化登录用session
-
-## [Encoding vs. Encryption vs. Hashing vs. Obfuscation](https://danielmiessler.com/study/encoding-encryption-hashing-obfuscation/#summary)
-
-
 
 # 科普
 

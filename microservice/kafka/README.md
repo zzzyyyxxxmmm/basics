@@ -756,7 +756,7 @@ Clients typically cache this information and use it to direct produce and fetch 
 refresh this information (refresh intervals are controlled by the meta data.max.age.ms configuration parameter) by sending another metadata request so they know if the topic metadata changed—for example, if a new broker was added or some replicas were moved to a new broker (Figure 5-2). In addition, if a client receives the “Not a Leader” error to one of its requests, it will refresh its metadata before trying to send the request again, since the error indicates that the client is using outdated information and is sending requests to the wrong broker.
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/1.png" width="700" height="500">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_metadata.png" width="700" height="500">
 </div>
 
 ### Produce Requests
@@ -1142,14 +1142,14 @@ Most operations on streams are windowed operations—operating on slices of time
 The most basic pattern of stream processing is the processing of each event in isola‐ tion. This is also known as a map/filter pattern because it is commonly used to filter unnecessary events from the stream or transform each event. (The term “map” is based on the map/reduce pattern in which the map stage transforms events and the reduce stage aggregates them.)
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_stream_p1.png.png" width="700" height="500">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_stream_p1.png" width="700" height="500">
 </div>
 
 ### Processing with Local State
 Most stream-processing applications are concerned with aggregating information, especially time-window aggregation. An example of this is finding the minimum and maximum stock prices for each day of trading and calculating a moving average.
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_stream_p1.png.png" width="700" height="500">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_stream_p2.png" width="700" height="500">
 </div>
 
 ### Multiphase Processing/Repartitioning
@@ -1159,7 +1159,7 @@ This type of multiphase processing is very familiar to those who write map-reduc
 
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_stream_p3.png.png" width="700" height="500">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/kafka_stream_p3.png" width="700" height="500">
 </div>
 
 ### Processing with External Lookup: Stream-Table Join
