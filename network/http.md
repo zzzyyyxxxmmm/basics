@@ -109,7 +109,7 @@ version is not supported by the server.
 # TCP and HTTP
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_message.png.png">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_message.png">
 </div>
 
 
