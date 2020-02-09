@@ -39,12 +39,17 @@
 6. 基于反射实现一个go sort library. TDD开发 √
 
 ### FEB, 2020
-1. 6.824 Lab3: Fault-tolerant Key/Value Service
-2. HTTP - The Definitive Guide
-3. Pro Git 
-4. Docker Kernel
-5. The Linux Programming Interface 
-6. Pratical Vim
+1. HTTP - The Definitive Guide
+2. Pro Git 
+3. Docker Kernel
+4. The Linux Programming Interface 
+5. Pratical Vim
 
-### MAR, 2019
+### MAR, 2020
 1. MongoDB Definitive Guide, 顺便温习数据库
+2. 6.824 Lab3: Fault-tolerant Key/Value Service
+
+### April, 2020
+1. 完成TCP/IP Illustrated TCP部分
+2. unix network programming
+3. 研究TCP连接对HTTP的影响

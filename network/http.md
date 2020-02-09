@@ -108,11 +108,100 @@ version is not supported by the server.
 
 # TCP and HTTP
 
+### http message
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_message.png" width="700">
 </div>
 
+### implement http by socket
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_socket.png" width="700" height="500">
+</div>
 
+## TCP Performance Considerations
+
+### HTTP Transaction Delays
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_delay.png" width="700" height="300">
+</div>
+
+Notice that the transaction processing time can be quite small compared to the time required to set up TCP connections and transfer the request and response messages. Unless the client or server is overloaded or executing complex dynamic resources, most HTTP delays are caused by TCP network delays.
+
+### TCP Connection Handshake Delays
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_handshake_delay.png" width="700" height="300">
+</div>
+
+step c can carry data.
+
+### TCP Slow Start
+Because of this congestion-control feature, new connections are slower than “tuned” connections that already have exchanged a modest amount of data. Because tuned connections are faster, HTTP includes facilities that let you reuse existing connec- tions. We’ll talk about these HTTP “persistent connections” later in this chapter.
+
+### Nagle’s Algorithm and TCP_NODELAY
+TCP has a data stream interface that permits applications to stream data of any size to the TCP stack—even a single byte at a time! But because each TCP segment car- ries at least 40 bytes of flags and headers, network performance can be degraded severely if TCP sends large numbers of packets containing small amounts of data.*
+
+Nagle’s algorithm (named for its creator, John Nagle) attempts to bundle up a large amount of TCP data before sending a packet, aiding network efficiency. The algo- rithm is described in RFC 896, “Congestion Control in IP/TCP Internetworks.”
+
+Nagle’s algorithm discourages the sending of segments that are not full-size (a maximum-size packet is around 1,500 bytes on a LAN, or a few hundred bytes across the Internet). Nagle’s algorithm lets you send a non-full-size packet only if all other packets have been acknowledged. If other packets are still in flight, the partial data is buffered. This buffered data is sent only when pending packets are acknowl- edged or when the buffer has accumulated enough data to send a full packet.
+
+Nagle’s algorithm causes several HTTP performance problems. First, small HTTP messages may not fill a packet, so they may be delayed waiting for additional data that will never arrive. Second, Nagle’s algorithm interacts poorly with disabled acknowledgments—Nagle’s algorithm will hold up the sending of data until an acknowledgment arrives, but the acknowledgment itself will be delayed 100–200 milliseconds by the delayed acknowledgment algorithm.
+
+HTTP applications often disable Nagle’s algorithm to improve performance, by setting the TCP_NODELAY parameter on their stacks. If you do this, you must ensure that you write large chunks of data to TCP so you don’t create a flurry of small packets.
+
+### TIME_WAIT Accumulation and Port Exhaustion
+TIME_WAIT port exhaustion is a serious performance problem that affects perfor- mance benchmarking but is relatively uncommon in real deployments. It warrants special attention because most people involved in performance benchmarking even- tually run into this problem and get unexpectedly poor performance.
+
+When a TCP endpoint closes a TCP connection, it maintains in memory a small con- trol block recording the IP addresses and port numbers of the recently closed con- nection. This information is maintained for a short time, typically around twice the estimated maximum segment lifetime (called “2MSL”; often two minutes*), to make sure a new TCP connection with the same addresses and port numbers is not cre- ated during this time. This prevents any stray duplicate packets from the previous connection from accidentally being injected into a new connection that has the same addresses and port numbers. In practice, this algorithm prevents two connections with the exact same IP addresses and port numbers from being created, closed, and recreated within two minutes.
+
+Today’s higher-speed routers make it extremely unlikely that a duplicate packet will show up on a server’s doorstep minutes after a connection closes. Some operating systems set 2MSL to a smaller value, but be careful about overriding this value. Pack- ets do get duplicated, and TCP data will be corrupted if a duplicate packet from a past connection gets inserted into a new stream with the same connection values.
+
+The 2MSL connection close delay normally is not a problem, but in benchmarking situations, it can be. It’s common that only one or a few test load-generation com- puters are connecting to a system under benchmark test, which limits the number of client IP addresses that connect to the server. Furthermore, the server typically is lis- tening on HTTP’s default TCP port, 80. These circumstances limit the available combinations of connection values, at a time when port numbers are blocked from reuse by TIME_WAIT.
+
+In a pathological situation with one client and one web server, of the four values that make up a TCP connection:
+
+```
+<source-IP-address, source-port, destination-IP-address, destination-port>
+```
+
+three of them are fixed—only the source port is free to change:
+
+```
+<client-IP, source-port, server-IP, 80>
+```
+
+Each time the client connects to the server, it gets a new source port in order to have a unique connection. But because a limited number of source ports are available (say, 60,000) and no connection can be reused for 2MSL seconds (say, 120 sec- onds), this limits the connect rate to 60,000 / 120 = 500 transactions/sec. If you keep making optimizations, and your server doesn’t get faster than about 500 transac- tions/sec, make sure you are not experiencing TIME_WAIT port exhaustion. You can fix this problem by using more client load-generator machines or making sure the client and server rotate through several virtual IP addresses to add more connec- tion combinations.
+
+Even if you do not suffer port exhaustion problems, be careful about having large numbers of open connections or large numbers of control blocks allocated for con- nection in wait states. Some operating systems slow down dramatically when there are numerous open connections or control blocks.
+
+## Keep-Alive and Dumb Proxies
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_dumb_proxy.png" width="700" height="300">
+</div>
+
+The problem comes with proxies—in particular, proxies that don’t understand the Connection header and don’t know that they need to remove the header before proxy- ing it down the chain. Many older or simple proxies act as blind relays, tunneling bytes from one connection to another, without specially processing the Connection header.
+
+Imagine a web client talking to a web server through a dumb proxy that is acting as a blind relay. This situation is depicted in Figure 4-15.
+Here’s what’s going on in this figure:
+
+1. In Figure 4-15a, a web client sends a message to the proxy, including the Connec- tion: Keep-Alive header, requesting a keep-alive connection if possible. The client waits for a response to learn if its request for a keep-alive channel was granted.
+2. The dumb proxy gets the HTTP request, but it doesn’t understand the Connec- tion header (it just treats it as an extension header). The proxy has no idea what keep-alive is, so it passes the message verbatim down the chain to the server (Figure 4-15b). But the Connection header is a hop-by-hop header; it applies to only a single transport link and shouldn’t be passed down the chain. Bad things are about to happen.
+3. In Figure 4-15b, the relayed HTTP request arrives at the web server. When the web server receives the proxied Connection: Keep-Alive header, it mistakenly concludes that the proxy (which looks like any other client to the server) wants to speak keep-alive! That’s fine with the web server—it agrees to speak keep- alive and sends a Connection: Keep-Alive response header back in Figure 4-15c. So, at this point, the web server thinks it is speaking keep-alive with the proxy and will adhere to rules of keep-alive. But the proxy doesn’t know the first thing about keep-alive. Uh-oh.
+4. In Figure 4-15d, the dumb proxy relays the web server’s response message back to the client, passing along the Connection: Keep-Alive header from the web server. The client sees this header and assumes the proxy has agreed to speak keep-alive. So at this point, both the client and server believe they are speaking keep-alive, but the proxy they are talking to doesn’t know anything about keep-alive.
+5. Because the proxy doesn’t know anything about keep-alive, it reflects all the data it receives back to the client and then waits for the origin server to close the connection. But the origin server will not close the connection, because it believes the proxy explicitly asked the server to keep the connection open. So the proxy will hang waiting for the connection to close.
+6. When the client gets the response message back in Figure 4-15d, it moves right along to the next request, sending another request to the proxy on the keep-alive connection (see Figure 4-15e). Because the proxy never expects another requeston the same connection, the request is ignored and the browser just spins, mak- ing no progress.
+7. This miscommunication causes the browser to hang until the client or server times out the connection and closes it.*
+
+To avoid this kind of proxy miscommunication, modern proxies must never proxy the Connection header or any headers whose names appear inside the Connection values. So if a proxy receives a Connection: Keep-Alive header, it shouldn’t proxy either the Connection header or any headers named Keep-Alive.
+
+In addition, there are a few hop-by-hop headers that might not be listed as values of a Connection header, but must not be proxied or served as a cache response either. These include Proxy-Authenticate, Proxy-Connection, Transfer-Encoding, and Upgrade. For more information, refer back to “The Oft-Misunderstood Connection Header.”
+
+解决的方式是通过smart proxy和Proxy-Connection: Keep-Alive
+
+## Connections
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_connections.png" width="700" height="1200">
+</div>
 ## Cache
 
 client first sends a request, it will first check whether the local storage (local storage is established by local ISP)has cache or not. If yes, it just return the cache in response. If not, it will send the request to the server, and when response return, it will be cached for the next time request. The response has a header called Last-Modified which indicate the last time the object was modified.
