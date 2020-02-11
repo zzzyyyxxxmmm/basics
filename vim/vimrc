@@ -1,6 +1,55 @@
+set nocompatible              " be iMproved, required
+filetype off                  " required
+
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+Plugin 'VundleVim/Vundle.vim'
+Plugin 'tpope/vim-fugitive'
+Plugin 'git://git.wincent.com/command-t.git'
+Plugin 'file:///home/gmarik/path/to/plugin'
+Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
+Plugin 'Valloric/YouCompleteMe'
+Plugin 'altercation/vim-colors-solarized'
+Plugin 'flazz/vim-colorschemes'
+Plugin 'preservim/nerdtree'
+
+call vundle#end()            " required
+filetype plugin indent on    " required
+
+syntax enable
+set background=light
+colorscheme solarized
+
+let g:ycm_use_clangd = 0
+
+autocmd vimenter * NERDTree
+let g:NERDTreeMouseMode=3
+
+
+set mouse=a
+
+
+" https://vim.fandom.com/wiki/Change_cursor_shape_in_different_modes
+let &t_SI = "\<Esc>]50;CursorShape=1\x7"
+let &t_SR = "\<Esc>]50;CursorShape=2\x7"
+let &t_EI = "\<Esc>]50;CursorShape=0\x7"
+
 autocmd bufwritepost .vimrc source $MYVIMRC
 :imap jj <Esc>
 :map <S-J> <S-}>
 :map <S-K> <S-{>
 :map <S-H> <S-^>
 :map <S-L> <S-$>
+:map <S-D> dd
+
+
+set tabstop=4       " The width of a TAB is set to 4.
+                    " Still it is a \t. It is just that
+                    " Vim will interpret it to be having
+                    " a width of 4.
+
+set shiftwidth=4    " Indents will have a width of 4
+
+set softtabstop=4   " Sets the number of columns for a TAB
+
+set expandtab       " Expand TABs to spaces

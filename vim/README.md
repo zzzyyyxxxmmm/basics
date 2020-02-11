@@ -18,5 +18,17 @@ i{insert some text}<Esc>
 ```
 所以经常切换到normal mode可以control the granularity
 
+### Use a Count When It Matters
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_4.png" width="500" height="300">
+</div>
 
-ina maina
+### Make Corrections Instantly from Insert Mode
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_5.png" width="500" height="300">
+</div>
+
+### Paste from a Register Without Leaving Insert Mode
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_6.png" width="500" height="300">
+</div>
