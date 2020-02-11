@@ -285,3 +285,90 @@ sudo ./main exec container2 sh
 ```
 
 # 容器网络
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/docker_net_1.png" width="500" height="300">
+</div>
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/docker_net_2.png" width="500" height="300">
+</div>
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/docker_net_3.png" width="500" height="300">
+</div>
+
+## Linux Veth
+```
+# #创建两个网络 Namespace
+ikangwang@ubuntu:~$ sudo ip netns add ns1
+jikangwang@ubuntu:~$ sudo ip netns add ns2
+# 创建一对 Veth
+jikangwang@ubuntu:~$ sudo ip link add veth0 type veth peer name veth1
+# 分别将两个Veth移到两个Namespace中
+jikangwang@ubuntu:~$ sudo ip link set veth0 netns ns1
+jikangwang@ubuntu:~$ sudo ip link set veth1 netns ns2
+# 去ns1的namespace中查看网络设备
+jikangwang@ubuntu:~$ sudo ip netns exec ns1 ip link
+1: lo: <LOOPBACK> mtu 65536 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+5: veth0@if4: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000
+    link/ether 0a:5b:5e:d9:e8:79 brd ff:ff:ff:ff:ff:ff link-netnsid 1
+
+# 配置每个 veth 的网络地址和 Namespace 的路由
+sudo ip netns exec ns1 ifconfig veth0 172.168.0.2/24 up
+sudo ip netns exec ns2 ifconfig veth1 172.168.0.3/24 up
+sudo ip netns exec ns1 route add default dev veth0
+sudo ip netns exec ns2 route add default dev veth1
+
+sudo ip netns exec ns1 ping -c 1 172.18.0.3
+PING 172.18.0.3 (172.18.0.3) 56(84) bytes of data.
+
+--- 172.18.0.3 ping statistics ---
+1 packets transmitted, 0 received, 100% packet loss, time 0ms
+```
+
+## Linux Bridge
+```
+# 创建Veth设备并将一端移入Namespace
+sudo ip netns add ns1
+sudo ip link add veth0 type veth peer name veth1
+sudo ip link set veth1 netns ns1 
+
+# 创建网桥
+sudo brctl addbr br0
+# 挂载网络设备
+sudo brctl addif br0 eth0
+sudo brctl addif br0 veth0
+```
+
+## Linux路由表
+路由表是 Linux 内核的 一个模块，通过定义路由表来决定在某个网络 Namespace 中包的流 向，从而定义请求会到哪个网络设备上。
+```
+# 启动虚拟网络设备, 并设置它在Net Namespace中的Ip地址
+sudo ip link set veth0 up
+sudo ip link set br0 up
+sudo ip netns exec ns1 ifconfig veth1 172.18.0.2/24 up
+# 分别设置ns1网络空间的路由和宿主机上的路由
+# default代表0.0.0.0/0, 即在Net Namespace中所有流量都经过veth1的网络设备流出
+sudo ip netns exec ns1 route add default dev veth1
+# 在宿主机上将172.168.0.0/24的网段请求路由到br0的网桥
+sudo route add -net 172.18.0.0/24 dev br0
+```
+
+## Linux iptables
+iptables 中的 MASQUERADE 策略可以将请求包中的源地址转换成一个网络设备的地址， 比如 6.1.2 小节介绍的那个 Namespace 中网络设备的地址是 172.18.0.2，这个地址虽然在宿主机 上可以路由到 brO 的 网桥，但是到达宿主机外部之后，是不知道如何路由到这个IP地址的，
+所以如果请求外部地址的话，需要先通过MASQUERADE策略将这个IP转换成宿主机出口网卡的IP
+```
+# 打开IP转发
+sudo sysctl -w net.ipv4.conf.all.forwarding=1
+net.ipv4.conf.all.fowarding=1
+# 对Namespace中发出的包添加网络地址转换
+sudo iptables -t nat -A POSTROUTING -s 172.18.0.0/24 -o eth0 -j MASQUERADE
+```
+
+iptables中的DNAT策略也是做网络地址的转换，不过它是要更换目标地址，经常用于将内部网络地址的端口映射到外部去。比如，上面那个例子中的Namespace如果需要提供服务给宿主机之外的应用去请求要怎么办呢?外部应用没办法直接路由到172.18.0.2这个地址，这时候就可以用到 DNAT 策略。
+```
+# 将到宿主机上80端的请求转发到Namespace的IP上
+sudo iptables -t nat -A PREROUTING -p tcp -m tcp --dport 80 -j DNAT --to-destination 172.18.0.2:80
+```
+这样就可以把宿主机上80端口的TCP请求转发到Namespace中的地址172.18.0.2:80，从而实现外部的应用调用。
