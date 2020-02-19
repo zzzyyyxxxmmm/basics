@@ -32,3 +32,9 @@ i{insert some text}<Esc>
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_6.png" width="500" height="300">
 </div>
+
+### Toggling the Free End of a Selection
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_7.png" width="500" height="300">
+</div>
+
