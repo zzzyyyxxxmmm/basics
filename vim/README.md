@@ -49,3 +49,33 @@ i{insert some text}<Esc>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_8.png" width="100" height="800">
 </div>
 
+### Duplicate or Move Lines Using ‘:t’ and ‘:m’ Commands
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_9.png" width="800" height="300">
+</div>
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_10.png" width="800" height="300">
+</div>
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_11.png" width="800" height="300">
+</div>
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_12.png" width="800" height="300">
+</div>
+
+### Run Normal Mode Commands Across a Range
+```:%normal A;```
+
+### Trace Your Selection with Precision Text Objects
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_13.png" width="300" height="800">
+</div>
+或者用vi
+
+### Delete Around, or Change Inside
+用ciw 代替dawi
+
+### global mark
