@@ -1,3 +1,9 @@
+```vim
+gUaw
+vitU
+```
+
+
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_1.png" width="500" height="300">
 </div>
@@ -36,5 +42,10 @@ i{insert some text}<Esc>
 ### Toggling the Free End of a Selection
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_7.png" width="500" height="300">
+</div>
+
+### Edit Tabular Data with Visual-Block Mode
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_8.png" width="100" height="800">
 </div>
 
