@@ -114,3 +114,15 @@ y默认放在""和"0的register, 因此d,x是不影响y的register的
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_17.png" width="800" height="500">
 </div>
+
+gp真的很好用!!!
+
+### Record and Execute a Macro
+```
+qa
+A;[ESC]
+q
+@a
+@@
+@@
+```
