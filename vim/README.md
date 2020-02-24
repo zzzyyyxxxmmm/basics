@@ -1,7 +1,11 @@
 ```vim
 gUaw
-vitU
+~
+vU
+vu
+c3w
 ```
+
 
 
 <div align=center>
@@ -46,7 +50,7 @@ i{insert some text}<Esc>
 
 ### Edit Tabular Data with Visual-Block Mode
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_8.png" width="100" height="800">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_8.png" width="300" height="800">
 </div>
 
 ### Duplicate or Move Lines Using ‘:t’ and ‘:m’ Commands
@@ -79,3 +83,34 @@ i{insert some text}<Esc>
 用ciw 代替dawi
 
 ### global mark
+```
+mm
+'m 跳转到标记行
+`m 跳转到标记点
+```
+### Delete, Yank, and Put with Vim’s Unnamed Register
+```
+xp
+Xp
+xP
+ddp
+yyp
+```
+
+y默认放在""和"0的register, 因此d,x是不影响y的register的
+### Grok Vim’s Registers
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_14.png" width="800" height="300">
+</div>
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_15.png" width="800" height="300"> 
+</div>
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_16.png" width="800" height="300">
+</div>
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_17.png" width="800" height="500">
+</div>
