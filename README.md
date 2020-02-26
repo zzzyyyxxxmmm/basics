@@ -39,15 +39,18 @@
 6. 基于反射实现一个go sort library. TDD开发 √
 
 ### FEB, 2020
-1. HTTP - The Definitive Guide
-2. Pro Git 
-3. Docker Kernel
-4. The Linux Programming Interface 
-5. Pratical Vim
+1. HTTP - The Definitive Guide √
+2. Pro Git ○
+3. Docker Kernel √
+4. The Linux Programming Interface
+5. Pratical Vim √
+6. 啊, 这个月好颓废, 效率--
 
 ### MAR, 2020
 1. MongoDB Definitive Guide, 顺便温习数据库
 2. 6.824 Lab3: Fault-tolerant Key/Value Service
+3. Pro Git
+4. Redis In Action
 
 ### April, 2020
 1. 完成TCP/IP Illustrated TCP部分
