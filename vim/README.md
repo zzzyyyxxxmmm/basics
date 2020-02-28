@@ -125,4 +125,29 @@ q
 @a
 @@
 @@
+100@a
+:normal @a
+```
+
+### Recording and Playing a Macro with a Count
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_18.png" width="800" height="300">
+</div>
+
+### Evaluate an Iterator to Number Items in a List
+```
+:let i=1
+qa
+<Esc>
+:let i+=1
+q
+jVG
+:'<,'>normal @a
+
+qa
+H
+f 
+vHx
+q
+:'<,'>normal @a
 ```

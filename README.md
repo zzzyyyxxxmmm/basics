@@ -42,7 +42,7 @@
 1. HTTP - The Definitive Guide √
 2. Pro Git ○
 3. Docker Kernel √
-4. The Linux Programming Interface
+4. The Linux Programming Interface ○ 
 5. Pratical Vim √
 6. 啊, 这个月好颓废, 效率--
 

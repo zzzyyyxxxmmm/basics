@@ -78,3 +78,38 @@ Redis 是一个使用 C 语言写成的，开源的 key-value 数据库。。和
 | SINTERSTORE | SINTERSTORE dest-key key-name [key-name ...]—Stores at the dest-key the items that are in all of the SETs (mathematical set intersection operation)                                                                                                               |
 | SUNION      | SUNION key-name [key-name ...]—Returns the items that are in at least one of the SETs (mathematical set union operation)                                                                                                                                          |
 | SUNIONSTORE | SUNIONSTORE dest-key key-name [key-name ...]—Stores at the dest-key the items that are in at least one of the SETs (mathematical set union operation)                                                                                                             |
+
+## Hash
+| Command      | Example use and description                                                                                                    |
+|--------------|--------------------------------------------------------------------------------------------------------------------------------|
+| HMGET        | HMGET key-name key [key ...]—Fetches the values at the fields in the HASH                                                      |
+| HMSET        | HMSET key-name key value [key value ...]—Sets the values of the,fields in the HASH                                             |
+| HDEL         | HDEL key-name key [key ...]—Deletes the key-value pairs in the HASH,,returning the number of pairs that were found and deleted |
+| HLEN         | HLEN key-name—Returns the number of key-value pairs in the HASH                                                                |
+| HEXISTS      | HEXISTS key-name key—Returns whether the given key exists in the HASH                                                          |
+| HKEYS        | HKEYS key-name—Fetches the keys in the HASH                                                                                    |
+| HVALS        | HVALS key-name—Fetches the values in the HASH                                                                                  |
+| HGETALL      | HGETALL key-name—Fetches all key-value pairs from the HASH                                                                     |
+| HINCRBY      | HINCRBY key-name key increment—Increments the value stored at the given key by the integer increment                           |
+| HINCRBYFLOAT | HINCRBYFLOAT key-name key increment—Increments the value stored at the given key by the float increment                        |
+
+## Sorted sets
+
+| Command          | Example use and description                                                                                                                           |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ZADD             | ZADD key-name score member [score member ...]—Adds members with the given scores to the ZSET                                                          |
+| ZREM             | ZREM key-name member [member ...]—Removes the members from the ZSET, returning the number of members that were removed                                |
+| ZCARD            | ZCARD key-name—Returns the number of members in the ZSET                                                                                              |
+| ZINCRBY          | ZINCRBY key-name increment member—Increments the member in the ZSET                                                                                   |
+| ZCOUNT           | ZCOUNT key-name min max—Returns the number of members with scores between the provided minimum and maximum                                            |
+| ZRANK            | ZRANK key-name member—Returns the position of the given member in the ZSET                                                                            |
+| ZSCORE           | ZSCORE key-name member—Returns the score of the member in the ZSET                                                                                    |
+| ZRANGE           | ZRANGE key-name start stop [WITHSCORES]—Returns the members and optionally the scores for the members with ranks between start and stop               |
+| ZREVRANK         | ZREVRANK key-name member—Returns the position of the member in the ZSET, with members ordered in reverse                                              |
+| ZREVRANGE        | ZREVRANGE key-name start stop [WITHSCORES]—Fetches the given members from the ZSET by rank, with members in reverse order                             |
+| ZRANGEBYSCORE    | ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]—Fetches the members between min and max                                                   |
+| ZREVRANGEBYSCORE | ZREVRANGEBYSCOREkeymaxmin[WITHSCORES][LIMIToffset count]—Fetches the members in reverse order between min and max                                     |
+| ZREMRANGEBYRANK  | ZREMRANGEBYRANK key-name start stop—Removes the items from the ZSET with ranks between start and stop                                                 |
+| ZREMRANGEBYSCORE | ZREMRANGEBYSCOREkey-nameminmax—Removes the items from the ZSET with scores between min and max                                                        |
+| ZINTERSTORE      | ZINTERSTORE dest-key key-count key [key ...] [WEIGHTS weight[weight...]][AGGREGATESUM|MIN|MAX]—Performs a SET-like intersection of the provided ZSETs |
+| ZUNIONSTORE      | ZUNIONSTORE dest-key key-count key [key ...] [WEIGHTS weight[weight...]][AGGREGATESUM|MIN|MAX]—Performs a SET-like union of the provided ZSETs        |
