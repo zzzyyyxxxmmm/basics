@@ -98,6 +98,24 @@ for(int i=0;i<n;i++){
 ## 判断所有三角形组合
 注意双point方向, l和r只能相加
 
+# 图论
+
+## 基本术语
+1. adjacent vertices. adjacent edges
+2. isolated vertex, end vertex
+3. cutset. A disconnecting set in a connected graph G is a set of edges whose removal disconnects G. We further define a cutset to be a disconnecting set, no proper subset of which is a disconnecting set. In the above example, only the second disconnecting set is a cutset. Note that the removal of the edges in a cutset always leaves a graph with exactly two components. If a cutset has only one edge e, we call e a **bridge** 
+4. We also need the analogous concepts for the removal of vertices. A **separating set** in a connected graph G is a set of vertices whose deletion disconnects G; If a separating set contains only one vertex v, we call v a **cut-vertex**.
+5. bfs. In breadth first search, we fan out to as many vertices as possible, before penetrat- ing deeper into the tree. 
+6. dfs. In depth first search, we penetrate as deeply as possible into a tree before fanning out to other vertices. 
+
+## 定理
+1. Let G be a plane drawing of a connected planar graph, and let n, m andf denote respectively the number of vertices, edges and faces of'G. Then
+n-m+f= 2.
+2. Let G be a plane graph with n vertices, m edges, ffaces and k components. Then n - m + f = k + 1.
+
+## 二分图
+染色法判断, KM求最大匹配
+
 # 几何
 
 ### 三点共线
