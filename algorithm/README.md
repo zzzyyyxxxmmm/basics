@@ -114,7 +114,19 @@ n-m+f= 2.
 2. Let G be a plane graph with n vertices, m edges, ffaces and k components. Then n - m + f = k + 1.
 
 ## 二分图
-染色法判断, KM求最大匹配
+染色法判断, KM求最大匹配.
+
+### 例题
+[hdu2444](http://acm.hdu.edu.cn/showproblem.php?pid=2444)
+
+## cut vertex and bridge
+
+* 定理: 在无向连通图G的DFS树中, 非根节点u是G的割顶当且仅当u存在一个子结点v, 使得v及其所有后代都没有反向边连回u的祖先(连回u不算).
+
+方便起见, 设low(u)为u及其后代所能连回的最早祖先的pre值, 则定理中的条件就可以简写成u存在一个子结点v, 使得low(v)>=pre(u). 作为一种特殊情况, 如果v的后代只能连回v自己(即low(v)>pre(u)), 只需要删除(u,v)一条边就可以让图G非连通了, 满足这个条件的边称为桥.
+
+### 例题
+[leetcode 1192](https://leetcode.com/problems/critical-connections-in-a-network/)
 
 # 几何
 

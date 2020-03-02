@@ -100,15 +100,15 @@ yyp
 y默认放在""和"0的register, 因此d,x是不影响y的register的
 ### Grok Vim’s Registers
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_14.png" width="800" height="300">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_14.png" width="500" height="300">
 </div>
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_15.png" width="800" height="300"> 
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_15.png" width="500" height="300"> 
 </div>
 
 <div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_16.png" width="800" height="300">
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/vim_16.png" width="500" height="300">
 </div>
 
 <div align=center>
