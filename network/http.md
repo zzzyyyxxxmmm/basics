@@ -202,16 +202,145 @@ In addition, there are a few hop-by-hop headers that might not be listed as valu
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_connections.png" width="700" height="1200">
 </div>
-## Cache
+
+
+
+# What Real Web Server Do
+
+1. Set up connection—accept a client connection, or close if the client is unwanted. 2. Receive request—read an HTTP request message from the network.
+3. Process request—interpret the request message and take action.
+4. Access resource—access the resource specified in the message.
+5. Construct response—create the HTTP response message with the right headers. 6. Send response—send the response back to the client.
+7. Log transaction—place notes about the completed transaction in a log file.
+
+## Step 1: Accepting Client Connections
+
+## Step 2: Receiving Request Messages
+
+### Connection Input/Output Processing Architectures
+Web servers constantly watch for new web requests, because requests can arrive at any time. Different web server architectures service requests in different ways, as Figure 5-7 illustrates:
+
+* Single-threaded web servers (Figure 5-7a)
+Single-threaded web servers process one request at a time until completion. When the transaction is complete, the next connection is processed. This archi- tecture is simple to implement, but during processing, all the other connections are ignored. This creates serious performance problems and is appropriate only for low-load servers and diagnostic tools like type-o-serve.
+* Multiprocess and multithreaded web servers (Figure 5-7b)
+
+Multiprocess and multithreaded web servers dedicate multiple processes or higher-efficiency threads to process requests simultaneously.* The threads/ processes may be created on demand or in advance.† Some servers dedicate a thread/process for every connection, but when a server processes hundreds, thousands, or even tens of thousands of simultaneous connections, the resulting number of processes or threads may consume too much memory or system
+resources. Thus, many multithreaded web servers put a limit on the maximum number of threads/processes.
+* Multiplexed I/O servers (Figure 5-7c)
+
+To support large numbers of connections, many web servers adopt multiplexed architectures. In a multiplexed architecture, all the connections are simulta- neously watched for activity. When a connection changes state (e.g., when data becomes available or an error condition occurs), a small amount of processing is performed on the connection; when that processing is complete, the connection is returned to the open connection list for the next change in state. Work is done on a connection only when there is something to be done; threads and processes are not tied up waiting on idle connections.
+* Multiplexed multithreaded web servers (Figure 5-7d)
+
+Some systems combine multithreading and multiplexing to take advantage of multiple CPUs in the computer platform. Multiple threads (often one per physi- cal processor) each watch the open connections (or a subset of the open connec- tions) and perform a small amount of work on each connection.
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_1.png" width="500" height="500">
+</div>
+
+## Step 3: Processing Requests
+
+## Step 4: Mapping and Accessing Resources
+
+### Docroots
+Web servers support different kinds of resource mapping, but the simplest form of resource mapping uses the request URI to name a file in the web server’s filesystem. Typically, a special folder in the web server filesystem is reserved for web content. This folder is called the document root, or docroot. The web server takes the URI from the request message and appends it to the document root.
+
+In Figure 5-8, a request arrives for /specials/saw-blade.gif. The web server in this example has document root /usr/local/httpd/files. The web server returns the file /usr/ local/httpd/files/specials/saw-blade.gif.
+
+To set the document root for an Apache web server, add a DocumentRoot line to the httpd.conf configuration file:
+
+**DocumentRoot /usr/local/httpd/files**
+
+Servers are careful not to let relative URLs back up out of a docroot and expose other parts of the filesystem. For example, most mature web servers will not permit this URI to see files above the Joe’s Hardware document root:
+**http://www.joes-hardware.com/../**
+
+### Virtually hosted docroots
+不同的Host映射到不同的文件夹里
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_2.png" width="500" height="300">
+</div>
+
+### User home directory docroots
+不同的路径映射到不同的文件夹里
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_3.png" width="500" height="300">
+</div>
+
+### Directory Listings
+A web server can receive requests for directory URLs, where the path resolves to a directory, not a file. Most web servers can be configured to take a few different actions when a client requests a directory URL:
+* Return an error.
+* Return a special, default, “index file” instead of the directory.
+* Scan the directory, and return an HTML page containing the contents.
+
+Most web servers look for a file named index.html or index.htm inside a directory to represent that directory. If a user requests a URL for a directory and the directory contains a file named index.html (or index.htm), the server will return the contents of that file.
+In the Apache web server, you can configure the set of filenames that will be inter- preted as default directory files using the DirectoryIndex configuration directive. The DirectoryIndex directive lists all filenames that serve as directory index files, in pre- ferred order. The following configuration line causes Apache to search a directory for any of the listed files in response to a directory URL request:
+
+DirectoryIndex index.html index.htm home.html home.htm index.cgi
+     
+If no default index file is present when a user requests a directory URI, and if direc- tory indexes are not disabled, many web servers automatically return an HTML file listing the files in that directory, and the sizes and modification dates of each file, including URI links to each file. This file listing can be convenient, but it also allows nosy people to find files on a web server that they might not normally find.
+
+## Step 5: Building Responses
+## Step 6: Sending Responses
+## Step 7: Logging
+
+# Proxies
+
+## Proxies Versus Gateways
+Strictly speaking, proxies connect two or more applications that speak the same pro- tocol, while gateways hook up two or more parties that speak different protocols. A gateway acts as a “protocol converter,” allowing a client to complete a transaction with a server, even when the client and server speak different protocols.
+
+
+# Cache
+1. 浏览器先检查是否有cache可用, 如果有并且有效则直接返回缓存
+2. 经过缓存, 缓存判断是否有效, 先看expire date, 如果没过期直接返回, 如果过期则发送一个conditional request向服务器询问是否更新, 同时更新缓存expire date
+3. 返回结果
 
 client first sends a request, it will first check whether the local storage (local storage is established by local ISP)has cache or not. If yes, it just return the cache in response. If not, it will send the request to the server, and when response return, it will be cached for the next time request. The response has a header called Last-Modified which indicate the last time the object was modified.
 
-What if the content they cache is modified on server? The send a request with a header called If-modified-since. The request will go to the server and check if the Last-Modified is same with If-modified-since. If yes, it will return 304 to tell the client to get the cache directly. If not, it will return a normall response and the response will be cached again.
+What if the content they cache is modified on server? The cache send a request with a header called If-modified-since. The request will go to the server and check if the Last-Modified is same with If-modified-since. If yes, it will return 304 to tell the client to get the cache directly. If not, it will return a normall response and the response will be cached again. WIthout fetching the entire object from the server.
 
-[https建立过程](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/https.png)
+## Cache Processing Steps
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_4.png" width="500" height="500">
+</div>
 
+Modern commercial proxy caches are quite complicated. They are built to be very high-performance and to support advanced features of HTTP and other technologies. But, despite some subtle details, the basic workings of a web cache are mostly simple. A basic cache-processing sequence for an HTTP GET message consists of seven steps (illustrated in Figure 7-11):
+1. Receiving—Cache reads the arriving request message from the network. 
+2. Parsing—Cache parses the message, extracting the URL and headers.
+3. Lookup—Cache checks if a local copy is available and, if not, fetches a copy (and stores it locally).
+4. Freshness check—Cache checks if cached copy is fresh enough and, if not, asks server for any updates.
+5. Response creation—Cache makes a response message with the new headers and cached body.
+6. Sending—Cache sends the response back to the client over the network.
+7. Logging—Optionally, cache creates a log file entry describing the transaction.
 
+## Cache Header
 
+### Expiration Dates and Ages
+**Cache-Control: max-age**
+
+The max-age value defines the maximum age of the document—the maximum legal elapsed time (in seconds) from when a document is first generated to when it can no longer be considered fresh enough to serve.
+
+*Cache-Control: max-age=484200*
+
+**Expires**
+Specifies an absolute expiration date. If the expiration date is in the past, the document is no longer fresh.
+
+*Expires: Fri, 05 Jul 2002, 05:00:00 GMT*
+
+### conditional request
+**If-Modified-Since:<date>** 
+
+Perform the requested method if the document has been modified since the specified date. This is used in conjunction with the Last-Modified server response header, to fetch content only if the content has been modified from the cached version.
+
+**If-None-Match: <tags>**
+
+Instead of matching on last-modified date, the server may provide special tags (see “ETag” in Appendix C) on the document that act like serial numbers. The If-None-Match header performs the requested method if the cached tags differ from the tags in the server’s document.
+
+### Cache Control
+* Attach a Cache-Control: no-store header to the response.
+* Attach a Cache-Control: no-cache header to the response.
+* Attach a Cache-Control: must-revalidate header to the response.
+* Attach a Cache-Control: max-age header to the response.
+* Attach an Expires date header to the response.
+* Attach no expiration information, letting the cache determine its own heuristic expiration date.
 
 # Cookie & Session
 客户想去银存钱，如果他是第一次去，那么银行就需要给他开户，办一张卡给他，这里银行就类似于server，客户就是client，client获得了银行给他的卡，那么下次他再去的时候，
@@ -244,3 +373,6 @@ Session默认的生命周期是20分钟，可以手动设置更长或更短的�
 
 ## [Encoding vs. Encryption vs. Hashing vs. Obfuscation](https://danielmiessler.com/study/encoding-encryption-hashing-obfuscation/#summary)
 To get around the limitations of a safe character set representation, an encoding scheme was devised to represent characters in a URL that are not safe. The encoding simply represents the unsafe character by an “escape” notation, consisting of a per- cent sign (%) followed by two hexadecimal digits that represent the ASCII code of the character.
+
+
+[https建立过程](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/https.png)

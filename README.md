@@ -50,9 +50,10 @@
 1. MongoDB Definitive Guide, 顺便温习数据库
 2. 6.824 Lab3: Fault-tolerant Key/Value Service
 3. Pro Git
-4. Redis In Action
+4. Redis In Action √ 
 
 ### April, 2020
 1. 完成TCP/IP Illustrated TCP部分
 2. unix network programming
 3. 研究TCP连接对HTTP的影响
+4. nginx
