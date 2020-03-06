@@ -98,6 +98,11 @@ for(int i=0;i<n;i++){
 ## 判断所有三角形组合
 注意双point方向, l和r只能相加
 
+# dp
+
+## 记录路径
+1. 边计算边记录, 例如求longestPalindrome
+2. 
 # 图论
 
 ## 基本术语
