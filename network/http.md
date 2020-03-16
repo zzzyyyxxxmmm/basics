@@ -342,6 +342,80 @@ Instead of matching on last-modified date, the server may provide special tags (
 * Attach an Expires date header to the response.
 * Attach no expiration information, letting the cache determine its own heuristic expiration date.
 
+# Integration Points: Gateways, Tunnels, and Relays
+
+### What is gateway
+The history behind HTTP extensions and interfaces was driven by people’s needs. When the desire to put more complicated resources on the Web emerged, it rapidly became clear that no single application could handle all imaginable resources.
+
+To get around this problem, developers came up with the notion of a gateway that could serve as a sort of interpreter, abstracting a way to get at the resource. A gate- way is the glue between resources and applications. An application can ask (through HTTP or some other defined interface) a gateway to handle the request, and the gateway can provide a response. The gateway can speak the query language to the database or generate the dynamic content, acting like a portal: a request goes in, and a response comes out.
+
+Some gateways automatically translate HTTP traffic to other protocols, so HTTP cli- ents can interface with other applications without the clients needing to know other protocols.
+
+Figure 8-2 shows three examples of gateways:
+* In Figure 8-2a, the gateway receives HTTP requests for FTP URLs. The gateway then opens FTP connections and issues the appropriate commands to the FTP server. The document is sent back through HTTP, along with the correct HTTP headers.
+* In Figure 8-2b, the gateway receives an encrypted web request through SSL, decrypts the request,* and forwards a normal HTTP request to the destination server. These security accelerators can be placed directly in front of web servers (usually in the same premises) to provide high-performance encryption for ori- gin servers.
+
+## Tunnels
+We’ve discussed different ways that HTTP can be used to enable access to various kinds of resources (through gateways) and to enable application-to-application com- munication. In this section, we’ll take a look at another use of HTTP, web tunnels, which enable access to applications that speak non-HTTP protocols through HTTP applications.
+
+Web tunnels let you send non-HTTP traffic through HTTP connections, allowing other protocols to piggyback on top of HTTP. The most common reason to use web tunnels is to embed non-HTTP traffic inside an HTTP connection, so it can be sent through firewalls that allow only web traffic.
+
+Figure 8-10 shows how the CONNECT method works to establish a tunnel to a gateway:
+* In Figure 8-10a, the client sends a CONNECT request to the tunnel gateway. The client’s CONNECT method asks the tunnel gateway to open a TCP connec- tion (here, to the host named orders.joes-hardware.com on port 443, the normal SSL port).
+* The TCP connection is created in Figure 8-10b and Figure 8-10c.
+* Once the TCP connection is established, the gateway notifies the client (Figure 8-10d) by sending an HTTP 200 Connection Established response.
+* At this point, the tunnel is set up. Any data sent by the client over the HTTP tunnel will be relayed directly to the outgoing TCP connection, and any data sent by the server will be relayed to the client over the HTTP tunnel.
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_5.png" width="700" height="500">
+</div>
+
+
+### Establishing HTTP Tunnels with CONNECT
+The CONNECT method asks a tunnel gateway to create a TCP connection to an arbitrary destination server and port and to blindly relay subsequent data between client and server.
+
+### SSL Tunnnel
+Web tunnels were first developed to carry encrypted SSL traffic through firewalls. Many organizations funnel all traffic through packet-filtering routers and proxy serv- ers to enhance security. But some protocols, such as encrypted SSL, cannot be prox- ied by traditional proxy servers, because the information is encrypted. Tunnels let the SSL traffic be carried through the port 80 HTTP firewall by transporting it through an HTTP connection.
+
+To allow SSL traffic to flow through existing proxy firewalls, a tunneling feature was added to HTTP, in which raw, encrypted data is placed inside HTTP messages and sent through normal HTTP channels.
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/http_6.png" width="700" height="500">
+</div>
+
+In Figure 8-12a, SSL traffic is sent directly to a secure web server (on SSL port 443). In Figure 8-12b, SSL traffic is encapsulated into HTTP messages and sent over HTTP port 80 connections, until it is decapsulated back into normal SSL connections.
+
+Tunnels often are used to let non-HTTP traffic pass through port-filtering firewalls. This can be put to good use, for example, to allow secure SSL traffic to flow through firewalls. However, this feature can be abused, allowing malicious protocols to flow into an organization through the HTTP tunnel.
+
+# Secure HTTP
+HTTPS 相当于在HTTP和TCP中间加了一层SSL
+
+## Digital Cryptography
+Before we talk in detail about HTTPS, we need to provide a little background about the cryptographic encoding techniques used by SSL and HTTPS. In the next few sec- tions, we’ll give a speedy primer of the essentials of digital cryptography. If you already are familiar with the technology and terminology of digital cryptography, feel free to jump ahead to “HTTPS: The Details.”
+In this digital cryptography primer, we’ll talk about:
+
+* **Ciphers** Algorithms for encoding text to make it unreadable to voyeurs
+* **Keys** Numeric parameters that change the behavior of ciphers
+* **Symmetric-key** cryptosystems Algorithms that use the same key for encoding and decoding
+* **Asymmetric-key** cryptosystems Algorithms that use different keys for encoding and decoding
+* **Public-key** cryptography A system making it easy for millions of computers to send secret messages
+* **Digital signatures** Checksums that verify that a message has not been forged or tampered with
+* **Digital certificates** Identifying information, verified and signed by a trusted organization
+
+## Digital Signatures
+好比考驾照, 政府给我一个驾照和我自己给自己一个驾照是不一样的, 那么政府怎么知道这个驾照是不是自己伪造的呢. 在颁发驾照的之后zf通过融合各种信息生成一个digest并且用private key加密, 放在驾照上. 别的机构想要验证就可以通过public key解密, 查看这个digest是否正确, 而我个人因为没有private key, 因此加密过的信息无法通过public key解开, 因此无法验证. 这个加密过后的digest就相当于签名
+
+## Digital Certificates
+这个就相当于驾照
+
+## Secure Transport Setup
+The procedure is slightly more complicated in HTTPS, because of the SSL security layer. In HTTPS, the client first opens a connection to port 443 (the default port for secure HTTP) on the web server. Once the TCP connection is established, the client and server initialize the SSL layer, negotiating cryptography parameters and exchang- ing keys. When the handshake completes, the SSL initialization is done, and the cli- ent can send request messages to the security layer. These messages are encrypted before being sent to TCP. 
+
+## Tunneling Secure Traffic Through Proxies
+But once the client starts encrypting the data to the server, using the server’s public key, the proxy no longer has the ability to read the HTTP header! And if the proxy can- not read the HTTP header, it won’t know where to forward the request.
+
+To make HTTPS work with proxies, a few modifications are needed to tell the proxy where to connect. One popular technique is the HTTPS SSL tunneling protocol. Using the HTTPS tunneling protocol, the client first tells the proxy the secure host and port to which it wants to connect. It does this in plaintext, before encryption starts, so the proxy can read this information.
+HTTP is used to send the plaintext endpoint information, using a new extension method called CONNECT. The CONNECT method tells the proxy to open a con- nection to the desired host and port number and, when that’s done, to tunnel data directly between the client and server. The CONNECT method is a one-line text command that provides the hostname and port of the secure origin server, separated by a colon. The host:port is followed by a space and an HTTP version string fol- lowed by a CRLF. After that there is a series of zero or more HTTP request header lines, followed by an empty line. After the empty line, if the handshake to establish the connection was successful, SSL data transfer can begin.
+
 # Cookie & Session
 客户想去银存钱，如果他是第一次去，那么银行就需要给他开户，办一张卡给他，这里银行就类似于server，客户就是client，client获得了银行给他的卡，那么下次他再去的时候，
 就不需要重新办卡存钱了，这个卡就是这个人在银行的身份凭证，只要出示这个卡，银行就可以帮他存钱。

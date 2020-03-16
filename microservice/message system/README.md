@@ -46,3 +46,52 @@ receiver’s computer, making it available to the receiver.
 4.  **Performance.** Messaging systems do add some overhead to communication. It takes effort to make data into a message and send it, and to receive a message and process it. If you have to transport a huge chunk of data, dividing it into a gazillion small pieces may not be a smart idea. For example, if an integration solution needs to synchronize information between two exiting systems, the first step is usually to replicate all relevant information from one system to the other. For such a bulk data replication step, ETL (extract, transform, and load) tools are much more efficient than messaging. Messaging is best suited to keeping the systems in sync after the initial data replication.
 
 # Integration Styles
+
+## Application Integration Criteria
+一个优秀的系统需要考虑哪几个方面?
+1. **Application coupling** 减少依赖
+2. **Integration simplicity** minimize changing
+3. **Integration technology** Different integration techniques require varying amounts of specialized software and hardware. These special tools can be expensive, can lead to vendor lock-in, and increase the burden on developers to understand how to use the tools to integrate applications.
+4. **Data format**
+5. **Data timeliness** Latency in data sharing has to be factored into the integration design; 
+   
+## Application Integration Options
+* **File Transfer** — Have each application produce files of shared data for others to consume, and consume files that others have produced.
+* **Shared Database** — Have the applications store the data they wish to share in a common database.
+* **Remote Procedure Invocation** — Have each application expose some of its procedures so that they can be invoked remotely, and have applications invoke those to run behavior and exchange data.
+* **Messaging** — Have each application connect to a common messaging system, and exchange data and invoke behavior using messages.
+
+## File Transfer
+In an ideal world, you might imagine an organization operating from a single cohesive piece of software, designed from the beginning to work in a unified and coherent way. Of course even the smallest operations don't work like that. Multiple pieces of software handle different aspects of the enterprise. This is due to a host of reasons.
+People buy packages that are developed by outside organizations
+Different system are built at different times, leading to different technology choices
+Different systems are built by different people, whose experience and preferences lead them to different approaches to building applications
+Getting an application out and delivering value is more important than ensuring that integration is addressed, especially when that integration isn't adding any value to the application under development.
+
+The great advantage of files is that integrators need no knowledge of the internals of an application. The application team itself usually provides the file. The file's contents and format are negotiated with integrators, although if a package is used there's often limited choices. The integrators then deal with the transformations required for other applications, or they leave it up the consuming applications to decide how they want to manipulate and read the file.
+
+One of the most obvious issues with File Transfer is that updates tend to occur infrequently, as a result systems can get out of synchronization. 
+
+## Shared Database
+One of the biggest difficulties with Shared Database is coming up with a suitable design for the shared database. Coming up with a unified schema that can meet the needs of multiple applications is a very difficult exercise, often resulting in a schema that application programmers find difficult to work with.
+
+Another, harder limit to Shared Database is external packages. Often they won't work with a schema other than their own. 
+
+Multiple applications using a Shared Database to frequently read and modify the same data can cause performance bottlenecks and even deadlocks as each application locks others out of the data. When the applications are distributed across multiple computers, the database must be distributed as well so that each application can access the database locally, which confuses the issue of which computer the data should be stored on. A distributed database with locking conflicts can easily become a performance nightmare.
+
+## Remote Procedure Invocation
+focus on functionalities
+
+The advantage of RPC is its encapsulated data
+
+Although the encapsulation helps reduce the coupling of the applications, by eliminating a large shared data structure, the applications are still fairly tightly coupled together. The remote calls each system supports tends to tie the different systems into a growing knot. In particular, sequencing--doing certain things in a particular order--can make it difficult to change systems independently.
+
+## Messaging
+File Transfer and Shared Database enable applications to share their data, but not their functionality. Remote Procedure Invocation enables applications to share functionality, but tightly couples them in the process.
+
+File Transfer allows you keep the applications very well decoupled, but at the cost of timeliness. Systems just can't keep up with each other. Collaborative behavior is way too slow. Shared Database keeps data together in a responsive way, but at the cost of coupling everything to the database. It also fails to handle collaborative behavior.
+
+Faced with these problems, Remote Procedure Invocation seems an appealing choice. But extending a model used for a single application to application integration runs into plenty of other weaknesses. These weaknesses start with the essential problems of distributed development. Despite the fact that remote procedure calls look like local calls, they don't act the same. Remote calls are slower, and can fail. With multiple applications communicating across an enterprise, you don't want one application's failure to bring down all of the other applications. Also, you don't want to design a system assuming that calls are fast and you don't want each application knowing details of other applications, even if it's only details about their interfaces.
+
+What we need is something like File Transfer where lots of little data packets can be produced quickly, transferred easily, and the receiver application is automatically notified when a new packet is available for consumption. The transfer needs a retry mechanism to make sure it succeeds. The details of any disk structure or database for storing the data needs to be hidden from the applications so that, unlike Shared Database, the storage schema and details can be easily changed to reflect the changing needs of the enterprise. One application should be able to send a packet of data to another application to invoke behavior in the other application, like Remote Procedure Invocation, but without being prone to failure. The data transfer should be asynchronous so that the sender does not need to wait on the receiver, especially when retry is necessary.
+
