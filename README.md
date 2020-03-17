@@ -47,7 +47,7 @@
 6. 啊, 这个月好颓废, 效率--
 
 ### MAR, 2020
-1. 123
+1.Refactoring improving the design of existing code
 2. 6.824 Lab3: Fault-tolerant Key/Value Service
 3. Pro Git
 4. Redis In Action √ 
