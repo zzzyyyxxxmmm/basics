@@ -110,3 +110,8 @@ What we need is something like File Transfer where lots of little data packets c
 **Transformation** — Various applications may not agree on the format for the same conceptual data; the sender formats the message one way, yet the receiver expects it to be formatted another way. To reconcile this, the message must go through an intermediate filter, a Message Translator, that converts the message from one format to another.
 
 **Endpoints** — An application does not have some built-in capability to interface with a messaging system. Rather, it must contain a layer of code that knows both how the application works and how the messaging system works, bridging the two so that they work together. This bridge code is a set of coordinated Message Endpoints that enable the application to send and receive messages.
+
+# Message Channel
+
+1. Point to Point Channel 信息只会被一个reciever接收
+2. Publish-Subscribe Channel 有类似broadcast功能的
