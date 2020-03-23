@@ -24,6 +24,22 @@ branch.master.merge=refs/heads/master
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/git_state.png" width="500" height="300">
 </div>
 
+## gitignore
+```git
+# no .a files
+*.a
+# but do track lib.a, even though you're ignoring .a files above
+!lib.a
+# only ignore the TODO file in the current directory, not subdir/TODO
+/TODO
+# ignore all files in the build/ directory
+build/
+# ignore doc/notes.txt, but not doc/server/arch.txt
+doc/*.txt
+# ignore all .pdf files in the doc/ directory
+doc/**/*.pdf
+```
+
 ## git commit
 ```
 Adding the -a option to the git commit command makes Git automatically stage every file that is **already tracked** before doing the commit, letting you skip the git add part:
@@ -131,6 +147,16 @@ Local branch configured for 'git pull':
 master merges with remote master
 Local ref configured for 'git push':
 master pushes to master (up to date)
+
+$ git remote
+origin
+$ git remote add pb https://github.com/paulboone/ticgit $ git remote -v
+origin https://github.com/schacon/ticgit (fetch) origin https://github.com/schacon/ticgit (push)
+pb https://github.com/paulboone/ticgit (fetch)
+pb https://github.com/paulboone/ticgit (push)
+$ git fetch pb
+remote: Counting objects: 43, done.
+remote: Compressing objects: 100% (36/36), done. remote: Total 43 (delta 10), reused 31 (delta 5)
 ```
 
 ## git branch
@@ -144,6 +170,7 @@ jikangs-MBP:gitTest jikangwang$ git branch -v
 * master  b20bb00 [ahead 4] Merge branch 'branch1'
 
 
+git checkout -b iss53 =  $ git branch iss53 $ git checkout iss53
 ```
 
 
@@ -162,3 +189,6 @@ doc/*.txt
 # ignore all .pdf files in the doc/ directory
 doc/**/*.pdf
 ```
+
+# tips
+HEAD 指向的是branch, branch指向某个commit
