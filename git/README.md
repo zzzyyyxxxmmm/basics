@@ -173,6 +173,52 @@ jikangs-MBP:gitTest jikangwang$ git branch -v
 git checkout -b iss53 =  $ git branch iss53 $ git checkout iss53
 ```
 
+## git fetch
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/git_1.png" width="700" height="500">
+</div>
+
+Let’s say you have a Git server on your network at git.ourcompany.com. If you clone from this, Git’s clone command automatically names it origin for you, pulls down all its data, creates a pointer to where its master branch is, and names it origin/ master locally. Git also gives you your own local master branch starting at the same place as origin’s master branch, so you have something to work from.
+
+```
+git fetch origin #updates your remote references
+git fetch -- all #所有的remote, 一般不用, 除非你指向了很多remote
+git checkout -b serverfix origin/serverfix # 然后用checkout创建local分支
+```
+
+It’s important to note that when you do a fetch that brings down new remote-tracking branches, you don’t automatically have local, editable copies of them.
+
+### git fetch 和 git pull的区别
+While the git fetch command will fetch down all the changes on the server that you don’t have yet, it will not modify your working directory at all. It will simply get the data for you and let you merge it yourself. However, there is a command called git pull which is essentially a git fetch immediately fol- lowed by a git merge in most cases. If you have a tracking branch set up as demonstrated in the last section, either by explicitly setting it or by having it created for you by the clone or checkout commands, git pull will look up what server and branch your current branch is tracking, fetch from that server and then try to merge in that remote branch.
+Generally it’s better to simply use the fetch and merge commands explicitly as the magic of git pull can often be confusing.
+
+## git push
+```
+git push origin server-fix:awesomebranch #push your local serverfix branch to the awesome- branch branch on the remote project.
+git push origin --delete serverfix #删除远端分支
+```
+
+## git rebase 
+```
+1 <- 2 <- 3(master)
+       <- 4(hotfix)
+
+$ git checkout experiment
+$ git rebase master
+1 <- 2 <- 3(master) <- 4(hotfix)
+
+
+$ git checkout master 
+$ git merge experiment   
+1 <- 2 <- 3 <- 4(hotfix, master)
+
+```
+
+### Rebase vs. Merge
+git pull可能会遇到冲突
+You can also simplify this by running a git pull --rebase instead of a normal git pull. Or you could do it manually with a git fetch followed by a git rebase teamone/master in this case.
+If you are using git pull and want to make --rebase the default, you can set the pull.rebase config value with something like git config --global pull.rebase true.
 
 # .gitignore
 ```

@@ -47,11 +47,11 @@
 6. 啊, 这个月好颓废, 效率--
 
 ### MAR, 2020
-1.Refactoring improving the design of existing code
+1. Refactoring improving the design of existing code √
 2. 6.824 Lab3: Fault-tolerant Key/Value Service
 3. Pro Git
 4. Redis In Action √ 
-5. Refactoring: improving the design of existing code
+5. Message System
 
 ### April, 2020
 1. 完成TCP/IP Illustrated TCP部分
