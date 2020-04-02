@@ -220,6 +220,22 @@ git pull可能会遇到冲突
 You can also simplify this by running a git pull --rebase instead of a normal git pull. Or you could do it manually with a git fetch followed by a git rebase teamone/master in this case.
 If you are using git pull and want to make --rebase the default, you can set the pull.rebase config value with something like git config --global pull.rebase true.
 
+One point of view on this is that your repository’s commit history is a record of what actually happened. It’s a historical document, valuable in its own right, and shouldn’t be tampered with. From this angle, changing the commit history is almost blasphemous; you’re lying about what actually transpired. So what if there was a messy series of merge commits? That’s how it happened, and the repository should preserve that for posterity.
+
+The opposing point of view is that the commit history is the story of how your project was made. You wouldn’t publish the first draft of a book, and the manual for how to maintain your software deserves careful editing. This is the camp that uses tools like rebase and filter-branch to tell the story in the way that’s best for future readers.
+
+如果你没有commit, 那么可以直接pull, 如果已经commit过了, 则需要fetch, 然后rebase
+
+# Git on the Server
+## Protocols
+Git can use four major protocols to transfer data: Local, HTTP, Secure Shell (SSH) and Git. Here we’ll discuss what they are and in what basic circumstances you would want (or not want) to use them.
+### Local Protocol
+The most basic is the Local protocol, in which the remote repository is in another directory on disk.
+```
+$ git clone /opt/git/project.git
+$ git remote add local_proj /opt/git/project.git
+```
+
 # .gitignore
 ```
 # no .a files

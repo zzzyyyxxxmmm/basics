@@ -140,3 +140,6 @@ n-m+f= 2.
 # 模板
 
 # STL
+
+### deque
+[leetcode 239. Sliding Window Maximum](https://leetcode.com/problems/sliding-window-maximum/)
