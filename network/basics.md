@@ -187,7 +187,7 @@ TTL is the time to live of the resource record
 # TCP vs UDP
 
 ### Reliable Data Transfer
-Packets can get lost within a computer network. For example, a packet can overflow a buffer in a router, or can be discarded by a host or router after having some of its bits corrupted. For many applications—such as electronic mail, file transfer, remote host access, Web document transfers, and financial applications—data loss can have devastating consequences. Thus, to support these applications, something has to be done to guarantee that the data sent by one end of the appli- cation is delivered correctly and completely to the other end of the application. If a protocol provides such a guaranteed data delivery service, it is said to provide reliable data transfer. One important service that a transport-layer protocol can potentially provide to an application is process-to-process reliable data transfer. When a transport protocol provides this service, the sending process can just pass its data into the socket and know with complete confidence that the data will arrive without errors at the receiving process.
+One important service that a transport-layer protocol can potentially provide to an application is process-to-process reliable data transfer. When a transport protocol provides this service, the sending process can just pass its data into the socket and know with complete confidence that the data will arrive without errors at the receiving process.
 
 When a transport-layer protocol doesn’t provide reliable data transfer, some of the data sent by the sending process may never arrive at the receiving process. This may be acceptable for loss-tolerant applications, most notably multimedia applica- tions such as conversational audio/video that can tolerate some amount of data loss. In these multimedia applications, lost data might result in a small glitch in the audio/video—not a crucial impairment.
 
@@ -214,24 +214,22 @@ A transport-layer protocol can also provide timing guarantees. Such a service wo
 
 
 
-## TCP
-The TCP service model includes a **connection-oriented service** and a **reliable data transfer service**.
+# TCP
 
+## TCP三大特点
 **Connection-oriented service**
 
-TCP has the client and server exchange transport- layer control information with each other before the application-level messages begin to flow. This so-called handshaking procedure alerts the client and server, allowing them to prepare for an onslaught of packets. After the handshaking phase, a TCP connection is said to exist between the sockets of the two processes. The connection is a full-duplex connection in that the two processes can send messages to each other over the connection at the same time. When the application finishes sending messages, it must tear down the connection.
-
 **Reliable data transfer service**
-
-The communicating processes can rely on TCP to deliver all data sent without error and in the proper order. When one side of the application passes a stream of bytes into a socket, it can count on TCP to deliver the same stream of bytes to the receiving socket, with no missing or duplicate bytes.
 
 **congestion-control mechanism**
 
 ### Building a Reliable Data Transfer Protocol
 1. 假设我们有一个sender和一个reciever, 保证网络可靠, 即packet不会被损坏, 也不会丢失, 那么直接发送即可
 2. 假设packet会损坏, 那么我们需要检测error和recover from error. 检测error需要在packet里加上checksum, recover from error就是重发, reciever通过checksum检测发送过来的包是否损坏, 如果损坏, 则发送NAK, 否则发送ACK. sender根据接收到的决定是否重发
-3. 再假设, 发送过来的ACK/NAK也损坏了呢? 最直接的想法就是对这个ACK/NAK也建立一个关于ACK/NAK的反馈, 但这样显然会无限循环了.(两座山的故事). 正确方法就是也检测ACK/NAK是否损坏, 损坏或者NAK就直接重发. 那reciever就有可能接收到duplicate packet, 区分方法就是加上sequential number: 0代表第一次发送, 1代表重发.
+3. 再假设, 发送过来的ACK/NAK也损坏了呢? 最直接的想法就是对这个ACK/NAK也建立一个关于ACK/NAK的反馈, 但这样显然会无限循环了.(两座山的故事). 正确方法就是也检测ACK/NAK是否损坏, 损坏或者NAK就直接重发. 那reciever就有可能接收到duplicate packet(这里的duplicate是指正在等待接收的实际是上一次重传的), 区分方法就是加上sequential number
 4. 如果packet发送的时候丢了呢. 这里加上timer计时即可
+
+唉, 这样一看,貌似已经做到可以稳定传输了, 那还要TCP干嘛
 
 以上都是基于 stop-and-wait的, 一次只能发送一个, 我们需要基于pipline式的, 一次支持发送多条, 因此上面的方法需要进一步改动:
 * The range of sequence numbers must be increased, since each in-transit packet (not counting retransmissions) must have a unique sequence number and there may be multiple, in-transit, unacknowledged packets.
@@ -260,19 +258,13 @@ If the windows size is greater than half the sequence number space, then if an A
 
 **Why is window size less than or equal to half the sequence number in SR protocol?**
 ```
-For example, if our sequence number range is 0-3 and the window size is 3, this situation can occur.
+假设发送方的sequence number是 [0,1,2,3,0,1,2,3], 窗口大小是3, 发送方发送0,1,2, 接收方接收到并且发送ACK2, 累计确认, 表示接收到012, 窗口右移, 三位, 等待接收3,0,1, 这时候由于ACK2丢失, 发送方重新发送0,1,2, 这个0,1,2里的0,1是重传的, 接收方无法识别, 错误.
 
-A -> 0 -> B
-A -> 1 -> B
-A -> 2 -> B
-A <- 2ack <- B (this is lost)
-A -> 0 -> B
-A -> 1 -> B
-A -> 2 -> B
+如果窗口大小是2, 那么sender -> 0,1  , 接收方右移等待接收2,3, 如果有重传那么也是0,1而不是2,3. 
 
-After the lost packet, B now expects the next packets to have sequence numbers 3, 0, and 1.
-But, the 0 and 1 that A is sending are actually retransmissions, so B receives them out of order.
-By limiting the window size to 2 in this example, we avoid this problem because B will be expecting 2 and 3, and only 0 and 1 can be retransmissions.
+那么有没有可能0,1重传的由于网络延迟, 之后才到, 这时候接收方又移动到了等待0,1的时候.
+
+这种情况是不可能的, 由于发送方发送完0,1后需要等待, 因此不会发送2,3, 接收方也就不会移动到0,1.
 ```
 
 ## TCP Segment Structure

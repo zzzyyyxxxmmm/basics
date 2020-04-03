@@ -58,3 +58,7 @@
 2. unix network programming
 3. 研究TCP连接对HTTP的影响
 4. nginx
+
+### May, 2020
+1. 温习数据库,  本月专攻数据库
+2. O'Reilly.High.Performance.MySQL.3rd.Edition.Mar.2012

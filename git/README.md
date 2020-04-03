@@ -236,6 +236,29 @@ $ git clone /opt/git/project.git
 $ git remote add local_proj /opt/git/project.git
 ```
 
+# Contributing to a project
+如何fork一个project
+```
+$ git clone (url)
+$ cd project
+$ git checkout -b featureA # (work)
+$ git commit
+# (work)
+$ git commit
+
+$ git remote add myfork (url)
+$ git push -u myfork featureA
+$ git request-pull origin/master myfork
+```
+
+拷贝另一个branch的所有修改
+```
+$ git checkout -b featureBv2 origin/master 
+$ git merge --squash featureB
+# (change implementation)
+$ git commit
+$ git push myfork featureBv2
+```
 # .gitignore
 ```
 # no .a files
