@@ -213,6 +213,15 @@ $ git checkout master
 $ git merge experiment   
 1 <- 2 <- 3 <- 4(hotfix, master)
 
+
+git rebase -i HEAD 也可以调整commit order, 删除某次的commit
+pick f7f3f6d changed my name a bit
+pick 310154e updated README formatting and added blame 
+pick a5f4a0d added cat-file
+
+
+pick 310154e updated README formatting and added blame
+pick f7f3f6d changed my name a bit
 ```
 
 ### Rebase vs. Merge
@@ -225,6 +234,19 @@ One point of view on this is that your repository’s commit history is a record
 The opposing point of view is that the commit history is the story of how your project was made. You wouldn’t publish the first draft of a book, and the manual for how to maintain your software deserves careful editing. This is the camp that uses tools like rebase and filter-branch to tell the story in the way that’s best for future readers.
 
 如果你没有commit, 那么可以直接pull, 如果已经commit过了, 则需要fetch, 然后rebase
+
+## git stash
+
+```
+git stash
+
+jikangs-MBP:gitTest jikangwang$ git stash list
+stash@{0}: WIP on master: 6a77383 AA
+stash@{1}: WIP on master: 6a77383 AA
+stash@{2}: WIP on master: 6a77383 AA
+
+git stash apply stash@{0}
+
 
 # Git on the Server
 ## Protocols
@@ -259,6 +281,7 @@ $ git merge --squash featureB
 $ git commit
 $ git push myfork featureBv2
 ```
+
 # .gitignore
 ```
 # no .a files

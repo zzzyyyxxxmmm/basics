@@ -1,3 +1,35 @@
+# KMP
+```c++
+void kmp_pre(string x,vector<int> &Next){
+    int i,j;
+    j=Next[0]=-1;
+    i=0;
+    while(i<x.length()){
+        while(j!=-1 && x[i]!=x[j])  j=Next[j];
+        Next[++i]=++j;
+    }
+}
+
+int kmp_count(string x,string y){
+    int i,j;
+    int ans=0;
+    vector<int> Next(x.length()+1);
+    kmp_pre(x,Next);
+    i=j=0;
+    while(i<y.length()){
+
+        while(j!=-1 && y[i]!=x[j])  j=Next[j];
+        i++;j++;
+        if(j>=x.length()){
+            ans++;
+            j=Next[j];
+        }
+    }
+    return ans;
+}
+
+```
+
 # 图论
 
 ## 二分图匹配+最大匹配
