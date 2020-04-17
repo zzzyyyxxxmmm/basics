@@ -246,7 +246,20 @@ stash@{1}: WIP on master: 6a77383 AA
 stash@{2}: WIP on master: 6a77383 AA
 
 git stash apply stash@{0}
+```
 
+## git reset
+```
+git reset --soft ead9as
+git reset (--mixed)
+git reset --hard
+
+soft会撤销上次commit, 但会保留add
+mix的会撤销add
+hard会撤销一切
+
+git reset --soft HEAD~2 会把前两个commit合并在一起, 类似于squash, 然后只需要再次commit就行了, 几乎等同于rebase -i, 只不过rebase -i是自动的
+```
 
 # Git on the Server
 ## Protocols

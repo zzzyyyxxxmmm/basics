@@ -49,7 +49,7 @@
 ### MAR, 2020
 1. Refactoring improving the design of existing code √
 2. 6.824 Lab3: Fault-tolerant Key/Value Service
-3. Pro Git
+3. Pro Git √后面太无聊实在看不下去了
 4. Redis In Action √ 
 5. Message System
 

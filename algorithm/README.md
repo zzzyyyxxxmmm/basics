@@ -39,6 +39,14 @@ code是不是用标准的格式来写的？
 
 ## [leetcode 84 monotonous stack](https://leetcode.com/problems/largest-rectangle-in-histogram/)
 
+# 构造问题
+1. 尝试最简单的case
+2. 思考如何自己check
+3. 列出case, 尝试优化
+
+# 递推
+做递推不想递推表达式, 被自己蠢哭
+
 # 背包问题
 
 ### 01背包
@@ -66,9 +74,6 @@ dp[0][0]初始化为1, max改成sum
 两个dp都是dp[j]=SUM(DP[i-nums[j]]), 其实就是交换两个loop, 第一个loop i 在外面表示选过的就不能再选了, 第二个loop i在里面, 可以重新再选
 
 # 常见算法
-
-### 返回和
-rangeSum还是以1开头比较好
 
 ## Interval
 基本思路都是过滤掉不相交的, 相交的再求
@@ -102,7 +107,8 @@ for(int i=0;i<n;i++){
 
 ## 记录路径
 1. 边计算边记录, 例如求longestPalindrome
-2. 
+2. 记忆化搜索不一定总能搜到最后, 有可能出现circle, 出现这种情况还是直接搜索, 然后对当前状态建立答案数组, 逐渐优化, 不过这种通常也能用bfs做, 例如: [1284. Minimum Number of Flips to Convert Binary Matrix to Zero Matrix](https://leetcode.com/problems/minimum-number-of-flips-to-convert-binary-matrix-to-zero-matrix/)
+
 # 图论
 
 ## 基本术语
@@ -150,3 +156,10 @@ n-m+f= 2.
 
 如果找到第一个小于等于的, 可以用upper_bound-1
 小于则是low_bound-1
+
+# 我犯傻过的题
+1348. Tweet Counts Per Frequency 互相思考
+
+1349. Min Stack 
+
+[1298](https://leetcode.com/contest/weekly-contest-168/problems/maximum-candies-you-can-get-from-boxes/) bfs没想清楚状态

@@ -293,9 +293,6 @@ Figure shows the structure of the TCP segment. As with UDP, the header includes 
 7. SYN—Synchronizesequencenumberstoinitiateaconnection;seeChapter13.
 8. FIN—The sender of the segment is finished sending data to its peer; see Chapter 13.
 
-## telnet example
-[image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/telnet.png)
-
 ## timeout的时间设置为多少比较合理
 **EstimatedRTT = (1 – α) • EstimatedRTT + α • SampleRTT**
 
@@ -316,7 +313,11 @@ Also, when a timeout occurs, the value of TimeoutInterval is doubled to avoid a 
 
 ### Fast Retransmit
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/fast_retransmit.png)
-首先对于接收方来说，如果接收方收到一个失序的报文段，就立即回送一个 ACK 给发送方，而不是等待发送延时的 ACK. 这样做的目的是可以让发送方尽可能早的知道报文段. 快重传算法规定，如果发送方一连收到 3 个重复的确认，就应当立即传送对方未收到的报文 M3，而不必等待 M3 的重传计时器到期。
+首先对于接收方来说，如果接收方收到一个失序的报文段，就立即回送一个 ACK 给发送方，而不是等待发送延时的 ACK（请参考《迟到的 ACK》）。所谓失序的报文是指，用户没有按照顺序收到 TCP 报文段，比如接收方收到了报文 M1, M2, M4，那么 M4 就称为失序 报文。
+
+这样做的目的是可以让发送方尽可能早的知道报文段 M3 未到达接收方。快重传算法规定，如果发送方一连收到 3 个重复的确认，就应当立即传送对方未收到的报文 M3，而不必等待 M3 的重传计时器到期。
+
+例如在图中120, 135, 141都是失序的, 因此发送方会重新发送100
 
 ### three-way handshake
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/three-way.png)

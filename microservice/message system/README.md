@@ -115,3 +115,5 @@ What we need is something like File Transfer where lots of little data packets c
 
 1. Point to Point Channel 信息只会被一个reciever接收
 2. Publish-Subscribe Channel 有类似broadcast功能的
+3. Datatype Channel 就是什么类型走什么channel, 一个channel只能有一个类型
+4. Invalid Message Channel The receiver should move the improper message to an Invalid Message Channel, a special channel for messages that could not be processed by their receivers. 但这个channel不是处理application error的, 好比删除一个不存在的数据的command message, 这是application error
