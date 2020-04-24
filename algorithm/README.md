@@ -108,7 +108,7 @@ for(int i=0;i<n;i++){
 ## 记录路径
 1. 边计算边记录, 例如求longestPalindrome
 2. 记忆化搜索不一定总能搜到最后, 有可能出现circle, 出现这种情况还是直接搜索, 然后对当前状态建立答案数组, 逐渐优化, 不过这种通常也能用bfs做, 例如: [1284. Minimum Number of Flips to Convert Binary Matrix to Zero Matrix](https://leetcode.com/problems/minimum-number-of-flips-to-convert-binary-matrix-to-zero-matrix/)
-
+3. 状态总数等于: 状态总数-所有不可能的状态及其衍生的状态
 # 图论
 
 ## 基本术语
@@ -163,3 +163,14 @@ n-m+f= 2.
 1349. Min Stack 
 
 [1298](https://leetcode.com/contest/weekly-contest-168/problems/maximum-candies-you-can-get-from-boxes/) bfs没想清楚状态
+
+[1201] (https://leetcode.com/problems/ugly-number-iii/) 数学太差
+
+[221] 最求大正方形, 最大矩形
+
+### 括号问题
+[32. Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses/)最长有效括号子串 
+
+[921. Minimum Add to Make Parentheses Valid](https://leetcode.com/problems/minimum-add-to-make-parentheses-valid/)添加最少括号
+
+[1190. Reverse Substrings Between Each Pair of Parentheses](https://leetcode.com/problems/reverse-substrings-between-each-pair-of-parentheses/)
