@@ -168,9 +168,4 @@ n-m+f= 2.
 
 [221] 最求大正方形, 最大矩形
 
-### 括号问题
-[32. Longest Valid Parentheses](https://leetcode.com/problems/longest-valid-parentheses/)最长有效括号子串 
-
-[921. Minimum Add to Make Parentheses Valid](https://leetcode.com/problems/minimum-add-to-make-parentheses-valid/)添加最少括号
-
-[1190. Reverse Substrings Between Each Pair of Parentheses](https://leetcode.com/problems/reverse-substrings-between-each-pair-of-parentheses/)
+[1424. Diagonal Traverse II](https://leetcode.com/contest/weekly-contest-186/problems/diagonal-traverse-ii/) 这个medium几乎让我变成一个智障, 首先范围没看仔细, 直接按最坏情况想, 结果没看到最底下的最坏情况有一个下限. 然后思考剪枝, 太复杂写了一个小时没写出来, 这种medium就不应该是剪枝, 当时应该直接放弃剪枝, 重新思考的
