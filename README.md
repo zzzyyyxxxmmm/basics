@@ -58,6 +58,7 @@
 2. unix network programming
 3. 研究TCP连接对HTTP的影响
 4. nginx
+5. 吐了, 在家实在是学不动, 明天开始按天记录吧
 
 ### May, 2020
 1. 温习数据库,  本月专攻数据库
