@@ -238,6 +238,7 @@ A transport-layer protocol can also provide timing guarantees. Such a service wo
 
 Sequential Number 是根据窗口大小循环的鸭:stuck_out_tongue_winking_eye:~
 
+The ACKs used by TCP are cumulative in the sense that an ACK indicating byte number N implies that all bytes up to number N (but not including it) have already been received successfully. This provides some robustness against ACK loss—if an ACK is lost, it is very likely that a subsequent ACK is sufficient to ACK the previous segments.
 ### Go-Back-N
 [view](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/GBN.png)
 

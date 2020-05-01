@@ -1,3 +1,26 @@
+# RMQ
+```c++
+vector<vector<int> > d;
+    int n;
+    void RMQ_init(vector<int> &A){
+        for(int i=1;i<=A.size();i++){
+            d[i][0]=A[i-1];
+        }
+        for(int j=1;(1<<j)<=n;j++){
+            for(int i=1;i+j-1<=n;i++){
+                d[i][j]=max(d[i][j-1],d[i+(1<<(j-1))][j-1]);
+            }
+        }
+    }
+
+    int RMQ(int L, int R){
+        L++;
+        R++;
+        int k=0;
+        while((1<<(k+1)) <= R-L+1)  k++;
+        return max(d[L][k], d[R-(1<<k)+1][k]);
+    }
+```
 # KMP
 ```c++
 void kmp_pre(string x,vector<int> &Next){
@@ -30,6 +53,75 @@ int kmp_count(string x,string y){
 
 ```
 
+# 线段树
+```
+#define lson l,mid,rt<<1
+#define rson mid+1,r,rt<<1|1
+#define root 1,nums.size(),1
+#define mid ((l+r)>>1)
+class NumArray {
+public:
+    vector<int> sum;
+    vector<int> nums;
+    int tot=0;
+    void pushup(int rt)
+    {
+        sum[rt]=sum[rt<<1]+sum[rt<<1|1];
+    }
+
+    void build(int l,int r,int rt)
+    {
+        if(l==r)
+        {
+            sum[rt]=nums[tot++];
+            return;
+        }
+        build(lson);
+        build(rson);
+        pushup(rt);
+    }
+
+    void Update(int pos,int val,int l,int r,int rt)
+    {
+        if(l==r)
+        {
+            sum[rt]=val;
+            return;
+        }
+        if(pos<=mid)    Update(pos,val,lson);
+        else Update(pos,val,rson);
+        pushup(rt);
+    }
+
+    int query(int L,int R,int l,int r,int rt)
+    {
+        if(l>=L&&r<=R)
+        {
+            return sum[rt];
+        }
+        int ans=0;
+        if(L<=mid)  ans+=query(L,R,lson);
+        if(R>mid)   ans+=query(L,R,rson);
+        return ans;
+    }
+
+    NumArray(vector<int>& nums) {
+        if(nums.size()==0)  return;
+        vector<int> s(nums.size()<<4, 0);
+        sum=s;
+        this->nums=nums;
+        build(root);
+    }
+
+    void update(int i, int val) {
+        Update(i+1, val, root);
+    }
+
+    int sumRange(int i, int j) {
+        return query(i+1, j+1, root);
+    }
+};
+```
 # 图论
 
 ## 二分图匹配+最大匹配
