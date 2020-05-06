@@ -59,7 +59,7 @@ int kmp_count(string x,string y){
 #define rson mid+1,r,rt<<1|1
 #define root 1,nums.size(),1
 #define mid ((l+r)>>1)
-class NumArray {
+class Solution {
 public:
     vector<int> sum;
     vector<int> nums;
@@ -121,6 +121,7 @@ public:
         return query(i+1, j+1, root);
     }
 };
+
 ```
 # 图论
 

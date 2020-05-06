@@ -171,3 +171,6 @@ n-m+f= 2.
 [1424. Diagonal Traverse II](https://leetcode.com/contest/weekly-contest-186/problems/diagonal-traverse-ii/) 这个medium几乎让我变成一个智障, 首先范围没看仔细, 直接按最坏情况想, 结果没看到最底下的最坏情况有一个下限. 然后思考剪枝, 太复杂写了一个小时没写出来, 这种medium就不应该是剪枝, 当时应该直接放弃剪枝, 重新思考的
 
 [1124. Longest Well-Performing Interval](https://leetcode.com/contest/weekly-contest-145/problems/longest-well-performing-interval/) 相对关系
+
+# 绝世好题
+[780. Reaching Points](https://leetcode.com/problems/reaching-points/)
