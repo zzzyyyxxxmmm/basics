@@ -53,13 +53,13 @@
 4. Redis In Action √ 
 5. Message System
 
-### April, 2020
+### April + May, 2020
 1. 完成TCP/IP Illustrated TCP部分
 2. unix network programming
 3. 研究TCP连接对HTTP的影响
-4. nginx
-5. 吐了, 在家实在是学不动, 明天开始按天记录吧
+4. nginx (nginx http server)
+5. 吐了, 在家实在是学不动, 本月废了, 全部移至下月
 
-### May, 2020
+### June, 2020
 1. 温习数据库,  本月专攻数据库
 2. O'Reilly.High.Performance.MySQL.3rd.Edition.Mar.2012

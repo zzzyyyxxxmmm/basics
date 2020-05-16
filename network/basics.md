@@ -239,6 +239,8 @@ A transport-layer protocol can also provide timing guarantees. Such a service wo
 Sequential Number 是根据窗口大小循环的鸭:stuck_out_tongue_winking_eye:~
 
 The ACKs used by TCP are cumulative in the sense that an ACK indicating byte number N implies that all bytes up to number N (but not including it) have already been received successfully. This provides some robustness against ACK loss—if an ACK is lost, it is very likely that a subsequent ACK is sufficient to ACK the previous segments.
+
+实际窗口大小貌似是65535
 ### Go-Back-N
 [view](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/GBN.png)
 
@@ -328,6 +330,15 @@ Also, when a timeout occurs, the value of TimeoutInterval is doubled to avoid a 
 been considerable interest in properly randomizing the choice of the client_isn in order to avoid certain security attacks.
 * Step 2. Once the IP datagram containing the TCP SYN segment arrives at the server host (assuming it does arrive!), the server extracts the TCP SYN segment from the datagram, allocates the TCP buffers and variables to the connection, and sends a connection-granted segment to the client TCP. (We’ll see in Chapter 8 that the allocation of these buffers and variables before completing the third step of the three-way handshake makes TCP vulnerable to a denial-of-service attack known as SYN flooding.) This connection-granted segment also contains no application- layer data. However, it does contain three important pieces of information in the segment header. First, the SYN bit is set to 1. Second, the acknowledgment field of the TCP segment header is set to client_isn+1. Finally, the server chooses its own initial sequence number (server_isn) and puts this value in the sequence number field of the TCP segment header. This connection-granted segment is saying, in effect, “I received your SYN packet to start a connection with your initial sequence number, client_isn. I agree to establish this con- nection. My own initial sequence number is server_isn.” The connection- granted segment is referred to as a SYNACK segment.
 * Step 3. Upon receiving the SYNACK segment, the client also allocates buffers and variables to the connection. The client host then sends the server yet another segment; this last segment acknowledges the server’s connection-granted seg- ment (the client does so by putting the value server_isn+1 in the acknowl- edgment field of the TCP segment header). The SYN bit is set to zero, since the connection is established. This third stage of the three-way handshake may carry client-to-server data in the segment payload.
+
+TCP是支持half-closed的, 即只发送方不再发送信息, 但是依然可以接受信息. 
+
+TCP是支持一个端口多个连接的, 识别一个tcp连接靠的是发送接收方IP和port, 只要这个不一样, 就可以建立连接, 例如发送方A:9999发送给B:7777, B:7777也可以和A:9999继续建立连接
+
+tcp连接失败后会等待3秒, 再失败然后等待6秒, 12s...
+### ISN
+每次建立连接的ISN不能相同, 否则如果一个信息delay了, 之后又建立了新的连接, 这个信息就有可能跑到新的连接上. In particular, new sequence numbers must not be allowed to overlap between different instantiations (or incarnations) of the same connection. The idea of different instantiations of the same connection becomes clear when we recall that a TCP connection is identified by a pair of endpoints, creat- ing a 4-tuple of two address/port pairs. If a connection had one of its segments delayed for a long period of time and closed, but then opened again with the same 4-tuple, it is conceivable that the delayed segment could reenter the new connec- tion’s data stream as valid data. This would be most troublesome. By taking steps to avoid overlap in sequence numbers between connection instantiations, we can try to minimize this risk.
+
 
 ## TCP Congestion Control
 this approach raises three questions.
