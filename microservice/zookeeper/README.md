@@ -1,5 +1,5 @@
 # What is Zookeeper
-Zookeeper是一个高性能分布式应用协调服务
+Zookeeper是一个高性能分布式应用协调服务, 实现分布式锁
 
 # Zookeeper的工作方式
 * Zookeeper集群包含一个Leader, 多个Follower

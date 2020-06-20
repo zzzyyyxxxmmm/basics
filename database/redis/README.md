@@ -113,3 +113,9 @@ Redis 是一个使用 C 语言写成的，开源的 key-value 数据库。。和
 | ZREMRANGEBYSCORE | ZREMRANGEBYSCOREkey-nameminmax—Removes the items from the ZSET with scores between min and max                                                        |
 | ZINTERSTORE      | ZINTERSTORE dest-key key-count key [key ...] [WEIGHTS weight[weight...]][AGGREGATESUM|MIN|MAX]—Performs a SET-like intersection of the provided ZSETs |
 | ZUNIONSTORE      | ZUNIONSTORE dest-key key-count key [key ...] [WEIGHTS weight[weight...]][AGGREGATESUM|MIN|MAX]—Performs a SET-like union of the provided ZSETs        |
+
+
+
+# 使用redis实现分布式锁
+
+(redis blog)[https://redis.io/topics/distlock]
