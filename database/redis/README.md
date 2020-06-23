@@ -118,4 +118,5 @@ Redis 是一个使用 C 语言写成的，开源的 key-value 数据库。。和
 
 # 使用redis实现分布式锁
 
+(redis)[https://juejin.im/post/5cc165816fb9a03202221dd5]
 (redis blog)[https://redis.io/topics/distlock]
