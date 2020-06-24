@@ -444,11 +444,197 @@ index_options用于控制在建立倒排索引过程中，哪些内容会被添�
 ## 增加Cache, 硬件优化
 
 ## 文档模型
+为了让搜索时的成本更低，文档应该合理建模。特别是应该避免join操作，嵌套（nested）会使查询慢几倍，父子（parent-child）关系可能使查询慢数百倍，因此，如果可以通过非规范化（denormalizing）文档来回答相同的问题，则可以显著地提高搜索速度。
 
+## 预索引数据
+还可以针对某些查询的模式来优化数据的索引方式。例如，如果所有文档都有一个 price字段，并且大多数查询在一个固定的范围上运行range聚合，那么可以通过将范围“pre-indexing”到索引中并使用terms聚合来加快聚合速度。
 
+例如，文档起初是这样的：
 
+```
+PUT index/type/1
 
+{
 
+＂designation＂: ＂spoon＂，
 
+＂price＂: 13
+
+}
+```
+
+采用如下的搜索方式：
+```
+GET index/_search
+{
+    "aggs":{
+        "price_ranges":{
+            "range":{
+                "field": "price",
+                "ranges":[
+                    {"to":10},
+                    {"from":10, "to":100},
+                    {"from":100}
+                ]
+            }
+        }
+    }
+}
+```
+那么我们的优化是，在建立索引时对文档进行富化，增加 price_range 字段，mapping 为keyword类型：
+```
+PUT index{
+    "mappings": {
+        "type":{
+            "properties":{
+                "price_range":{
+                    "type": "keyword"
+                }
+            }
+        }
+    }
+}
+
+PUT index/type/1
+{
+    "designation":"spoon"
+    "price": 13,
+    "price_range":"10-100"
+}
+```
+
+接下来，搜索请求可以聚合这个新字段，而不是在price字段上运行range聚合。
+```
+GET index/_search
+{
+    "aggs": {
+        "price_ranges":{
+            "terms":{
+                "field":"price_range"
+            }
+        }
+    }
+}
+```
+
+## 字段映射
+有些字段的内容是数值，但并不意味着其总是应该被映射为数值类型，例如，一些标识符，将它们映射为keyword可能会比integer或long更好。
+
+## 避免使用脚本
+一般来说，应该避免使用脚本。如果一定要用，则应该优先考虑painless和expressions。
+
+## 为只读索引执行force-merge
+
+**Lucene segments**
+
+Each Elasticsearch index is divided into shards. Shards are both logical and physical division of an index. Each Elasticsearch shard is a Lucene index. The maximum number of documents you can have in a Lucene index is 2,147,483,519. The Lucene index is divided into smaller files called segments. A segment is a small Lucene index. Lucene searches in all segments sequentially.
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_7.png" width="700" height="500">
+</div>
+
+Lucene creates a segment when a new writer is opened, and when a writer commits or is closed. It means segments are immutable. When you add new documents into your Elasticsearch index, Lucene creates a new segment and writes it. Lucene can also create more segments when the indexing throughput is important.
+
+From time to time, Lucene merges smaller segments into a larger one. the merge can also be triggered manually from the Elasticsearch API.
+
+This behavior has a few consequences from an operational point of view.
+The more segments you have, the slower the search. This is because Lucene has to search through all the segments in sequence, not in parallel. Having a little number of segments improves search performances.
+
+Lucene merges have a cost in terms of CPU and I/Os. It means they might slow your indexing down. When performing a bulk indexing, for example an initial indexing, it is recommended to disable the merges completely.
+
+If you plan to host lots of shards and segments on the same host, you might choose a filesystem that copes well with lots of small files and does not have an important inode limitation. This is something we’ll deal in details in the part about choosing the right file system.
+
+为不再更新的只读索引执行force merge，将Lucene索引合并为单个分段，可以提升查询速度。当一个Lucene索引存在多个分段时，每个分段会单独执行搜索再将结果合并，将只读索引强制合并为一个Lucene分段不仅可以优化搜索过程，对索引恢复速度也有好处。
+
+基于日期进行轮询的索引的旧数据一般都不会再更新。此前的章节中说过，应该避免持续地写一个固定的索引，直到它巨大无比，而应该按一定的策略，例如，每天生成一个新的索引，然后用别名关联，或者使用索引通配符。这样，可以每天选一个时间点对昨天的索引执行force-merge、Shrink等操作。
+
+## 预热全局序号（global ordinals）
+全局序号是一种数据结构，用于在keyword字段上运行terms聚合。它用一个数值来代表字段中的字符串值，然后为每一数值分配一个 bucket。这需要一个对 global ordinals 和 bucket的构建过程。默认情况下，它们被延迟构建，因为ES不知道哪些字段将用于 terms聚合，哪些字段不会。可以通过配置映射在刷新（refresh）时告诉ES预先加载全局序数：
+
+[es](https://www.elastic.co/guide/en/elasticsearch/reference/master/eager-global-ordinals.html#:~:text=When%20used%20during%20aggregations%2C%20ordinals%20can%20greatly%20improve%20performance.&text=Each%20index%20segment%20defines%20its,unified%20mapping%20called%20global%20ordinals.)
+
+## 使用近似聚合
+
+# 磁盘使用量优化
+
+### 禁用对你来说不需要的特性
+默认情况下，ES为大多数的字段建立索引，并添加到doc_values，以便使之可以被搜索和聚合。但是有时候不需要通过某些字段过滤，例如，有一个名为 foo 的数值类型字段，需要运行直方图，但不需要在这个字段上过滤，那么可以不索引这个字段：
+```
+PUT index
+{
+    "mappings": {
+        "type": {
+            "properties": {
+                "foo": {
+                    "type": "integer",
+                    "index": false
+                }
+            }
+        }
+    }
+}
+```
+
+text 类型的字段会在索引中存储归一因子（normalization factors），以便对文档进行评分，如果只需要在文本字段上进行匹配，而不关心生成的得分，则可以配置 ES 不将 norms 写入索引：
+```
+PUT index
+{
+    "mappings": {
+        "type": {
+            "properties": {
+                "foo": {
+                    "type": "text",
+                    "index": false
+                }
+            }
+        }
+    }
+}
+```
+
+关于text字段的优化还有很多
+
+### 禁用doc values
+所有支持doc value的字段都默认启用了doc value。如果确定不需要对字段进行排序或聚合，或者从脚本访问字段值，则可以禁用doc value以节省磁盘空间：
+```
+PUT index
+{
+    "mappings": {
+        "type": {
+            "properties": {
+                "foo": {
+                    "type": "text",
+                    "doc_values": false
+                }
+            }
+        }
+    }
+}
+```
+
+### 不要使用默认的动态字符串映射
+默认的动态字符串映射会把字符串类型的字段同时索引为 text 和 keyword。如果只需要其中之一，则显然是一种浪费。通常，id字段只需作为 keyword类型进行索引，而body字段只需作为text类型进行索引。
+
+要禁用默认的动态字符串映射，则可以显式地指定字段类型，或者在动态模板中指定将字符串映射为text或keyword。下例将字符串字段映射为keyword：
+```
+PUT index
+{
+    "mappings": {
+        "type": {
+            "dynamic_templates": [
+                {
+                    "strings": {
+                        "match_mapping_type": "string",
+                        "mapping": {
+                            "type":"keyword"
+                        }
+                    }
+                }
+            ]
+        }
+```
 # 问
 1. 什么情况下es数据会丢失
+2. 索引重建
+索引重建（Rebuild）
+索引创建后，你可以在索引当中添加新的类型，在类型中添加新的字段。但是如果想修改已存在字段的属性（修改分词器、类型等），目前ES是做不到的。如果确实存在类似这样的需求，只能通过重建索引的方式来实现。但想要重建索引，请保证索引_source属性值为true，即存储原始数据。索引重建的过程就是将原来索引数据查询回来入到新建的索引当中去，为了重建过程不影响客户端查询，创建索引时请使用索引别名，例如现在需要将index1进行重建生成index2，index1给客户端提供的别名为index1_alias

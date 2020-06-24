@@ -1,6 +1,7 @@
 # What is Zookeeper
 Zookeeper是一个高性能分布式应用协调服务, 实现分布式锁
 
+在ZNode改变的时候, watcher会给客户端发送通知
 # Zookeeper的工作方式
 * Zookeeper集群包含一个Leader, 多个Follower
 * 所有的Follower都可提供读服务

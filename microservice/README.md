@@ -37,6 +37,9 @@ Microservice is an idea to devide the project into small services. The service e
 
 ## 一致性方案
 
+### 分布式算法
+(3种分布式算法)[https://zhuanlan.zhihu.com/p/86580285]
+
 ### Master-slave
 * RDBMS的读写分离即为典型的Master-slave方案
 * 同步复制可保证强一致性但会影响可用性
@@ -50,6 +53,8 @@ Microservice is an idea to devide the project into small services. The service e
 
 ### Paxos及其变种
 * Google的Chubby, Zookeeper的Zab, RAFT等
+
+
 # API GateWay
 
 load balancer, cache, access controll. (Nginx)
