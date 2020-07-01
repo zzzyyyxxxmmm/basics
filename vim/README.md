@@ -151,3 +151,47 @@ vHx
 q
 :'<,'>normal @a
 ```
+
+
+# Vim练习
+
+## 1
+```
+This is a
+very short
+
+file, but it is 
+still
+full
+
+of
+
+surpises.
+```
+
+```
+*This is a
+*very short
+
+*file, but it is 
+*still
+*full
+
+*of
+
+*surpises.
+```
+
+
+利用g匹配找到所有非空行, 然后加*
+```sh
+:g/^./norm I*<CR>ZZ
+
+:g/./norm I*<CR>ZZ
+
+:g/./s/^/*<CR>ZZ 13
+
+:%s/./*&<CR>ZZ 11
+
+<C-V>GyPgvr*ZZ 10
+```

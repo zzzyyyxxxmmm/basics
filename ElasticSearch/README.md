@@ -16,10 +16,101 @@ Elasticsearch is a distributed document store. Instead of storing information as
 
 When a document is stored, it is indexed and fully searchable in near real-time—​within 1 second. Elasticsearch uses a data structure called an inverted index that supports very fast full-text searches. An inverted index lists every unique word that appears in any document and identifies all of the documents each word occurs in.
 
+# Life inside a cluster
+
+## An empty cluster
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_8.png" width="700" height="400">
+</div>
+
+A node is a running instance of Elasticsearch, while a cluster consists of one or more nodes with the same cluster.name that are working together to share their data and workload. As nodes are added to or removed from the cluster, the cluster reorganizes itself to spread the data evenly.
+
+One node in the cluster is elected to be the master node, which is in charge of managing cluster-wide changes like creating or deleting an index, or adding or removing a node from the cluster. The master node does not need to be involved in document- level changes or searches, which means that having just one master node will not become a bottleneck as traffic grows. Any node can become the master. Our example cluster has only one node, so it performs the master role.
+
+As users, we can talk to any node in the cluster, including the master node. Every node knows where each document lives and can forward our request directly to the nodes that hold the data we are interested in. Whichever node we talk to manages the pro‐ cess of gathering the response from the node or nodes holding the data and returning the final response to the client. It is all managed transparently by Elasticsearch.
+
+## Cluster Health
+green: All primary and replica shards are active.
+yellow: All primary shards are active, but not all replica shards are active.
+red: Not all primary shards are active
+
+## Add an Index
+To add data to Elasticsearch, we need an index—a place to store related data. In real‐ ity, an index is just a logical namespace that points to one or more physical shards.
+
+A shard is a low-level worker unit that holds just a slice of all the data in the index. In Chapter 11, we explain in detail how a shard works, but for now it is enough to know that a shard is a single instance of Lucene, and is a complete search engine in its own right. Our documents are stored and indexed in shards, but our applications don’t talk to them directly. Instead, they talk to an index.
+
+Shards are how Elasticsearch distributes data around your cluster. Think of shards as containers for data. Documents are stored in shards, and shards are allocated to nodes in your cluster. As your cluster grows or shrinks, Elasticsearch will automati‐ cally migrate shards between nodes so that the cluster remains balanced.
+
+A shard can be either a primary shard or a replica shard. Each document in your index belongs to a single primary shard, so the number of primary shards that you have determines the maximum amount of data that your index can hold.
+
+A replica shard is just a copy of a primary shard. Replicas are used to provide redun‐ dant copies of your data to protect against hardware failure, and to serve read requests like searching or retrieving a document.
+
+The number of primary shards in an index is fixed at the time that an index is cre‐ ated, but the number of replica shards can be changed at any time.
+
+Let’s create an index called blogs in our empty one-node cluster. By default, indices are assigned five primary shards, but for the purpose of this demonstration, we’ll assign just three primary shards and one replica (one replica of every primary shard):
+```json
+PUT /blogs {
+"settings" : { 
+    "number_of_shards" : 3, "number_of_replicas" : 1
+    } 
+}
+```
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_9.png" width="700" height="400">
+</div>
+
+**status: yellow**
+
+A cluster health of yellow means that all primary shards are up and running (the cluster is capable of serving any request successfully) but not all replica shards are active. In fact, all three of our replica shards are currently unassigned—they haven’t been allocated to a node. It doesn’t make sense to store copies of the same data on the same node. If we were to lose that node, we would lose all copies of our data.
+
+Currently, our cluster is fully functional but at risk of data loss in case of hardware failure.
+
+## Add Failover
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_10.png" width="700" height="400">
+</div>
+
+**status: green**
+
+The second node has joined the cluster, and three replica shards have been allocated to it—one for each primary shard. That means that we can lose either node, and all of our data will be intact.
+
+Any newly indexed document will first be stored on a primary shard, and then copied in parallel to the associated replica shard(s). This ensures that our document can be retrieved from a primary shard or from any of its replicas.
+
+## Scale Horizontally
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_11.png" width="700" height="400">
+</div>
+
+## Then Scale Some More
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_12.png" width="700" height="400">
+</div>
+
+## Coping with Failure
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_13.png" width="700" height="400">
+</div>
+
+The node we killed was the master node. A cluster must have a master node in order to function correctly, so the first thing that happened was that the nodes elected a new master: Node 2.
+
+Primary shards 1 and 2 were lost when we killed Node 1, and our index cannot func‐ tion properly if it is missing primary shards. If we had checked the cluster health at this point, we would have seen status red: not all primary shards are active!
+
+Fortunately, a complete copy of the two lost primary shards exists on other nodes, so the first thing that the new master node did was to promote the replicas of these shards on Node 2 and Node 3 to be primaries, putting us back into cluster health yellow. This promotion process was instantaneous, like the flick of a switch.
+
+So why is our cluster health yellow and not green? We have all three primary shards, but we specified that we wanted two replicas of each primary, and currently only one replica is assigned. This prevents us from reaching green, but we’re not too worried here: were we to kill Node 2 as well, our application could still keep running without data loss, because Node 3 contains a copy of every shard.
+
+If we restart Node 1, the cluster would be able to allocate the missing replica shards, resulting in a state similar to the one d escribed in Figure 2-5. If Node 1 still has copies of the old shards, it will try to reuse them, copying over from the primary shard only the files that have changed in the meantime.
+
+By now, you should have a reasonable idea of how shards allow Elasticsearch to scale horizontally and to ensure that your data is safe. Later we will examine the life cycle of a shard in more detail.
+
 # 集群启动流程
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_1.png" width="700" height="500">
 </div>
+
 
 ## 选举主节点
 ES的选主算法是基于Bully算法的改进, 主要思路是对节点ID排序, 取ID值最大的节点作为Master.
