@@ -1,3 +1,11 @@
+# 常见操作
+1. 删除所有不带数字的
+```
+:v/\d/d
+```
+
+2.
+
 ```vim
 gUaw
 ~
@@ -156,6 +164,7 @@ q
 # Vim练习
 
 ## 1
+start file:
 ```
 This is a
 very short
@@ -169,6 +178,7 @@ of
 surpises.
 ```
 
+end file:
 ```
 *This is a
 *very short
@@ -195,3 +205,137 @@ surpises.
 
 <C-V>GyPgvr*ZZ 10
 ```
+
+## 2
+**start file:**
+```
+super.onCreate(savedInstanceState)
+setContentView(R.layout.activity_second)
+Intent intent = getIntent()
+String text = intent.getStringExtra("text")
+
+TextView view = findViewById(R.id.textView2)
+view.setText(text)
+```
+
+**end file:**
+```
+super.onCreate(savedInstanceState);
+setContentView(R.layout.activity_second);
+Intent intent = getIntent();
+String text = intent.getStringExtra("text");
+
+TextView view = findViewById(R.id.textView2);
+view.setText(text);
+```
+
+**Solution:**
+```
+:%s/.$/&;<CR>ZZ
+```
+
+## 3
+```
+6GYp<C-A>ws11<Esc><fd-61>3joNew text.<CR><Esc>ZZ
+
+MYp<C-A>l11<C-A>GONew te<C-N>.<CR><Esc>ZZ
+```
+
+## 4
+```
+:%s/\(\d\)/-\1<CR>ZZ
+
+:%s/\d/-&<CR>ZZ
+```
+
+## 5
+```
+i# <Esc>fiswa<Esc>A #<Esc>YPPVr#G.ZZ
+```
+
+## 6
+```
+//先替换再删除所有空行
+dj:%s/,/\r/g<CR>:g/^$/d<CR>ZZ
+
+dj:%s/,/\r/g<CR>:v/./d<CR>ZZ
+
+
+dj3JIwr<CR><Esc>u9@.$xZZ
+
+dj3JV"=[<C-R><C-L>]<CR>pZZ
+```
+
+## 7
+question:
+```
+I can't see the $ for all the $,
+But there $ not $ $ tomorrow.
+$ she can do $ and 4,
+$ the $ in the $ and $ the $.
+
+----------------------------------------
+
+I can't see the 1 for all the 2,
+But there 1 not 2 3 tomorrow.
+1 she can do 2 and 4,
+1 the 2 in the 3 and 4 the 5.
+```
+
+Solution:
+```
+/\$<CR>r1nr2nr1nr2nr3nr1nr2nr1nr2nr3nr4nr5ZZ
+
+f$r1;r2+;r1;r2;r3+r1;r2+r1;r2;r3;r4;r5ZZ
+
+:%s/\$/1<CR>:<Up><BS>2<CR>:<Up><BS>3<CR>:<Up><BS>4<CR>:<Up><BS>5<CR>ZZ
+
+:let@a=@a+1|%s'\$'\=@a<CR>4@:ZZ
+
+*dsa*
+*dsadas*
+*dsad*
+```
+
+## 8
+
+```
+foo = a
+      ab
+      abc
+ 
+ 
+foo = "a"
+      "ab"
+      "abc"
+ 
+ 
+ 
+:%s/\w\+$/"\0"/g<CR>ZZ
+:%s/\w\+$/"&"/g<CR>ZZ
+ 
+qqfai"<C-O>$"<Esc><Down>0q2@qZZ
+ 
+```
+
+### 9
+```
+## Headers
+
+## To
+
+## Underline
+
+
+Headers
+-------
+
+Are
+---
+
+Underlined
+----------
+
+<C-V>GtUxqwYpVr-<CR><CR>qCAre<Esc>@wAd<Esc>@wZZ
+```
+ 
