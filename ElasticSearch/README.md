@@ -16,6 +16,68 @@ Elasticsearch is a distributed document store. Instead of storing information as
 
 When a document is stored, it is indexed and fully searchable in near real-time—​within 1 second. Elasticsearch uses a data structure called an inverted index that supports very fast full-text searches. An inverted index lists every unique word that appears in any document and identifies all of the documents each word occurs in.
 
+# Dealing with Conflicts ES是如何控制数据冲突的
+When updating a document with the index API, we read the original document, make our changes, and then reindex the whole document in one go. The most recent indexing request wins: whichever document was indexed last is the one stored in Elasticsearch. If somebody else had changed the document in the meantime, their changes would be lost.
+
+In the database world, two approaches are commonly used to ensure that changes are not lost when making concurrent updates:
+
+**Pessimistic concurrency control**
+
+Widely used by relational databases, this approach assumes that conflicting changes are likely to happen and so blocks access to a resource in order to pre‐ vent conflicts. A typical example is locking a row before reading its data, ensuring that only the thread that placed the lock is able to make changes to the data in that row.
+
+**Optimistic concurrency control**
+
+Used by Elasticsearch, this approach assumes that conflicts are unlikely to hap‐ pen and doesn’t block operations from being attempted. However, if the underly‐ ing data has been modified between reading and writing, the update will fail. It is then up to the application to decide how it should resolve the conflict. For instance, it could reattempt the update, using the fresh data, or it could report the situation to the user.
+
+## Optimistic Concurrency Control
+new version of the document has to be replicated to other nodes in the cluster. Elas‐ ticsearch is also asynchronous and concurrent, meaning that these replication requests are sent in parallel, and may arrive at their destination out of sequence. Elas‐ ticsearch needs a way of ensuring that an older version of a document never over‐ writes a newer version.
+
+When we discussed index, get, and delete requests previously, we pointed out that every document has a _version number that is incremented whenever a document is changed. Elasticsearch uses this _version number to ensure that changes are applied in the correct order. If an older version of a document arrives after a new version, it can simply be ignored.
+
+
+# Partial Updates to Documents
+the way to update a docu‐ ment is to retrieve it, change it, and then reindex the whole document. 
+
+The simplest form of the update request accepts a partial document as the doc parameter, which just gets merged with the existing document. Objects are merged together, existing scalar fields are overwritten, and new fields are added.
+
+```json
+POST /website/blog/1/_update {
+    "script" : "ctx._source.views+=1" 
+}
+
+
+这段代码可以直接在array后append一个新的
+POST /website/blog/1/_update {
+    "script" : "ctx._source.tags+=new_tag", "params" : {
+    "new_tag" : "search" 
+    }
+}
+```
+
+更新不存在的field
+```
+POST /website/pageviews/1/_update {
+"script" : "ctx._source.views+=1", "upsert": {
+"views": 1 }
+}
+```
+
+## Updates and Conflicts
+In the introduction to this section, we said that the smaller the window between the retrieve and reindex steps, the smaller the opportunity for conflicting changes. But it doesn’t eliminate the possibility completely. It is still possible that a request from another process could change the document before update has managed to reindex it.
+
+To avoid losing data, the update API retrieves the current _version of the document in the retrieve step, and passes that to the index request during the reindex step. If another process has changed the document between retrieve and reindex, then the _version number won’t match and the update request will fail.
+
+For many uses of partial update, it doesn’t matter that a document has been changed. For instance, if two processes are both incrementing the page-view counter, it doesn’t matter in which order it happens; if a conflict occurs, the only thing we need to do is reattempt the update.
+
+number of times that update should retry before failing; it defaults to 0.
+```
+POST /website/pageviews/1/_update?retry_on_conflict=5 {
+"script" : "ctx._source.views+=1", "upsert": {
+"views": 0 }
+}
+```
+
+
 # Life inside a cluster
 
 ## An empty cluster
