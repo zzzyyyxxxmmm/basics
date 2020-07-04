@@ -307,17 +307,9 @@ ES 中的每个索引都会被拆分为多个分片，并且每个分片都有�
 # 写流程
 
 ## Index Bulk基本流程
-以下是写单个文档所需的步骤：
-
-（1）客户端向NODE1发送写请求。
-
-（2）NODE1使用文档ID来确定文档属于分片0，通过集群状态中的内容路由表信息获知分片0的主分片位于NODE3，因此请求被转发到NODE3上。
-
-（3）NODE3上的主分片执行写操作。如果写入成功，则它将请求并行转发到 NODE1和NODE2的副分片上，等待返回结果。当所有的副分片都报告成功，NODE3将向协调节点报告成功，协调节点再向客户端报告成功。
-
-在客户端收到成功响应时，意味着写操作已经在主分片和所有副分片都执行完成。
-
-写一致性的默认策略是quorum，即多数的分片（其中分片副本可以是主分片或副分片）在写入操作时处于可用状态。
+1. The client sends a create, index, or delete request to Node 1.
+2. The node uses the document’s _id to determine that the document belongs to shard 0. It forwards the request to Node 3, where the primary copy of shard 0 is currently allocated.
+3. Node 3 executes the request on the primary shard. If it is successful, it forwards the request in parallel to the replica shards on Node 1 and Node 2. Once all of the replica shards report success, Node 3 reports success to the requesting node, which reports success to the client.
 
 ## 详细流程
 <div align=center>
@@ -332,13 +324,13 @@ ES 中的每个索引都会被拆分为多个分片，并且每个分片都有�
 </div>
 
 ## GET基本流程
-（1）客户端向NODE1发送读请求。
+1. The client sends a get request to Node 1.
+2. The node uses the document’s _id to determine that the document belongs to shard 0. Copies of shard 0 exist on all three nodes. On this occasion, it forwards the request to Node 2.
 
-（2）NODE1使用文档ID来确定文档属于分片0，通过集群状态中的内容路由表信息获知分片0有三个副本数据，位于所有的三个节点中，此时它可以将请求发送到任意节点，这里它将请求转发到NODE2。
+3. Node 2 returns the document to Node 1, which returns the document to the client.
 
-（3）NODE2将文档返回给 NODE1,NODE1将文档返回给客户端。
-
-NODE1作为协调节点，会将客户端请求轮询发送到集群的所有副本来实现负载均衡。 在读取时，文档可能已经存在于主分片上，但还没有复制到副分片。在这种情况下，读请求命中副分片时可能会报告文档不存在，但是命中主分片可能成功返回文档。一旦写请求成功返回给客户端，则意味着文档在主分片和副分片都是可用的。
+For read requests, the requesting node will choose a different shard copy on every request in order to balance the load; it round-robins through all shard copies.
+It is possible that, while a document is being indexed, the document will already be present on the primary shard but not yet copied to the replica shards. In this case, a replica might report that the document doesn’t exist, while the primary would have returned the document successfully. Once the indexing request has returned success to the user, the document will be available on the primary and all replica shards.
 
 **读失败是怎么处理的？** 尝试从别的分片副本读取。
 
