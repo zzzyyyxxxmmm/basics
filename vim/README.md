@@ -347,3 +347,25 @@ Underlined
 <C-V>GtUxqwYpVr-<CR><CR>qCAre<Esc>@wAd<Esc>@wZZ
 ```
  
+
+ ### 10
+```
+Assert.ThrowsAsync<Exception>(() => _auction.StartSellingItem());
+Assert.ThrowsAsync<Exception>(() => _application.StartBiddingIn(_auction));
+Assert.ThrowsAsync<Exception>(() => _auction.HasReceivedJoinRequestFromSniper());
+Assert.ThrowsAsync<Exception>(() => _auction.AnnounceClosed());
+Assert.ThrowsAsync<Exception>(() => _application.ShowsSniperHasLostAuction());
+
+
+_auction.StartSellingItem();
+_application.StartBiddingIn(_auction);
+_auction.HasReceivedJoinRequestFromSniper();
+_auction.AnnounceClosed();
+_application.ShowsSniperHasLostAuction();
+
+
+
+qq2df $<BS>x<CR>q5@qZZ
+
+:%norm d2W%x<CR>ZZ
+```

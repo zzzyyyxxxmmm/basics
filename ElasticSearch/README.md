@@ -334,12 +334,21 @@ It is possible that, while a document is being indexed, the document will alread
 
 **读失败是怎么处理的？** 尝试从别的分片副本读取。
 
+# Partial update 流程
+1. The client sends an update request to Node 1.
+2. It forwards the request to Node 3, where the primary shard is allocated.
+3. Node 3 retrieves the document from the primary shard, changes the JSON in the _source field, and tries to reindex the document on the primary shard. If the document has already been changed by another process, it retries step 3 up to retry_on_conflict times, before giving up.
+4. If Node 3 has managed to update the document successfully, it forwards the new version of the document in parallel to the replica shards on Node 1 and Node 2 to be reindexed. Once all replica shards report success, Node 3 reports success to the requesting node, which reports success to the client.
+
 ## 详细分析
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_4.png" width="700" height="500">
 </div>
 
 ## MGET流程
+1. The client sends an mget request to Node 1.
+2. Node 1 builds a multi-get request per shard, and forwards these requests in paral‐ lel to the nodes hosting each required primary or replica shard. Once all replies have been received, Node 1 builds the response and returns it to the client.
+
 （1）遍历请求，计算出每个doc的路由信息，得到由shardid为key组成的request map。这个过程没有在TransportSingleShardAction中实现，是因为如果在那里实现，shardid就会重复，这也是合并为基于分片的请求的过程。
 
 （2）循环处理组织好的每个 shard 级请求，调用处理 GET 请求时使用 TransportSingleShardAction#AsyncSingleAction处理单个doc的流程。
@@ -347,6 +356,12 @@ It is possible that, while a document is being indexed, the document will alread
 （3）收集Response，全部Response返回后执行finishHim（），给客户端返回结果。
 
 回复的消息中文档顺序与请求的顺序一致。如果部分文档读取失败，则不影响其他结果，检索失败的doc会在回复信息中标出。
+
+# Bulk流程
+1. The client sends a bulk request to Node 1.
+2. Node 1 builds a bulk request per shard, and forwards these requests in parallel to
+the nodes hosting each involved primary shard.
+3. The primary shard executes each action serially, one after another. As each action succeeds, the primary forwards the new document (or deletion) to its replica shards in parallel, and then moves on to the next action. Once all replica shards report success for all actions, the node reports success to the requesting node, which collates the responses and returns them to the client.
 
 # Search流程
 GET操作只能对单个文档进行处理，由_index、_type和_id三元组来确定唯一文档。但搜索需要一种更复杂的模型，因为不知道查询会命中哪些文档。
