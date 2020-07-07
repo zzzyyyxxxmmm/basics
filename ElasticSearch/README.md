@@ -168,6 +168,135 @@ If we restart Node 1, the cluster would be able to allocate the missing replica 
 
 By now, you should have a reasonable idea of how shards allow Elasticsearch to scale horizontally and to ensure that your data is safe. Later we will examine the life cycle of a shard in more detail.
 
+# Inverted Index
+The inverted index may hold a lot more information than the list of documents that contain a particular term. It may store a count of the number of documents that con‐ tain each term, the number of times a term appears in a particular document, the order of terms in each document, the length of each document, the average length of all documents, and more. These statistics allow Elasticsearch to determine which terms are more important than others, and which documents are more important than others, as described in “What Is Relevance?” on page 115.
+
+Immutability
+The inverted index that is written to disk is immutable: it doesn’t change. Ever. This immutability has important benefits:
+* There is no need for locking. If you never have to update the index, you never have to worry about multiple processes trying to make changes at the same time.
+* Once the index has been read into the kernel’s filesystem cache, it stays there, because it never changes. As long as there is enough space in the filesystem cache, most reads will come from memory instead of having to hit disk. This provides a big performance boost.
+* Any other caches (like the filter cache) remain valid for the life of the index. They don’t need to be rebuilt every time the data changes, because the data doesn’t change.
+* Writing a single large inverted index allows the data to be compressed, reducing costly disk I/O and the amount of RAM needed to cache the index.
+
+Of course, an immutable index has its downsides too, primarily the fact that it is immutable! You can’t change it. If you want to make new documents searchable, you have to rebuild the entire index. This places a significant limitation either on the amount of data that an index can contain, or the frequency with which the index can be updated.
+
+The next problem that needed to be solved was how to make an inverted index updatable without losing the benefits of immutability? The answer turned out to be: use more than one index.
+
+Instead of rewriting the whole inverted index, add new supplementary indices to reflect more-recent changes. Each inverted index can be queried in turn—starting with the oldest—and the results combined.
+
+Lucene, the Java libraries on which Elasticsearch is based, introduced the concept of per-segment search. A segment is an inverted index in its own right, but now the word index in Lucene came to mean a collection of segments plus a commit point—a file that lists all known segments, as depicted in Figure 11-1. New documents are first added to an in-memory indexing buffer, as shown in Figure 11-2, before being written to an on-disk segment, as in Figure 11-3
+
+**Lucene segments**
+
+Each Elasticsearch index is divided into shards. Shards are both logical and physical division of an index. Each Elasticsearch shard is a Lucene index. The maximum number of documents you can have in a Lucene index is 2,147,483,519. The Lucene index is divided into smaller files called segments. A segment is a small Lucene index. Lucene searches in all segments sequentially.
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_7.png" width="700" height="500">
+</div>
+
+Lucene creates a segment when a new writer is opened, and when a writer commits or is closed. It means segments are immutable. When you add new documents into your Elasticsearch index, Lucene creates a new segment and writes it. Lucene can also create more segments when the indexing throughput is important.
+
+From time to time, Lucene merges smaller segments into a larger one. the merge can also be triggered manually from the Elasticsearch API.
+
+This behavior has a few consequences from an operational point of view.
+The more segments you have, the slower the search. This is because Lucene has to search through all the segments in sequence, not in parallel. Having a little number of segments improves search performances.
+
+Lucene merges have a cost in terms of CPU and I/Os. It means they might slow your indexing down. When performing a bulk indexing, for example an initial indexing, it is recommended to disable the merges completely.
+
+If you plan to host lots of shards and segments on the same host, you might choose a filesystem that copes well with lots of small files and does not have an important inode limitation. This is something we’ll deal in details in the part about choosing the right file system.
+
+## per-segment search works
+
+1. 新增的文档首先会被存放在内存的缓存中
+
+2. 当文档数足够多或者到达一定时间点时，就会对缓存进行commit
+
+a. 生成一个新的segment，并写入磁盘
+
+b. 生成一个新的commit point，记录当前所有可用的segment
+
+c. 等待所有数据都已写入磁盘
+
+3. 打开新增的segment，这样我们就可以对新增的文档进行搜索了
+
+4. 清空缓存，准备接收新的文档
+
+When a query is issued, all known segments are queried in turn. Term statistics are aggregated across all segments to ensure that the relevance of each term and each document is calculated accurately. In this way, new documents can be added to the index relatively cheaply.
+
+## Deletes and Updates
+Segments are immutable, so documents cannot be removed from older segments, nor can older segments be updated to reflect a newer version of a document. Instead, every commit point includes a .del file that lists which documents in which seg‐ ments have been deleted.
+
+When a document is “deleted,” it is actually just marked as deleted in the .del file. A document that has been marked as deleted can still match a query, but it is removed from the results list before the final query results are returned.
+
+Document updates work in a similar way: when a document is updated, the old ver‐ sion of the document is marked as deleted, and the new version of the document is indexed in a new segment. Perhaps both versions of the document will match a query, but the older deleted version is removed before the query results are returned.
+
+## Near Real-Time Search
+数据首先写入到 Index buffer（内存） 和 Transaction log（磁盘） 中，即便内存数据丢失，也可读取磁盘中的 Transaction log
+
+默认 1s 一次的 refresh 操作将 Index buffer 中的数据写入 segments（内存），此时数据可查询；每次都会创建新的segment, 传统步骤到这里是需要执行fsync, 但这里不需要
+
+默认30分钟执行一次的 flush 操作，将 segments 写入磁盘，同时清空 Transaction log。若Transaction log 满（默认512M），也会执行此操作
+
+merge 操作，定期合并 segment；
+## refresh API
+In Elasticsearch, this lightweight process of writing and opening a new segment is called a refresh. By default, every shard is refreshed automatically once every second. This is why we say that Elasticsearch has near real-time search: document changes are not visible to search immediately, but will become visible within 1 second.
+
+## Making Changes Persistent
+
+维护一个文件commit point，用来记录当前所有可用的segment，当我们在这个commit point上进行搜索时，就相当于在它下面的segment中进行搜索
+
+we said that a full commit flushes segments to disk and writes a commit point, which lists all known segments. Elastic‐ search uses this commit point during startup or when reopening an index to decide which segments belong to the current shard.
+
+While we refresh once every second to achieve near real-time search, we still need to do full commits regularly to make sure that we can recover from failure. But what about the document changes that happen between commits? We don’t want to lose those either.
+Elasticsearch added a translog, or transaction log, which records every operation in Elasticsearch as it happens. With the translog, the process now looks like this:
+1. When a document is indexed, it is added to the in-memory buffer and appended to the translog
+2. The refresh leaves the shard in the state depicted in Figure 11-7. Once every second, the shard is refreshed:
+* The docs in the in-memory buffer are written to a new segment, without an fsync.
+* The segment is opened to make it visible to search.
+3. This process continues with more documents being added to the in-memory buffer and appended to the transaction log (see Figure 11-8).
+4. Every so often—such as when the translog is getting too big—the index is flushed; a new translog is created, and a full commit is performed (see Figure 11-9):
+* Any docs in the in-memory buffer are written to a new segment.
+* The buffer is cleared.
+* A commit point is written to disk.
+* The filesystem cache is flushed with an fsync.
+* The old translog is deleted.
+
+The translog provides a persistent record of all operations that have not yet been flushed to disk. When starting up, Elasticsearch will use the last commit point to recover known segments from disk, and will then replay all operations in the translog to add the changes that happened after the last commit.
+
+The translog is also used to provide real-time CRUD. When you try to retrieve, update, or delete a document by ID, it first checks the translog for any recent changes before trying to retrieve the document from the relevant segment. This means that it always has access to the latest known version of the document, in real-time.
+
+## How Safe Is the Translog?
+The purpose of the translog is to ensure that operations are not lost. This begs the question: how safe is the translog?
+
+Writes to a file will not survive a reboot until the file has been fsync‘ed to disk. By default, the translog is fsync‘ed every 5 seconds. Potentially, we could lose 5 seconds worth of data—if the translog were the only mechanism that we had for dealing with failure.
+
+Fortunately, the translog is only part of a much bigger system. Remember that an indexing request is considered successful only after it has completed on both the pri‐ mary shard and all replica shards. Even if the node holding the primary shard were to suffer catastrophic failure, it would be unlikely to affect the nodes holding the replica shards at the same time.
+While we could force the translog to fsync more frequently (at the cost of indexing performance), it is unlikely to provide more reliability.
+
+## Segment Merging
+With the automatic refresh process creating a new segment every second, it doesn’t take long for the number of segments to explode. Having too many segments is a problem. Each segment consumes file handles, memory, and CPU cycles. More important, every search request has to check every segment in turn; the more seg‐ ments there are, the slower the search will be.
+Elasticsearch solves this problem by merging segments in the background. Small seg‐ ments are merged into bigger segments, which, in turn, are merged into even bigger segments.
+
+This is the moment when those old deleted documents are purged from the filesys‐ tem. Deleted documents (or old versions of updated documents) are not copied over to the new bigger segment.
+
+There is nothing you need to do to enable merging. It happens automatically while you are indexing and searching. 
+1. While indexing, the refresh process creates new segments and opens them for search.
+2. The merge process selects a few segments of similar size and merges them into a new bigger segment in the background. This does not interrupt indexing and searching.
+3. Figure 11-11 illustrates activity as the merge completes:
+• The new segment is flushed to disk.
+• A new commit point is written that includes the new segment and excludes the old, smaller segments.
+• The new segment is opened for search.
+• The old segments are deleted.
+
+The optimize API is best described as the forced merge API. 
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_14.png" width="700" height="500">
+</div>
+
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_15.png" width="700" height="500">
+</div>
 # 集群启动流程
 <div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_1.png" width="700" height="500">
@@ -403,6 +532,7 @@ Search由两个部分组成, Query和Fetch
 
 查询阶段并不会对搜索请求的内容进行解析，无论搜索什么内容，只看本次搜索需要命中哪些shard，然后针对每个特定shard选择一个副本，转发搜索请求。
 
+The first step is to broadcast the request to a shard copy of every node in the index. Just like document GET requests, search requests can be handled by a primary shard or by any of its replicas. This is how more replicas (when combined with more hard‐ ware) can increase search throughput. A coordinating node will round-robin through all shard copies on subsequent requests in order to spread the load.
 
 **Fetch阶段由以下步骤构成：**
 
@@ -684,25 +814,6 @@ GET index/_search
 一般来说，应该避免使用脚本。如果一定要用，则应该优先考虑painless和expressions。
 
 ## 为只读索引执行force-merge
-
-**Lucene segments**
-
-Each Elasticsearch index is divided into shards. Shards are both logical and physical division of an index. Each Elasticsearch shard is a Lucene index. The maximum number of documents you can have in a Lucene index is 2,147,483,519. The Lucene index is divided into smaller files called segments. A segment is a small Lucene index. Lucene searches in all segments sequentially.
-
-<div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/es_7.png" width="700" height="500">
-</div>
-
-Lucene creates a segment when a new writer is opened, and when a writer commits or is closed. It means segments are immutable. When you add new documents into your Elasticsearch index, Lucene creates a new segment and writes it. Lucene can also create more segments when the indexing throughput is important.
-
-From time to time, Lucene merges smaller segments into a larger one. the merge can also be triggered manually from the Elasticsearch API.
-
-This behavior has a few consequences from an operational point of view.
-The more segments you have, the slower the search. This is because Lucene has to search through all the segments in sequence, not in parallel. Having a little number of segments improves search performances.
-
-Lucene merges have a cost in terms of CPU and I/Os. It means they might slow your indexing down. When performing a bulk indexing, for example an initial indexing, it is recommended to disable the merges completely.
-
-If you plan to host lots of shards and segments on the same host, you might choose a filesystem that copes well with lots of small files and does not have an important inode limitation. This is something we’ll deal in details in the part about choosing the right file system.
 
 为不再更新的只读索引执行force merge，将Lucene索引合并为单个分段，可以提升查询速度。当一个Lucene索引存在多个分段时，每个分段会单独执行搜索再将结果合并，将只读索引强制合并为一个Lucene分段不仅可以优化搜索过程，对索引恢复速度也有好处。
 
