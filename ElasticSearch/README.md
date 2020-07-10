@@ -650,7 +650,40 @@ index.translog.flush_threshold_size: 1024mb
 
 index.refresh_interval: 120s
 
-##  索引过程调整和优化
+# Filter
+
+filter只适用于exact value, 遇到无法filter的但确实存在的, 用analysis分析是否被tokenize, 可以在mapping里  -> "index" : "not_analyzed"
+
+## Combining Filters
+
+```sql
+SELECT product
+FROM products
+WHERE (price = 20 OR productID = "XHDK-A-1293-#fJ3")
+AND (price != 30)
+```
+
+```
+GET /my_store/products/_search {
+       "query" : {
+          "filtered" : {
+             "filter" : {
+                "bool" : {
+"should" : [
+{ "term" : {"price" : 20}},
+{ "term" : {"productID" : "XHDK-A-1293-#fJ3"}}
+],
+"must_not" : {
+                     "term" : {"price" : 30}
+                  }
+} }
+} }
+}
+```
+
+
+
+#  索引过程调整和优化
 ### 自动生成doc ID
 通过ES写入流程可以看出，写入doc时如果外部指定了id，则ES会先尝试读取原来doc的版本号，以判断是否需要更新。这会涉及一次读取磁盘的操作，通过自动生成doc ID可以避免这个环节。
 
