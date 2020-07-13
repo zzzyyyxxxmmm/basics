@@ -681,6 +681,17 @@ GET /my_store/products/_search {
 }
 ```
 
+# Match
+Elasticsearch executes the preceding match query as follows:
+1. Check the field type.
+The title field is a full-text (analyzed) string field, which means that the query string should be analyzed too.
+2. Analyze the query string.
+The query string QUICK! is passed through the standard analyzer, which results in the single term quick. Because we have a just a single term, the match query can be executed as a single low-level term query.
+3. Find matching docs.
+The term query looks up quick in the inverted index and retrieves the list of
+documents that contain that term—in this case, documents 1, 2, and 3. 
+4. Score each doc.
+The term query calculates the relevance _score for each matching document, by combining the term frequency (how often quick appears in the title field of each document), with the inverse document frequency (how often quick appears in the title field in all documents in the index), and the length of each field (shorter fields are considered more relevant). See “What Is Relevance?” on page 115.
 
 
 #  索引过程调整和优化

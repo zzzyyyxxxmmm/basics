@@ -11,6 +11,36 @@
 8. 访问http://localhost/
 ```
 
+```
+1.查看版本号
+cd /usr/local/nginx/sbin/
+./nginx -v
+
+2. 启动
+./nginx
+
+```
+
+# 使用nginx做反向代理
+1. 一对一
+```
+location / {
+    root html;
+    proxy_pass http://localhost:1323/;
+    index index.html index.htm
+}
+```
+2. 根据路径代理到不同的服务器上
+```
+location ~ /edu {
+    proxy_pass http://127.0.0.1:9000;
+}
+
+location ~ /vog {
+    proxy_pass http://127.0.0.1:9001;
+}
+```
+
 # NGINX as a Reverse Proxy
 A reverse proxy is a web server that terminates connections with clients and makes new ones to upstream servers on their behalf. An upstream server is defined as a server that NGINX makes a connection with in order to fulfill the client's request. These upstream servers can take various forms, and NGINX can be configured differently to handle each of them.
 
@@ -26,6 +56,14 @@ rewrite ^/(.*)$ http://localhost:1323/$1 permanent;
 
 多路设置:
 ```
+location ~ /edu {
+    proxy_pass http://127.0.0.1:9000;
+}
+
+location ~ /vog {
+    proxy_pass http://127.0.0.1:9001;
+}
+
 location /blog {
     proxy_pass http://127.0.0.1:9000;
 }
