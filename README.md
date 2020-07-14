@@ -60,6 +60,12 @@
 4. nginx (nginx http server)
 5. 吐了, 在家实在是学不动, 本月废了, 全部移至下月
 
-### June, 2020
+### June
+1. ES
+
+### July, 2020
+1. nginx
+
+### 待定, 2020
 1. 温习数据库,  本月专攻数据库
 2. O'Reilly.High.Performance.MySQL.3rd.Edition.Mar.2012

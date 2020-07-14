@@ -41,6 +41,25 @@ location ~ /vog {
 }
 ```
 
+# 负载均衡
+```
+http{
+    upstream myserver {
+        server 192.168.17.129:8080
+        server 192.168.17.129:8081
+    }
+
+    server{
+        server_name 192.168.17.129
+
+        location / {
+            proxy_pass http://myserver;
+        }
+    }
+
+}
+```
+
 # NGINX as a Reverse Proxy
 A reverse proxy is a web server that terminates connections with clients and makes new ones to upstream servers on their behalf. An upstream server is defined as a server that NGINX makes a connection with in order to fulfill the client's request. These upstream servers can take various forms, and NGINX can be configured differently to handle each of them.
 
