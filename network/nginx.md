@@ -60,6 +60,24 @@ http{
 }
 ```
 
+# 动静分离
+```
+data/www/a.html
+data/image/1.jpg
+
+server{
+    location /www/ {
+        root /data/;
+        index index.html index htm
+    }
+
+    location /image/ {
+        root /data/;
+        autoindex on;
+    }
+}
+```
+
 # NGINX as a Reverse Proxy
 A reverse proxy is a web server that terminates connections with clients and makes new ones to upstream servers on their behalf. An upstream server is defined as a server that NGINX makes a connection with in order to fulfill the client's request. These upstream servers can take various forms, and NGINX can be configured differently to handle each of them.
 
@@ -174,5 +192,16 @@ http {
 }
 ```
 
+**server_name**: Assigns one or more hostnames to the server block. When Nginx receives an HTTP request, it matches the Host header of the request against all of the server blocks. The first server block to match this hostname is selected. 
+
+Plan B: If no server block matches the desired host, Nginx selects the first server block that matches the parameters of the listen directive (such as listen *:80 would be a catch-all for all requests received on port 80), giving priority to the first block that has the default option enabled on the listen directive.
+
+
 ## Nginx process architecture
 At the very moment of starting Nginx, one unique process exists in memory—the Master Process. It is launched with the current user and group permissions—usually root/root if the service is launched at boot time by an init script. The master process itself does not process any client request, instead, it spawns processes that do—the Worker Processes, which are affected to a customizable user and group.
+
+worker进程的数量会直接影响性能。那么，用户配置多少个worker进程才好呢?这实际 上与业务需求有关。
+
+每个worker进程都是单线程的进程，它们会调用各个模块以实现多种多样的功能。如果 这些模块确认不会出现阻塞式的调用，那么，有多少CPU内核就应该配置多少个进程;反 之，如果有可能出现阻塞式调用，那么需要配置稍多一些的worker进程。
+
+例如，如果业务方面会致使用户请求大量读取本地磁盘上的静态资源文件，而且服务器 上的内存较小，以至于大部分的请求访问静态资源文件时都必须读取磁盘(磁头的寻址是缓 慢的)，而不是内存中的磁盘缓存，那么磁盘I/O调用可能会阻塞住worker进程少量时间，进而导致服务整体性能下降。
