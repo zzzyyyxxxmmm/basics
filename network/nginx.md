@@ -41,6 +41,15 @@ location ~ /vog {
 }
 ```
 
+当客户端发来HTTP请求时，Nginx并不会立刻转发到上游服务器，而是先把用户的请求 (包括HTTP包体)完整地接收到Nginx所在服务器的硬盘或者内存中，然后再向上游服务器 发起连接，把缓存的客户端请求转发到上游服务器。而Squid等代理服务器则采用一边接收客户端请求，一边转发到上游服务器的方式。
+
+Nginx的这种工作方式有什么优缺点呢?很明显，缺点是延长了一个请求的处理时间， 并增加了用于缓存请求内容的内存和磁盘空间。而优点则是降低了上游服务器的负载，尽量 把压力放在Nginx服务器上。
+
+Nginx的这种工作方式为什么会降低上游服务器的负载呢?通常，客户端与代理服务器 之间的网络环境会比较复杂，多半是“走”公网，网速平均下来可能较慢，因此，一个请求可 能要持续很久才能完成。而代理服务器与上游服务器之间一般是“走”内网，或者有专线连 接，传输速度较快。Squid等反向代理服务器在与客户端建立连接且还没有开始接收HTTP包体时，就已经向上游服务器建立了连接。例如，某个请求要上传一个1GB的文件，那么每次 Squid在收到一个TCP分包(如2KB)时，就会即时地向上游服务器转发。在接收客户端完整 HTTP包体的漫长过程中，上游服务器始终要维持这个连接，这直接对上游服务器的并发处 理能力提出了挑战。
+
+Nginx则不然，它在接收到完整的客户端请求(如1GB的文件)后，才会与上游服务器 建立连接转发请求，由于是内网，所以这个转发过程会执行得很快。这样，一个客户端请求 占用上游服务器的连接时间就会非常短，也就是说，Nginx的这种反向代理方案主要是为了 降低上游服务器的并发压力。
+
+
 # 负载均衡
 ```
 http{
@@ -199,9 +208,3 @@ Plan B: If no server block matches the desired host, Nginx selects the first ser
 
 ## Nginx process architecture
 At the very moment of starting Nginx, one unique process exists in memory—the Master Process. It is launched with the current user and group permissions—usually root/root if the service is launched at boot time by an init script. The master process itself does not process any client request, instead, it spawns processes that do—the Worker Processes, which are affected to a customizable user and group.
-
-worker进程的数量会直接影响性能。那么，用户配置多少个worker进程才好呢?这实际 上与业务需求有关。
-
-每个worker进程都是单线程的进程，它们会调用各个模块以实现多种多样的功能。如果 这些模块确认不会出现阻塞式的调用，那么，有多少CPU内核就应该配置多少个进程;反 之，如果有可能出现阻塞式调用，那么需要配置稍多一些的worker进程。
-
-例如，如果业务方面会致使用户请求大量读取本地磁盘上的静态资源文件，而且服务器 上的内存较小，以至于大部分的请求访问静态资源文件时都必须读取磁盘(磁头的寻址是缓 慢的)，而不是内存中的磁盘缓存，那么磁盘I/O调用可能会阻塞住worker进程少量时间，进而导致服务整体性能下降。
