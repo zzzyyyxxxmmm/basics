@@ -1,3 +1,18 @@
+# 快速配置vim
+```
+git clone https://github.com/VundleVim/Vundle.vim.git ~/.vim/bundle/Vundle.vim
+
+
+cd ~/.vim/bundle
+git clone git://github.com/altercation/vim-colors-solarized.git
+
+(optional) mv vim-colors-solarized ~/.vim/bundle/
+
+sudo apt install npm
+
+install youcompleteme
+```
+
 # 常见操作
 1. 删除所有不带数字的
 ```
