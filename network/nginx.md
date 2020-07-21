@@ -49,6 +49,8 @@ Nginx的这种工作方式为什么会降低上游服务器的负载呢?通常�
 
 Nginx则不然，它在接收到完整的客户端请求(如1GB的文件)后，才会与上游服务器 建立连接转发请求，由于是内网，所以这个转发过程会执行得很快。这样，一个客户端请求 占用上游服务器的连接时间就会非常短，也就是说，Nginx的这种反向代理方案主要是为了 降低上游服务器的并发压力。
 
+## proxy_cache
+启用缓存功能, 即使上游服务器断开, nginx也能返回缓存的结果, 但缓存不会更新
 
 # 负载均衡
 ```
@@ -206,5 +208,30 @@ http {
 Plan B: If no server block matches the desired host, Nginx selects the first server block that matches the parameters of the listen directive (such as listen *:80 would be a catch-all for all requests received on port 80), giving priority to the first block that has the default option enabled on the listen directive.
 
 
-## Nginx process architecture
+# Nginx process architecture
 At the very moment of starting Nginx, one unique process exists in memory—the Master Process. It is launched with the current user and group permissions—usually root/root if the service is launched at boot time by an init script. The master process itself does not process any client request, instead, it spawns processes that do—the Worker Processes, which are affected to a customizable user and group.
+
+nginx采用的是多进程的架构, 相比于多线程, 进程的崩溃不会导致nginx整体的崩溃.
+
+Master fork出worker, cache manager, cache loader, 这些进程都是通过共享内存实现通信的, worker最好绑定在固定的CPU上, 从而增加缓存的命中率
+
+## nginx 信号
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/nginx_2.png" width="700" height="500">
+</div> 
+
+## 热升级流程
+1. 将旧nginx文件换成新Nginx文件(注意备份)
+2. 向master进程发送USR2信号
+3. master进程修改pid文件名, 加后缀.oldbin
+4. 老master进程用新nginx文件启动新master进程
+5. 向老master进程发送QUIT信号, 关闭老master进程(optional)
+6. 回滚: 向老master发送HUP, 向新master发送QUIT
+
+## 优雅关闭worker
+主要针对http请求. 
+1. 设置定时器 worker_shutdown_timeout
+2. 关闭监听句柄
+3. 关闭空闲连接
+4. 在循环中等待全部连接关闭, 耗时
+5. 退出进程
