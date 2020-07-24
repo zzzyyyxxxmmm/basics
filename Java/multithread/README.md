@@ -1,3 +1,6 @@
+# 同步异步, 阻塞和非阻塞
+
+
 # Concurrency and parallelism 
 Parallel processing is a subset of concurrent processing.
 

@@ -235,3 +235,19 @@ Master fork出worker, cache manager, cache loader, 这些进程都是通过共�
 3. 关闭空闲连接
 4. 在循环中等待全部连接关闭, 耗时
 5. 退出进程
+
+## nginx事件处理
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/nginx_3.png" width="700" height="500">
+</div> 
+
+nginx使用队列保证某个module不会长时间占用CPU
+
+nginx使用epoll处理, 只用处理活跃的连接
+
+## Slab内存管理
+将内存分为多个slot, 大小为8,16,32,64, 有多个, 每次分配的时候选一个最小的
+* 最多两倍内存消耗,例如64分配了33
+* 适合小对象
+* 避免碎片
+* 避免重复初始化
