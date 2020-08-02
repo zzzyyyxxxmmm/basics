@@ -251,3 +251,13 @@ nginx使用epoll处理, 只用处理活跃的连接
 * 适合小对象
 * 避免碎片
 * 避免重复初始化
+
+## 接收事件
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/nginx_4.png" width="700" height="500">
+</div> 
+
+## 接收http
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/nginx_5.png" width="700" height="500">
+</div> 
