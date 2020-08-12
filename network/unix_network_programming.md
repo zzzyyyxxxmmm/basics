@@ -62,6 +62,7 @@ int bind (int sockfd, const struct sockaddr *myaddr, socklen_t addrlen);
 //Returns: 0 if OK,-1 on error
 ```
 
+如果没bind, the kernel chooses the source IP address based on the outgoing interface that is used. 
 ## listen
 The listen function is called only by a TCP server and it performs two actions:
 1. When a socket is created by the socket function, it is assumed to be an active socket, that is, a client socket that will issue a connect. The listen function converts an unconnected socket into a passive socket, indicating that the kernel should accept incoming connection requests directed to this socket. In terms of the TCP state transition diagram (Figure 2.4), the call to listen moves the socket from the CLOSED state to the LISTEN state.
@@ -88,3 +89,8 @@ accept is called by a TCP server to return the next completed connection from th
 int accept (int sockfd, struct sockaddr *cliaddr, socklen_t *addrlen);
 //Returns: non-negative descriptor if OK, -1 on error
 ```
+
+If accept is successful, its return value is a brand-new descriptor automatically created by the kernel. This new descriptor refers to the TCP connection with the client. When discussing accept, we call the first argument to accept the listening socket (the descriptor created by socket and then used as the first argument to both bind and listen), and we call the return value from accept the connected socket. It is important to differentiate between these two sockets. A given server normally creates only one listening socket, which then exists for the lifetime of the server. The kernel creates one connected socket for each client connection that is accepted (i.e., for which the TCP three-way handshake completes). When the server is finished serving a given client, the connected socket is closed.
+
+## Concurrent Servers
+

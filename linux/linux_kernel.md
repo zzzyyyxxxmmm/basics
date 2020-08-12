@@ -1,3 +1,19 @@
+# Signals
+Signals serve two main purposes:
+* To make a process aware that a specific event has occurred
+* To cause a process to execute a signal handler function included in its code
+
+Of course, the two purposes are not mutually exclusive, because often a process must react to some event by executing a specific routine.
+
+Besides the regular signals described in this table, the POSIX standard has intro- duced a new class of signals denoted as real-time signals; their signal numbers range from 32 to 64 on Linux. They mainly differ from regular signals because they are always queued so that multiple signals sent will be received. On the other hand, regular signals of the same kind are not queued: if a regular signal is sent many times in a row, just one of them is delivered to the receiving process. Although the Linux ker- nel does not use real-time signals, it fully supports the POSIX standard by means of several specific system calls.
+
+* If a fatal signal is sent to a multithreaded application, the kernel will kill all threads of the application—not just the thread to which the signal has been delivered. 某些signal是可以被送到个别process的
+
+## struct of signal
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/linux_01.png" width="500" height="500">
+</div>
+
 # Tasks performed by the kernel
 * **Process scheduling**: A computer has one or more central processing units (CPUs), which execute the instructions of programs. Like other UNIX systems, Linux is a preemptive multitasking operating system, Multitasking means that multiple processes (i.e., running programs) can simultaneously reside in mem- ory and each may receive use of the CPU(s). Preemptive means that the rules governing which processes receive use of the CPU and for how long are deter- mined by the kernel process scheduler (rather than by the processes them- selves).
 * **Memory management**: While computer memories are enormous by the stan- dards of a decade or two ago, the size of software has also correspondingly grown, so that physical memory (RAM) remains a limited resource that the ker- nel must share among processes in an equitable and efficient fashion. Like most modern operating systems, Linux employs virtual memory management (Section 6.4), a technique that confers two main advantages:
