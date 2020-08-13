@@ -14,6 +14,26 @@ Besides the regular signals described in this table, the POSIX standard has intr
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/linux_01.png" width="500" height="500">
 </div>
 
+kill()也可以用来检测一个process是否存在
+
+Various other techniques can also be used to check whether a particular pro- cess is running, including the following:
+* The wait() system calls: These calls are described in Chapter 26. They can be employed only if the monitored process is a child of the caller.
+* Semaphores and exclusive file locks: If the process that is being monitored contin- uously holds a semaphore or a file lock, then, if we can acquire the semaphore or lock, we know the process has terminated. We describe semaphores in Chapters 47 and 53 and file locks in Chapter 55.
+* IPC channels such as pipes and FIFOs: We set up the monitored process so that it holds a file descriptor open for writing on the channel as long as it is alive. Meanwhile, the monitoring process holds open a read descriptor for the chan- nel, and it knows that the monitored process has terminated when the write end of the channel is closed (because it sees end-of-file). The monitoring pro- cess can determine this either by reading from its file descriptor or by monitor- ing the descriptor using one of the techniques described in Chapter 63.
+* The /proc/PID interface: For example, if a process with the process ID 12345 exists, then the directory /proc/12345 will exist, and we can check this using a call such as stat().
+
+raise()用来给自己发signal
+
+## signal mask
+For each process, the kernel maintains a signal mask—a set of signals whose delivery to the process is currently blocked. If a signal that is blocked is sent to a process, delivery of that signal is delayed until it is unblocked by being removed from the process signal mask. (In Section 33.2.1, we’ll see that the signal mask is actually a per-thread attribute, and that each thread in a multithreaded process can indepen- dently examine and modify its signal mask using the pthread_sigmask() function.)
+A signal may be added to the signal mask in the following ways:
+* When a signal handler is invoked, the signal that caused its invocation can be automatically added to the signal mask. Whether or not this occurs depends on the flags used when the handler is established using sigaction().
+* When a signal handler is established with sigaction(), it is possible to specify an additional set of signals that are to be blocked when the handler is invoked.
+* The sigprocmask() system call can be used at any time to explicitly add signals to, and remove signals from, the signal mask.
+
+## Signals Are Not Queued
+The set of pending signals is only a mask; it indicates whether or not a signal has occurred, but not how many times it has occurred. In other words, if the same sig- nal is generated multiple times while it is blocked, then it is recorded in the set of pending signals, and later delivered, just once. (One of the differences between standard and realtime signals is that realtime signals are queued, as discussed in Section 22.8.)
+
 # Tasks performed by the kernel
 * **Process scheduling**: A computer has one or more central processing units (CPUs), which execute the instructions of programs. Like other UNIX systems, Linux is a preemptive multitasking operating system, Multitasking means that multiple processes (i.e., running programs) can simultaneously reside in mem- ory and each may receive use of the CPU(s). Preemptive means that the rules governing which processes receive use of the CPU and for how long are deter- mined by the kernel process scheduler (rather than by the processes them- selves).
 * **Memory management**: While computer memories are enormous by the stan- dards of a decade or two ago, the size of software has also correspondingly grown, so that physical memory (RAM) remains a limited resource that the ker- nel must share among processes in an equitable and efficient fashion. Like most modern operating systems, Linux employs virtual memory management (Section 6.4), a technique that confers two main advantages:
