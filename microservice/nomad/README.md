@@ -49,5 +49,14 @@ func (j *Job) Register(args *structs.JobRegisterRequest, reply *structs.JobRegis
 		return err
     }
     
+    // Run admission controllers
+    //https://kubernetes.io/blog/2019/03/21/a-guide-to-kubernetes-admission-controllers/
+	job, warnings, err := j.admissionControllers(args.Job)
+	if err != nil {
+		return err
+    }
+    
+    
+    
 }
 ```
