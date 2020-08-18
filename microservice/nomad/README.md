@@ -55,8 +55,64 @@ func (j *Job) Register(args *structs.JobRegisterRequest, reply *structs.JobRegis
 	if err != nil {
 		return err
     }
+
+    // Check job submission permissions
+	if aclObj, err := j.srv.ResolveToken(args.AuthToken); err != nil {
+    }
+
+    // Validate Volume Permissions
+		for _, tg := range args.Job.TaskGroups {
+        }
+
+        // Validate job transitions if its an update
+	if err := validateJobUpdate(existingJob, args.Job); err != nil {
+		return err
+    }
     
+
+    // Submit a multiregion job to other regions (enterprise only).
+	// The job will have its region interpolated.
+	var existingVersion uint64
+	if existingJob != nil {
+		existingVersion = existingJob.Version
+	}
+	isRunner, err := j.multiregionRegister(args, reply, existingVersion)
+	if err != nil {
+		return err
+    }
     
+
+    // Create a new evaluation
+	now := time.Now().UnixNano()
+	submittedEval := false
+	var eval *structs.Evaluation
+
+	// Set the submit time
+	args.Job.SubmitTime = now
+
+	// If the job is periodic or parameterized, we don't create an eval.
+	if !(args.Job.IsPeriodic() || args.Job.IsParameterized()) {
+    }
+
+//****************************************send job here*********************8//
+    fsmErr, index, err := j.srv.raftApply(structs.JobRegisterRequestType, args)
     
+}
+```
+
+```go
+//nomad/fsm.go
+func (n *nomadFSM) Apply(log *raft.Log) interface{} {
+case structs.JobRegisterRequestType:
+		return n.applyUpsertJob(buf[1:], log.Index)
+}
+```
+
+```go
+func (n *nomadFSM) applyUpsertJob(buf []byte, index uint64) interface{} {
+if err := n.state.UpsertJob(index, req.Job); err != nil {
+		n.logger.Error("UpsertJob failed", "error", err)
+		return err
+	}
 }
 ```
