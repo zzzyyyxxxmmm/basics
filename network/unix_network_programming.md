@@ -1,6 +1,17 @@
 # Intro
 Note for learning Unit Network Programming
 
+# QA
+
+## what is RST and when RST happens
+When an unexpected TCP packet arrives at a host, that host usually responds by sending a reset packet back on the same connection. A reset packet is simply one with no payload and with the RST bit set in the TCP header flags.
+
+There are a few circumstances in which a TCP packet might not be expected; the two most common are:
+
+The packet is an initial SYN packet trying to establish a connection to a server port on which no process is listening.
+
+The packet arrives on a TCP connection that was previously established, but the local application already closed its socket or exited and the OS closed the socket.
+Other circumstances are possible, but are unlikely outside of malicious behavior such as attempts to hijack a TCP connection.
 # Socket
 
 ## Connect function
@@ -92,5 +103,77 @@ int accept (int sockfd, struct sockaddr *cliaddr, socklen_t *addrlen);
 
 If accept is successful, its return value is a brand-new descriptor automatically created by the kernel. This new descriptor refers to the TCP connection with the client. When discussing accept, we call the first argument to accept the listening socket (the descriptor created by socket and then used as the first argument to both bind and listen), and we call the return value from accept the connected socket. It is important to differentiate between these two sockets. A given server normally creates only one listening socket, which then exists for the lifetime of the server. The kernel creates one connected socket for each client connection that is accepted (i.e., for which the TCP three-way handshake completes). When the server is finished serving a given client, the connected socket is closed.
 
-## Concurrent Servers
+## Handling SIGCHLD Signals
+The purpose of the zombie state is to maintain information about the child for the parent to fetch at some later time. This information includes the process ID of the child, its termination status, and information on the resource utilization of the child (CPU time, memory, etc.). If a process terminates, and that process has children in the zombie state, the parent process ID of all the zombie children is set to 1 (the init process), which will inherit the children and clean them up (i.e., init will wait for them, which removes the zombie).
 
+## Termination of Server Process
+
+We will now start our client/server and then kill the server child process. This simulates the crashing of the server process, so we can see what happens to the client. (We must be careful to distinguish between the crashing of the server process, which we are about to describe, and the crashing of the server host, which we will describe in Section 5.14.) The following steps take place:
+1. We start the server and client and type one line to the client to verify that all is okay. That line is echoed normally by the server child.
+2. We find the process ID of the server child and kill it. As part of process termination, all open descriptors in the child are closed. This causes a FIN to be sent
+to the client, and the client TCP responds with an ACK. This is the first half of the TCP connection termination.
+3. The SIGCHLD signal is sent to the server parent and handled correctly (Figure 5.12).
+4. Nothing happens at the client. The client TCP receives the FIN from the server TCP and responds with an ACK, but the problem is that the client process is blocked in the call to fgets waiting for a line from the terminal.
+5. Running netstat at this point shows the state of the sockets.
+
+```shell
+linux % netstat -a | grep 9877
+localhost:43604 FIN_WAIT2
+localhost:9877 CLOSE_WAIT
+```
+
+
+14. We can still type a line of input to the client. Here is what happens at the client starting from Step 1:
+```
+linux % tcpcli01 127.0.0.1 hello
+hello
+hello
+another line
+str_cli : server terminated prematurely
+```
+15. When we type "another line," str_cli calls writen and the client TCP sends the data to the server. This is allowed by TCP because the receipt of the FIN by the client TCP only indicates that the server process has closed its end of the connection and will not be sending any more data. The receipt of the FIN does not tell the client TCP that the server process has terminated (which in this case, it has). We will cover this again in Section 6.6 when we talk about TCP's half-close.
+16. When the server TCP receives the data from the client, it responds with an RST since the process that had that socket open has terminated. We can verify that the RST was sent by watching the packets with tcpdump.
+17. The client process will not see the RST because it calls readline immediately after the call to writen and readline returns 0 (EOF) immediately because of the FIN
+that was received in Step 2. Our client is not expecting to receive an EOF at this point (Figure 5.5) so it quits with the error message "server terminated prematurely."
+18. When the client terminates (by calling err_quit in Figure 5.5), all its open descriptors are closed.
+
+What we have described also depends on the timing of the example. The client's call to readline may happen before the server's RST is received by the client, or it may happen after. If the readline happens before the RST is received, as we've shown in our example, the result is an unexpected EOF in the client. But if the RST arrives first, the result is an ECONNRESET ("Connection reset by peer") error return from readline.
+
+The problem in this example is that the client is blocked in the call to fgets when the FIN arrives on the socket. The client is really working with two descriptors the socket and the user input and instead of blocking on input from only one of the two sources (as str_cli is currently coded), it should block on input from either source. Indeed, this is one purpose of the select and poll functions, which we will describe in Chapter 6. When we recode
+the str_cli function in Section 6.4, as soon as we kill the server child, the client is notified of the received FIN.
+
+The problem in this example is that the client is blocked in the call to fgets when the FIN arrives on the socket. The client is really working with two descriptors the socket and the user input and instead of blocking on input from only one of the two sources (as str_cli is currently coded), it should block on input from either source. Indeed, this is one purpose of the select and poll functions, which we will describe in Chapter 6. When we recode
+the str_cli function in Section 6.4, as soon as we kill the server child, the client is notified of the received FIN.
+
+## SIGPIPE Signal
+What happens if the client ignores the error return from readline and writes more data to the server? This can happen, for example, if the client needs to perform two writes to the server before reading anything back, with the first write eliciting the RST.
+
+The rule that applies is: When a process writes to a socket that has received an RST, the SIGPIPE signal is sent to the process. The default action of this signal is to terminate the process, so the process must catch the signal to avoid being involuntarily terminated.
+
+If the process either catches the signal and returns from the signal handler, or ignores the signal, the write operation returns EPIPE.
+
+A frequently asked question (FAQ) on Usenet is how to obtain this signal on the first write, and not the second. This is not possible. Following our discussion above, the first write elicits the RST and the second write elicits the signal. It is okay to write to a socket that has received a FIN, but it is an error to write to a socket that has received an RST.
+
+```c++
+#include	"unp.h"
+
+void str_cli(FILE *fp, int sockfd)
+{
+	char sendline[MAXLINE], recvline[MAXLINE];
+	while (Fgets(sendline, MAXLINE, fp) != NULL) {
+
+		Writen(sockfd, sendline, 1);
+		sleep(1);
+		Writen(sockfd, sendline+1, strlen(sendline)-1);
+
+		if (Readline(sockfd, recvline, MAXLINE) == 0)
+			err_quit("str_cli: server terminated prematurely");
+
+		Fputs(recvline, stdout);
+	}
+}
+```
+
+All we have changed is to call writen two times: the first time the first byte of data is written to the socket, followed by a pause of one second, followed by the remainder of the line. The intent is for the first writen to elicit the RST and then for the second writen to generate SIGPIPE.
+
+The recommended way to handle SIGPIPE depends on what the application wants to do when this occurs. If there is nothing special to do, then setting the signal disposition to SIG_IGN is easy, assuming that subsequent output operations will catch the error of EPIPE and terminate. If special actions are needed when the signal occurs (writing to a log file perhaps), then the signal should be caught and any desired actions can be performed in the signal handler. Be aware, however, that if multiple sockets are in use, the delivery of the signal will not tell us which socket encountered the error. If we need to know which write caused the error, then we must either ignore the signal or return from the signal handler and handle EPIPE from the write.

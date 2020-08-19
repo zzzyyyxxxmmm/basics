@@ -2,6 +2,9 @@
 
 Anytime a job is updated, Nomad creates an evaluation to determine what actions need to take place. In this case, because this is a new job, Nomad has determined that an allocation should be created and has scheduled it on our local agent.
 
+# QA
+
+## 什么是Job Summary
 # Archetecture
 
 <div align=center>
@@ -100,6 +103,7 @@ func (j *Job) Register(args *structs.JobRegisterRequest, reply *structs.JobRegis
 }
 ```
 
+ModifyIndex原来就是raft的index
 ```go
 //nomad/fsm.go
 func (n *nomadFSM) Apply(log *raft.Log) interface{} {
@@ -113,6 +117,103 @@ func (n *nomadFSM) applyUpsertJob(buf []byte, index uint64) interface{} {
 if err := n.state.UpsertJob(index, req.Job); err != nil {
 		n.logger.Error("UpsertJob failed", "error", err)
 		return err
+    }
+    
+    if req.Eval != nil {
+		req.Eval.JobModifyIndex = index
+		if err := n.upsertEvals(index, []*structs.Evaluation{req.Eval}); err != nil {
+			return err
+		}
+    }
+    
+}
+```
+
+
+这里是插入Job信息到db
+```go
+//nomad state state_store.go
+// upsertJobImpl is the implementation for registering a job or updating a job definition
+func (s *StateStore) upsertJobImpl(index uint64, job *structs.Job, keepVersion bool, txn *memdb.Txn) error {
+
+    // Check if the job already exists 原来job是存在数据库里的
+	existing, err := txn.First("jobs", "id", job.Namespace, job.ID)
+	if err != nil {
+		return fmt.Errorf("job lookup failed: %v", err)
+    }
+
+    // Setup the indexes correctly
+	if existing != nil {
+		job.CreateIndex = existing.(*structs.Job).CreateIndex
+		job.ModifyIndex = index
+
+		existingJob := existing.(*structs.Job)
+
+		// Compute the job status
+		var err error
+		job.Status, err = s.getJobStatus(txn, job, false)   //先看allocation, 再看evaluation
+		if err != nil {
+			return fmt.Errorf("setting job status for %q failed: %v", job.ID, err)
+		}
+	} else {
+		job.CreateIndex = index
+		job.ModifyIndex = index
+		job.JobModifyIndex = index
+		job.Version = 0
+
+		if err := s.setJobStatus(index, txn, job, false, ""); err != nil {
+			return fmt.Errorf("setting job status for %q failed: %v", job.ID, err)
+		}
+
+		// Have to get the job again since it could have been updated
+		updated, err := txn.First("jobs", "id", job.Namespace, job.ID)
+		if err != nil {
+			return fmt.Errorf("job lookup failed: %v", err)
+		}
+		if updated != nil {
+			job = updated.(*structs.Job)
+		}
+    }
+    
+    if err := s.updateSummaryWithJob(index, job, txn); err != nil {
+		return fmt.Errorf("unable to create job summary: %v", err)
+	}
+
+	if err := s.upsertJobVersion(index, job, txn); err != nil {
+		return fmt.Errorf("unable to upsert job into job_version table: %v", err)
+	}
+
+	if err := s.updateJobScalingPolicies(index, job, txn); err != nil {
+		return fmt.Errorf("unable to update job scaling policies: %v", err)
+	}
+
+	// Insert the job
+	if err := txn.Insert("jobs", job); err != nil {
+		return fmt.Errorf("job insert failed: %v", err)
+	}
+	if err := txn.Insert("index", &IndexEntry{"jobs", index}); err != nil {
+		return fmt.Errorf("index update failed: %v", err)
+	}
+    
+}
+```
+
+```go
+// handleUpsertingEval is a helper for taking action after upserting an eval.
+func (n *nomadFSM) handleUpsertedEval(eval *structs.Evaluation) {
+	if eval == nil {
+		return
+	}
+
+	if eval.ShouldEnqueue() {
+		n.evalBroker.Enqueue(eval)
+	} else if eval.ShouldBlock() {
+		n.blockedEvals.Block(eval)
+	} else if eval.Status == structs.EvalStatusComplete &&
+		len(eval.FailedTGAllocs) == 0 {
+		// If we have a successful evaluation for a node, untrack any
+		// blocked evaluation
+		n.blockedEvals.Untrack(eval.JobID, eval.Namespace)
 	}
 }
 ```
