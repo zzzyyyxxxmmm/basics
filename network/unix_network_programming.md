@@ -188,3 +188,58 @@ The following steps take place:
 
 25.11 of TCPv2 shows a typical pattern for TCP retransmissions: Berkeley-derived implementations retransmit the data segment 12 times, waiting for around 9 minutes before giving up. When the client TCP finally gives up (assuming the server host has not been rebooted during this time, or if the server host has not crashed but was unreachable on the network, assuming the host was still unreachable), an error is returned to the client process. Since the client is blocked in the call to readline, it returns an error. Assuming the server host crashed and there were no responses at all to the client's data segments, the error is ETIMEDOUT. But if some intermediate router determined that the server host was unreachable and responded with an ICMP "destination unreachable' message, the error is either EHOSTUNREACH
 or ENETUNREACH.
+
+Although our client discovers (eventually) that the peer is down or unreachable, there are times when we want to detect this quicker than having to wait nine minutes. The solution is to place a timeout on the call to readline, which we will discuss in Section 14.2.
+
+The scenario that we just discussed detects that the server host has crashed only when we send data to that host. If we want to detect the crashing of the server host even if we are not actively sending it data, another technique is required. We will discuss the SO_KEEPALIVE socket option in Section 7.5.
+
+## Crashing and Rebooting of Server Host
+
+1. We start the server and then the client. We type a line to verify that the connection is established.
+2. The server host crashes and reboots.
+3. We type a line of input to the client, which is sent as a TCP data segment to the
+server host.
+4. When the server host reboots after crashing, its TCP loses all information about connections that existed before the crash. Therefore, the server TCP responds to the received data segment from the client with an RST.
+5. Our client is blocked in the call to readline when the RST is received, causing readline to return the error ECONNRESET.
+
+# IO
+
+## select Function
+This function allows the process to instruct the kernel to wait for any one of multiple events to occur and to wake up the process only when one or more of these events occurs or when a specified amount of time has passed.
+As an example, we can call select and tell the kernel to return only when:
+* Any of the descriptors in the set {1, 4, 5} are ready for reading
+* Any of the descriptors in the set {2, 7} are ready for writing
+* Any of the descriptors in the set {1, 4} have an exception condition pending
+* 10.2 seconds have elapsed
+That is, we tell the kernel what descriptors we are interested in (for reading, writing, or an exception condition) and how long to wait. The descriptors in which we are interested are not restricted to sockets; any descriptor can be tested using select.
+
+```c++
+#include <sys/select.h>
+#include <sys/time.h>
+int select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset, const struct timeval *timeout);
+//Returns: positive count of ready descriptors, 0 on timeout, 1 on error
+```
+
+## Under What Conditions Is a Descriptor Ready?
+We have been talking about waiting for a descriptor to become ready for I/O (reading or writing) or to have an exception condition pending on it (out-of-band data). While readability and writability are obvious for descriptors such as regular files, we must be more specific about the conditions that cause select to return "ready" for sockets (Figure 16.52 of TCPv2).
+
+### A socket is ready for reading if any of the following four conditions is true:
+1. The number of bytes of data in the socket receive buffer is greater than or equal to the current size of the low-water mark for the socket receive buffer. A read operation on the socket will not block and will return a value greater than 0 (i.e., the data that is ready to be read). We can set this low-water mark using the SO_RCVLOWAT socket option. It defaults to 1 for TCP and UDP sockets.
+2. The read half of the connection is closed (i.e., a TCP connection that has received a FIN). A read operation on the socket will not block and will return 0 (i.e., EOF).
+3. The socket is a listening socket and the number of completed connections is nonzero. An accept on the listening socket will normally not block, although we will describe a timing condition in Section 16.6 under which the accept can block.
+4. A socket error is pending. A read operation on the socket will not block and will return an error ( 1) with errno set to the specific error condition. These pending errors can also be fetched and cleared by calling getsockopt and specifying the SO_ERROR socket option.
+
+### A socket is ready for writing if any of the following four conditions is true
+1. The number of bytes of available space in the socket send buffer is greater than or equal to the current size of the low-water mark for the socket send buffer and either: (i) the socket is connected, or (ii) the socket does not require a connection (e.g., UDP). This means that if we set the socket to nonblocking (Chapter 16), a write operation will not block and will return a positive value (e.g., the number of bytes accepted by the transport layer). We can set this low-water mark using the SO_SNDLOWAT socket option. This low-water mark normally defaults to 2048 for TCP and UDP sockets.
+2. The write half of the connection is closed. A write operation on the socket will generate SIGPIPE (Section 5.12).
+3. A socket using a non-blocking connect has completed the connection, or the connect has failed.
+4. A socket error is pending. A write operation on the socket will not block and will return an error ( 1) with errno set to the specific error condition. These pending errors can also be fetched and cleared by calling getsockopt with the SO_ERROR socket option.
+
+Notice that when an error occurs on a socket, it is marked as both readable and writable by select.
+
+##  poll Function
+```c++
+#include <poll.h>
+int poll (struct pollfd *fdarray, unsigned long nfds, int timeout);
+//Returns: count of ready descriptors, 0 on timeout, 1 on error
+```

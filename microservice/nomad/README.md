@@ -99,6 +99,10 @@ func (j *Job) Register(args *structs.JobRegisterRequest, reply *structs.JobRegis
 
 //****************************************send job here*********************8//
     fsmErr, index, err := j.srv.raftApply(structs.JobRegisterRequestType, args)
+
+
+//trigger eval
+    _, evalIndex, err := j.srv.raftApply(structs.EvalUpdateRequestType, update)
     
 }
 ```
@@ -198,6 +202,16 @@ func (s *StateStore) upsertJobImpl(index uint64, job *structs.Job, keepVersion b
 }
 ```
 
+
+
+
+```go
+//fsm
+case structs.EvalUpdateRequestType:
+		return n.applyUpdateEval(buf[1:], log.Index)
+```
+
+
 ```go
 // handleUpsertingEval is a helper for taking action after upserting an eval.
 func (n *nomadFSM) handleUpsertedEval(eval *structs.Evaluation) {
@@ -216,4 +230,50 @@ func (n *nomadFSM) handleUpsertedEval(eval *structs.Evaluation) {
 		n.blockedEvals.Untrack(eval.JobID, eval.Namespace)
 	}
 }
+```
+
+这里是由worker触发的
+
+```go
+// run is the long-lived goroutine which is used to run the worker
+func (w *Worker) run() {
+	for {
+		// Dequeue a pending evaluation
+		eval, token, waitIndex, shutdown := w.dequeueEvaluation(dequeueTimeout)
+		if shutdown {
+			return
+		}
+
+		// Check for a shutdown
+		if w.srv.IsShutdown() {
+			w.logger.Error("nacking eval because the server is shutting down", "eval", log.Fmt("%#v", eval))
+			w.sendAck(eval.ID, token, false)
+			return
+		}
+
+		// Wait for the raft log to catchup to the evaluation
+		snap, err := w.snapshotMinIndex(waitIndex, raftSyncLimit)
+		if err != nil {
+			w.logger.Error("error waiting for Raft index", "error", err, "index", waitIndex)
+			w.sendAck(eval.ID, token, false)
+			continue
+		}
+
+		// Invoke the scheduler to determine placements
+		if err := w.invokeScheduler(snap, eval, token); err != nil {
+			w.logger.Error("error invoking scheduler", "error", err)
+			w.sendAck(eval.ID, token, false)
+			continue
+		}
+
+		// Complete the evaluation
+		w.sendAck(eval.ID, token, true)
+	}
+}
+
+// invokeScheduler is used to invoke the business logic of the scheduler
+func (w *Worker) invokeScheduler(snap *state.StateSnapshot, eval *structs.Evaluation, token string) error {
+	err = sched.Process(eval)
+}
+
 ```
