@@ -243,3 +243,173 @@ Notice that when an error occurs on a socket, it is marked as both readable and 
 int poll (struct pollfd *fdarray, unsigned long nfds, int timeout);
 //Returns: count of ready descriptors, 0 on timeout, 1 on error
 ```
+
+# 代码温习
+
+## v1
+strserv.c
+```c++
+#include    "unp.h"
+
+int main(int argc, char **argv) {
+    int listenfd, connfd;
+    pid_t childpid;
+    socklen_t clilen;
+    struct sockaddr_in cliaddr, servaddr;
+
+    listenfd = Socket(AF_INET, SOCK_STREAM, 0);
+
+    bzero(&servaddr, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    servaddr.sin_port = htons(SERV_PORT);
+
+    Bind(listenfd, (SA * ) & servaddr, sizeof(servaddr));
+
+    Listen(listenfd, LISTENQ);
+
+    for (;;) {
+        clilen = sizeof(cliaddr);
+        connfd = Accept(listenfd, (SA * ) & cliaddr, &clilen);
+
+        if ((childpid = Fork()) == 0) {    /* child process */
+            Close(listenfd);    /* close listening socket */
+            str_echo(connfd);    /* process the request */
+            exit(0);
+
+            /*
+            程序在这里结束后由于parent没有catch到signhold, 因此child会变成zombie
+            */
+
+        }
+        Close(connfd);            /* parent closes connected socket */
+    }
+
+    
+}
+```
+
+str_echo.c
+```c++
+#include    "unp.h"
+
+void str_echo(int sockfd) {
+    ssize_t n;
+    char buf[MAXLINE];
+    again:
+    while ((n = read(sockfd, buf, MAXLINE)) > 0)
+        Writen(sockfd, buf, n);
+
+    if (n < 0 && errno == EINTR)
+        goto again;
+    else if (n < 0)
+        err_sys("str_echo: read error");
+}
+```
+
+str_cli.c
+```c++
+#include    "unp.h"
+
+int main(int argc, char **argv) {
+    int sockfd;
+    struct sockaddr_in servaddr;
+
+    if (argc != 2)
+        err_quit("usage: tcpcli <IPaddress>");
+
+    sockfd = Socket(AF_INET, SOCK_STREAM, 0);
+
+    bzero(&servaddr, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(SERV_PORT);
+    Inet_pton(AF_INET, argv[1], &servaddr.sin_addr);
+
+    Connect(sockfd, (SA * ) & servaddr, sizeof(servaddr));
+
+    str_cli(stdin, sockfd);     /* do it all */
+
+    exit(0);
+}
+```
+
+tcpcli.c
+```c++
+#include "unp.h"
+
+void str_cli(FILE *fp, int sockfd) {
+    char sendline[MAXLINE], recvline[MAXLINE];
+    while (Fgets(sendline, MAXLINE, fp) != NULL) {
+        Writen(sockfd, sendline, strlen(sendline));
+        if (Readline(sockfd, recvline, MAXLINE) == 0)
+            err_quit("str_cli: server terminated prematurely");
+        Fputs(recvline, stdout);
+    }
+}
+```
+
+## v2
+```c++
+#include    "unp.h"
+
+void sig_chld(int signo) {
+    pid_t pid;
+    int stat;
+
+    pid = wait(&stat);
+    printf("child %d terminated\n", pid);
+    return;
+}
+
+```
+tcpserv02.c
+```c++
+Bind(listenfd, (SA *) &servaddr, sizeof(servaddr));
+
+Listen(listenfd, LISTENQ);
+
+Signal(SIGCHLD, sig_chld);
+
+for ( ; ; ) {
+		clilen = sizeof(cliaddr);
+		connfd = Accept(listenfd, (SA *) &cliaddr, &clilen);    这里没有handle EINTR
+
+		if ( (childpid = Fork()) == 0) {	/* child process */
+			Close(listenfd);	/* close listening socket */
+			str_echo(connfd);	/* process the request */
+			exit(0);
+		}
+		Close(connfd);			/* parent closes connected socket */
+	}
+```
+
+Since the signal was caught by the parent while the parent was blocked in a slow system call (accept), the kernel causes the accept to return an error of EINTR (interrupted system call). The parent does not handle this error, so it aborts.
+
+```c++
+if ( (connfd = accept(listenfd, (SA *) &cliaddr, &clilen)) < 0) {
+    if (errno == EINTR)
+        continue;		/* back to for() */
+    else
+        err_sys("accept error");
+}
+```
+
+## v3
+如果client建立了多个连接, 一旦释放, 则会释放多个连接(client释放多个连接), 那么server就会发送多个signal, 由于signal是无法queue的, 因此wait只能处理一个child
+
+The correct solution is to call waitpid instead of wait. Figure 5.11 shows the version of
+our sig_chld function that handles SIGCHLD correctly. This version works because we call waitpid within a loop, fetching the status of any of our children that have terminated. We must specify the WNOHANG option: This tells waitpid not to block if there are running children that have not yet terminated. In Figure 5.7, we cannot call wait in a loop, because there is no way to prevent wait from blocking if there are running children that have not yet terminated.
+
+```c++
+#include    "unp.h"
+
+void sig_chld(int signo) {
+    pid_t pid;
+    int stat;
+
+    while ((pid = waitpid(-1, &stat, WNOHANG)) > 0)
+        printf("child %d terminated\n", pid);
+    return;
+}
+
+```
