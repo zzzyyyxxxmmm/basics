@@ -5,6 +5,17 @@ Anytime a job is updated, Nomad creates an evaluation to determine what actions 
 # QA
 
 ## 什么是Job Summary
+
+## 重复提交相同的Job会怎么样
+
+## 
+
+
+
+
+
+
+
 # Archetecture
 
 <div align=center>
@@ -742,6 +753,7 @@ func evaluateNodePlan(snap *state.StateSnapshot, plan *structs.Plan, nodeID stri
 	}
 
 	// Get the existing allocations that are non-terminal
+	//一个非常神奇的地方, 所有allocation一开始都被创建好了
 	existingAlloc, err := snap.AllocsByNodeTerminal(ws, nodeID, false)
 	if err != nil {
 		return false, "", fmt.Errorf("failed to get existing allocations for '%s': %v", nodeID, err)
@@ -769,6 +781,74 @@ func evaluateNodePlan(snap *state.StateSnapshot, plan *structs.Plan, nodeID stri
 	fit, reason, _, err := structs.AllocsFit(node, proposed, nil, true)
 	return fit, reason, err
 }
+```
 
+```go
+//structs/funcs.go
+// AllocsFit checks if a given set of allocations will fit on a node.
+// The netIdx can optionally be provided if its already been computed.
+// If the netIdx is provided, it is assumed that the client has already
+// ensured there are no collisions. If checkDevices is set to true, we check if
+// there is a device oversubscription.
+func AllocsFit(node *Node, allocs []*Allocation, netIdx *NetworkIndex, checkDevices bool) (bool, string, *ComparableResources, error) {
+	// Compute the allocs' utilization from zero
+	used := new(ComparableResources)
+
+	// For each alloc, add the resources
+	for _, alloc := range allocs {
+		// Do not consider the resource impact of terminal allocations
+		if alloc.TerminalStatus() {
+			continue
+		}
+
+		used.Add(alloc.ComparableResources())
+	}
+
+	// Check that the node resources (after subtracting reserved) are a
+	// super set of those that are being allocated
+	available := node.ComparableResources()
+	available.Subtract(node.ComparableReservedResources())
+	if superset, dimension := available.Superset(used); !superset {
+		return false, dimension, used, nil
+	}
+
+	// Create the network index if missing
+	if netIdx == nil {
+		netIdx = NewNetworkIndex()
+		defer netIdx.Release()
+		if netIdx.SetNode(node) || netIdx.AddAllocs(allocs) {
+			return false, "reserved port collision", used, nil
+		}
+	}
+
+	// Check if the network is overcommitted
+	if netIdx.Overcommitted() {
+		return false, "bandwidth exceeded", used, nil
+	}
+
+	// Check devices
+	if checkDevices {
+		accounter := NewDeviceAccounter(node)
+		if accounter.AddAllocs(allocs) {
+			return false, "device oversubscribed", used, nil
+		}
+	}
+
+	// Allocations fit!
+	return true, "", used, nil
+}
+```
+
+回到planApply
+
+```go
+planApply
+func (p *planner) applyPlan(plan *structs.Plan, result *structs.PlanResult, snap *state.StateSnapshot) (raft.ApplyFuture, error) {
+	future, err := p.raftApplyFuture(structs.ApplyPlanResultsRequestType, &req)
+}
+
+//又回到了这里
+case structs.ApplyPlanResultsRequestType:
+		return n.applyPlanResults(buf[1:], log.Index)
 
 ```

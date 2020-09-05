@@ -678,3 +678,16 @@ main(int argc, char **argv)
 }
 /* end fig02 */
 ```
+
+# UDP
+udp可以不用connect直接使用, 但也可以connect.
+
+直接发送就是先connect, 然后发送, 然后断开
+
+UDP接收是有一个buffer的, buffer满了, 其他的就会被drop
+
+# Deamon
+
+## syslog
+syslog可以通过udp的方式向syslog deamon发送log信息, log将会根据配置向指定位置添加log
+
