@@ -1,6 +1,8 @@
 # What is Zookeeper
 Zookeeper是一个高性能分布式应用协调服务, 实现分布式锁
 
+ZooKeeper was designed to be a robust service that enables application developers to focus mainly on their application logic rather than coordination. It exposes a simple API, inspired by the filesystem API, that allows developers to implement common coordination tasks, such as electing a master server, managing group membership, and managing metadata. 
+
 在ZNode改变的时候, watcher会给客户端发送通知
 # Zookeeper的工作方式
 * Zookeeper集群包含一个Leader, 多个Follower

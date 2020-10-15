@@ -851,4 +851,197 @@ func (p *planner) applyPlan(plan *structs.Plan, result *structs.PlanResult, snap
 case structs.ApplyPlanResultsRequestType:
 		return n.applyPlanResults(buf[1:], log.Index)
 
+// applyPlanApply applies the results of a plan application
+func (n *nomadFSM) applyPlanResults(buf []byte, index uint64) interface{} {
+
+	if err := n.state.UpsertPlanResults(index, &req); err != nil {
+		n.logger.Error("ApplyPlan failed", "error", err)
+		return err
+	}
+
+	// Add evals for jobs that were preempted
+	n.handleUpsertedEvals(req.PreemptionEvals)
+	return nil
+}
+
+// UpsertPlanResults is used to upsert the results of a plan.
+func (s *StateStore) UpsertPlanResults(index uint64, results *structs.ApplyPlanResultsRequest) error {
+	
+	// Upsert the newly created or updated deployment
+	if results.Deployment != nil {
+		if err := s.upsertDeploymentImpl(index, results.Deployment, txn); err != nil {
+			return err
+		}
+	}
+
+
+	numAllocs := 0
+	if len(results.Alloc) > 0 || len(results.NodePreemptions) > 0 {
+		// COMPAT 0.11: This branch will be removed, when Alloc is removed
+		// Attach the job to all the allocations. It is pulled out in the payload to
+		// avoid the redundancy of encoding, but should be denormalized prior to
+		// being inserted into MemDB.
+		addComputedAllocAttrs(results.Alloc, results.Job)
+		numAllocs = len(results.Alloc) + len(results.NodePreemptions)
+	} else {
+		// Attach the job to all the allocations. It is pulled out in the payload to
+		// avoid the redundancy of encoding, but should be denormalized prior to
+		// being inserted into MemDB.
+		addComputedAllocAttrs(results.AllocsUpdated, results.Job)
+		numAllocs = len(allocsStopped) + len(results.AllocsUpdated) + len(allocsPreempted)
+	}
+
+	allocsToUpsert := make([]*structs.Allocation, 0, numAllocs)
+
+	// COMPAT 0.11: Both these appends should be removed when Alloc and NodePreemptions are removed
+	allocsToUpsert = append(allocsToUpsert, results.Alloc...)
+	allocsToUpsert = append(allocsToUpsert, results.NodePreemptions...)
+
+	allocsToUpsert = append(allocsToUpsert, allocsStopped...)
+	allocsToUpsert = append(allocsToUpsert, results.AllocsUpdated...)
+	allocsToUpsert = append(allocsToUpsert, allocsPreempted...)
+
+	// handle upgrade path
+	for _, alloc := range allocsToUpsert {
+		alloc.Canonicalize()
+	}
+
+	if err := s.upsertAllocsImpl(index, allocsToUpsert, txn); err != nil {
+		return err
+	}
+
+	// Upsert followup evals for allocs that were preempted
+	for _, eval := range results.PreemptionEvals {
+		if err := s.nestedUpsertEval(txn, index, eval); err != nil {
+			return err
+		}
+	}
+
+	txn.Commit()
+	return nil
+}
+
+
+//终于创建allocation了
+// upsertAllocs is the actual implementation of UpsertAllocs so that it may be
+// used with an existing transaction.
+func (s *StateStore) upsertAllocsImpl(index uint64, allocs []*structs.Allocation, txn *memdb.Txn) error {
+	// Handle the allocations
+	jobs := make(map[structs.NamespacedID]string, 1)
+	for _, alloc := range allocs {
+		existing, err := txn.First("allocs", "id", alloc.ID)
+		if err != nil {
+			return fmt.Errorf("alloc lookup failed: %v", err)
+		}
+		exist, _ := existing.(*structs.Allocation)
+
+		if exist == nil {
+			alloc.CreateIndex = index
+			alloc.ModifyIndex = index
+			alloc.AllocModifyIndex = index
+			if alloc.DeploymentStatus != nil {
+				alloc.DeploymentStatus.ModifyIndex = index
+			}
+
+			// Issue https://github.com/hashicorp/nomad/issues/2583 uncovered
+			// the a race between a forced garbage collection and the scheduler
+			// marking an allocation as terminal. The issue is that the
+			// allocation from the scheduler has its job normalized and the FSM
+			// will only denormalize if the allocation is not terminal.  However
+			// if the allocation is garbage collected, that will result in a
+			// allocation being upserted for the first time without a job
+			// attached. By returning an error here, it will cause the FSM to
+			// error, causing the plan_apply to error and thus causing the
+			// evaluation to be failed. This will force an index refresh that
+			// should solve this issue.
+			if alloc.Job == nil {
+				return fmt.Errorf("attempting to upsert allocation %q without a job", alloc.ID)
+			}
+		} else {
+			alloc.CreateIndex = exist.CreateIndex
+			alloc.ModifyIndex = index
+			alloc.AllocModifyIndex = index
+
+			// Keep the clients task states
+			alloc.TaskStates = exist.TaskStates
+
+			// If the scheduler is marking this allocation as lost we do not
+			// want to reuse the status of the existing allocation.
+			if alloc.ClientStatus != structs.AllocClientStatusLost {
+				alloc.ClientStatus = exist.ClientStatus
+				alloc.ClientDescription = exist.ClientDescription
+			}
+
+			// The job has been denormalized so re-attach the original job
+			if alloc.Job == nil {
+				alloc.Job = exist.Job
+			}
+		}
+
+		// OPTIMIZATION:
+		// These should be given a map of new to old allocation and the updates
+		// should be one on all changes. The current implementation causes O(n)
+		// lookups/copies/insertions rather than O(1)
+		if err := s.updateDeploymentWithAlloc(index, alloc, exist, txn); err != nil {
+			return fmt.Errorf("error updating deployment: %v", err)
+		}
+
+		if err := s.updateSummaryWithAlloc(index, alloc, exist, txn); err != nil {
+			return fmt.Errorf("error updating job summary: %v", err)
+		}
+
+		if err := s.updateEntWithAlloc(index, alloc, exist, txn); err != nil {
+			return err
+		}
+
+		if err := s.updatePluginWithAlloc(index, alloc, txn); err != nil {
+			return err
+		}
+
+		if err := txn.Insert("allocs", alloc); err != nil {
+			return fmt.Errorf("alloc insert failed: %v", err)
+		}
+
+		if alloc.PreviousAllocation != "" {
+			prevAlloc, err := txn.First("allocs", "id", alloc.PreviousAllocation)
+			if err != nil {
+				return fmt.Errorf("alloc lookup failed: %v", err)
+			}
+			existingPrevAlloc, _ := prevAlloc.(*structs.Allocation)
+			if existingPrevAlloc != nil {
+				prevAllocCopy := existingPrevAlloc.Copy()
+				prevAllocCopy.NextAllocation = alloc.ID
+				prevAllocCopy.ModifyIndex = index
+				if err := txn.Insert("allocs", prevAllocCopy); err != nil {
+					return fmt.Errorf("alloc insert failed: %v", err)
+				}
+			}
+		}
+
+		// If the allocation is running, force the job to running status.
+		forceStatus := ""
+		if !alloc.TerminalStatus() {
+			forceStatus = structs.JobStatusRunning
+		}
+
+		tuple := structs.NamespacedID{
+			ID:        alloc.JobID,
+			Namespace: alloc.Namespace,
+		}
+		jobs[tuple] = forceStatus
+	}
+
+	// Update the indexes
+	if err := txn.Insert("index", &IndexEntry{"allocs", index}); err != nil {
+		return fmt.Errorf("index update failed: %v", err)
+	}
+
+	// Set the job's status
+	if err := s.setJobStatuses(index, txn, jobs, false); err != nil {
+		return fmt.Errorf("setting job status failed: %v", err)
+	}
+
+	return nil
+}
+
 ```
