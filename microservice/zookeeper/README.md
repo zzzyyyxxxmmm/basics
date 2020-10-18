@@ -3,6 +3,22 @@ Zookeeper是一个高性能分布式应用协调服务, 实现分布式锁
 
 ZooKeeper was designed to be a robust service that enables application developers to focus mainly on their application logic rather than coordination. It exposes a simple API, inspired by the filesystem API, that allows developers to implement common coordination tasks, such as electing a master server, managing group membership, and managing metadata. 
 
+**Apache HBase**
+
+HBase is a data store typically used alongside Hadoop. In HBase, ZooKeeper is used to elect a cluster master, to keep track of available servers, and to keep cluster metadata.
+
+**Apache Kafka**
+Kafka is a pub-sub messaging system. It uses ZooKeeper to detect crashes, to im‐ plement topic discovery, and to maintain production and consumption state for topics.
+
+**Apache Solr**
+Solr is an enterprise search platform. In its distributed form, called SolrCloud, it uses ZooKeeper to store metadata about the cluster and coordinate the updates to this metadata.
+
+**Yahoo! Fetching Service**
+Part of a crawler implementation, the Fetching Service fetches web pages efficiently by caching content while making sure that web server policies, such as those in robots.txt files, are preserved. This service uses ZooKeeper for tasks such as master election, crash detection, and metadata storage.
+
+**Facebook Messages**
+This is a Facebook application that integrates communication channels: email, SMS, Facebook Chat, and the existing Facebook Inbox. It uses ZooKeeper as a controller for implementing sharding and failover, and also for service discovery.
+
 在ZNode改变的时候, watcher会给客户端发送通知
 # Zookeeper的工作方式
 * Zookeeper集群包含一个Leader, 多个Follower
