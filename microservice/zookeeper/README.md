@@ -19,6 +19,10 @@ Part of a crawler implementation, the Fetching Service fetches web pages efficie
 **Facebook Messages**
 This is a Facebook application that integrates communication channels: email, SMS, Facebook Chat, and the existing Facebook Inbox. It uses ZooKeeper as a controller for implementing sharding and failover, and also for service discovery.
 
+# Zookeeper basic
+
+We consequently have taken a different path with ZooKeeper. ZooKeeper does not ex‐ pose primitives directly. Instead, it exposes a file system-like API comprised of a small set of calls that enables applications to implement their own primitives. We typically use recipes to denote these implementations of primitives. Recipes include ZooKeeper operations that manipulate small data nodes, called znodes, that are organized hier‐ archically as a tree, just like in a file system. Figure 2-1 illustrates a znode tree. The root node contains four more nodes, and three of those nodes have nodes under them. The leaf nodes are the data.
+
 在ZNode改变的时候, watcher会给客户端发送通知
 # Zookeeper的工作方式
 * Zookeeper集群包含一个Leader, 多个Follower
