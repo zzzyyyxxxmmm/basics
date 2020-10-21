@@ -72,7 +72,21 @@ When trying to connect to a different server, it is important for the ZooKeeper 
 
 Figure 2-7 illustrates the use of transaction identifiers (zxids) for reconnecting. After the client disconnects from s1 because it times out, it tries s2, but s2 has lagged behind and does not reflect a change known to the client. However, s3 has seen the same changes as the client, so it is safe to connect.
 
+### Implementing a Primitive: Locks with ZooKeeper
+One simple example of what we can do with ZooKeeper is implement critical sections through locks. There are multiple flavors of locks (e.g., read/write locks, global locks) and several ways to implement locks with ZooKeeper. Here we discuss a simple recipe just to illustrate how applications can use ZooKeeper; we do not consider other variants of locks.
 
+Say that we have an application with n processes trying to acquire a lock. Recall that ZooKeeper does not expose primitives directly, so we need to use the ZooKeeper inter‐ face to manipulate znodes and implement the lock. To acquire a lock, each process p tries to create a znode, say /lock. If p succeeds in creating the znode, it has the lock and can proceed to execute its critical section. One potential problem is that p could crash and never release the lock. In this case, no other process will ever be able to acquire the lock again, and the system could seize up in a deadlock. To avoid such situations, we just have to make the /lock znode ephemeral when we create it.
+
+Other processes that try to create /lock fail so long as the znode exists. So, they watch for changes to /lock and try to acquire the lock again once they detect that /lock has been deleted. Upon receiving a notification that /lock has been deleted, if a process pʹ is still interested in acquiring the lock, it repeats the steps of attempting to create /lock and, if another process has created the znode already, watching it.
+
+### Implementation of a Master-Worker Example
+1. server通过创建一个/master的enphermal node来表示当前是master, 其他尝试的server会得到该znode已被注册, 同时可以创建watch
+2. create /workers /tasks /assign The three new znodes are persistent znodes and contain no data. We use these znodes in this example to tell us which workers are available, tell us when there are tasks to assign, and make assignments to workers. Regardless of how they are created, once they exist, the master needs to watch for changes in the children of /workers and /tasks:
+3. worker在/worker创建, 表示该wor就绪.
+4. worker在/assign/worker1创建watcher, 观察等待分配到这个目录的任务
+5. client创建/tasks/task-0000000000, 并watch
+6. master watch/tasks, 并分配/assign/worker1.example.com/task-0000000000, worker观察到, 并处理, 然后创建/tasks/task-0000000000/status "done"
+7. client观察到done, 表示处理成功
 
 # Zookeeper的工作方式
 * Zookeeper集群包含一个Leader, 多个Follower
