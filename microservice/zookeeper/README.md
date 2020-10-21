@@ -23,7 +23,57 @@ This is a Facebook application that integrates communication channels: email, SM
 
 We consequently have taken a different path with ZooKeeper. ZooKeeper does not ex‐ pose primitives directly. Instead, it exposes a file system-like API comprised of a small set of calls that enables applications to implement their own primitives. We typically use recipes to denote these implementations of primitives. Recipes include ZooKeeper operations that manipulate small data nodes, called znodes, that are organized hier‐ archically as a tree, just like in a file system. Figure 2-1 illustrates a znode tree. The root node contains four more nodes, and three of those nodes have nodes under them. The leaf nodes are the data.
 
+## Different Modes for Znodes
+When creating a new znode, you also need to specify a mode. The different modes determine how the znode behaves.
+**Persistent and ephemeral znodes**
+
+A znode can be either persistent or ephemeral. A persistent znode /path can be deleted only through a call to delete. An ephemeral znode, in contrast, is deleted if the client that created it crashes or simply closes its connection to ZooKeeper.
+Persistent znodes are useful when the znode stores some data on behalf of an application and this data needs to be preserved even after its creator is no longer part of the system. For example, in the master-worker example, we need to maintain the assignment of tasks to workers even when the master that performed the assignment crashes.
+
+Ephemeral znodes convey information about some aspect of the application that must exist only while the session of its creator is valid. For example, the master znode in our master-worker example is ephemeral. Its presence implies that there is a master and the master is up and running. If the master znode remains while the master is gone, then the system won’t be able to detect the master crash. This would prevent the system from making progress, so the znode must go with the master. We also use ephemeral znodes for workers. If a worker becomes unavailable, its session expires and its znode in /workers disappears automatically.
+An ephemeral znode can be deleted in two situations:
+1. When the session of the client creator ends, either by expiration or because it ex‐ plicitly closed.
+2. When a client, not necessarily the creator, deletes it.
+
+Because ephemeral znodes are deleted when their creator’s session expires, we currently do not allow ephemerals to have children. There have been discussions in the commu‐ nity about allowing children for ephemeral znodes by making them also ephemeral. This feature might be available in future releases, but it isn’t available currently.
+
+**Sequential znodes**
+
+A znode can also be set to be sequential. A sequential znode is assigned a unique, mo‐ notonically increasing integer. This sequence number is appended to the path used to create the znode. For example, if a client creates a sequential znode with the path /tasks/ task-, ZooKeeper assigns a sequence number, say 1, and appends it to the path. The path of the znode becomes /tasks/task-1. Sequential znodes provide an easy way to create znodes with unique names. They also provide a way to easily see the creation order of znodes.
+To summarize, there are four options for the mode of a znode: persistent, ephemeral, persistent_sequential, and ephemeral_sequential.
+
+## Watches and Notifications
+Because ZooKeeper is typically accessed as a remote service, accessing a znode every time a client needs to know its content would be very expensive: it would induce higher latency and more operations to a ZooKeeper installation. Consider the example in Figure 2-2. The second call to getChildren /tasks returns the same value, an empty set, and consequently is unnecessary.
+
+This is a common problem with polling. To replace the client polling, we have opted for a mechanism based on notifications: clients register with ZooKeeper to receive notifi‐ cations of changes to znodes. Registering to receive a notification for a given znode consists of setting a watch. A watch is a one-shot operation, which means that it triggers one notification. To receive multiple notifications over time, the client must set a new watch upon receiving each notification.
+
+每次创建watcher的时候会重新读一遍value, 防止value过期
+
+zookeeper也有version
+
+
 在ZNode改变的时候, watcher会给客户端发送通知
+
+## ZooKeeper Architecture
+<div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/zk_1.png" width="700" height="500">
+</div>
+
+ZooKeeper Quorums
+
+In quorum mode, ZooKeeper replicates its data tree across all servers in the ensemble. But if a client had to wait for every server to store its data before continuing, the delays might be unacceptable. In public administration, a quorum is the minimum number of legislators required to be present for a vote. In ZooKeeper, it is the minimum number of servers that have to be running and available in order for ZooKeeper to work. This number is also the minimum number of servers that have to store a client’s data before telling the client it is safely stored. For instance, we might have five ZooKeeper servers in total, but a quorum of three. So long as any three servers have stored the data, the client can continue, and the other two servers will eventually catch up and store the data.
+
+### Session
+Sessions offer order guarantees
+
+One important parameter you should set when creating a session is the session timeout, which is the amount of time the ZooKeeper service allows a session before declaring it expired. If the service does not see messages associated to a given session during time t, it declares the session expired. On the client side, if it has heard nothing from the server at 1/3 of t, it sends a heartbeat message to the server. At 2/3 of t, the ZooKeeper client starts looking for a different server, and it has another 1/3 of t to find one.
+
+When trying to connect to a different server, it is important for the ZooKeeper state of this server to be at least as fresh as the last ZooKeeper state the client has observed. A client cannot connect to a server that has not seen an update that the client might have seen. ZooKeeper determines freshness by ordering updates in the service. Every change to the state of a ZooKeeper deployment is totally ordered with respect to all other exe‐ cuted updates. Consequently, if a client has observed an update in position i, it cannot connect to a server that has only seen iʹ < i. In the ZooKeeper implementation, the transaction identifiers that the system assigns to each update establish the order.
+
+Figure 2-7 illustrates the use of transaction identifiers (zxids) for reconnecting. After the client disconnects from s1 because it times out, it tries s2, but s2 has lagged behind and does not reflect a change known to the client. However, s3 has seen the same changes as the client, so it is safe to connect.
+
+
+
 # Zookeeper的工作方式
 * Zookeeper集群包含一个Leader, 多个Follower
 * 所有的Follower都可提供读服务

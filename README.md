@@ -77,7 +77,12 @@
 2. unix network programming 
 3. nomad源码阅读
 
+### Oct, 2020
+1. Zookeeper
+2. GCP
+
+
+
 ### 待定
 1. 温习数据库,  本月专攻数据库
 2. O'Reilly.High.Performance.MySQL.3rd.Edition.Mar.2012
-3. 从零实现一个nomad
