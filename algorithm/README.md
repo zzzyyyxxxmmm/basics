@@ -1,34 +1,3 @@
-# 注意事项
-**Code本身：**
-
-code写的对不对，是不是做到bug free？
-
-是不是能够处理所有可能的情况？
-
-有没有主动walk through几个test cases？
-
-code是不是用标准的格式来写的？
-
-结构是不是让别人能够很清楚的看明白？
-
-**沟通code：**
-
-在写code之前，有没有主动的跟面试官沟通来明确题目要求，分析各种需要处理的情形？
-
-有没有考虑可能的环境和多种解决方案？
-
-有没有做必要的trade off的分析？
-
-如果你用到了某些数据结构和算法，有没有解释清楚运用这些工具的原因到底是什么？
-
-**code优化方面：**
-
-有没有冗余的可以优化的代码？
-
-你给的答案是否是效率比较好的？
-
-能否主动继续分析优化方案
-
 # 每日练习
 
 ## [leetcode 208 Trie](https://leetcode.com/problems/implement-trie-prefix-tree/)
@@ -39,8 +8,8 @@ code是不是用标准的格式来写的？
 
 ## [leetcode 84 monotonous stack](https://leetcode.com/problems/largest-rectangle-in-histogram/)
 
+# 基础
 # 构造问题
-1. 尝试最简单的case
 2. 思考如何自己check
 3. 列出case, 尝试优化
 
@@ -174,3 +143,5 @@ n-m+f= 2.
 
 # 绝世好题
 [780. Reaching Points](https://leetcode.com/problems/reaching-points/)
+[1593. Split a String Into the Max Number of Unique Substrings](https://leetcode.com/contest/weekly-contest-207/problems/split-a-string-into-the-max-number-of-unique-substrings/)
+[1594. Maximum Non Negative Product in a Matrix](https://leetcode.com/contest/weekly-contest-207/problems/maximum-non-negative-product-in-a-matrix/)

@@ -82,12 +82,22 @@ Other processes that try to create /lock fail so long as the znode exists. So, t
 ### Implementation of a Master-Worker Example
 1. server通过创建一个/master的enphermal node来表示当前是master, 其他尝试的server会得到该znode已被注册, 同时可以创建watch
 2. create /workers /tasks /assign The three new znodes are persistent znodes and contain no data. We use these znodes in this example to tell us which workers are available, tell us when there are tasks to assign, and make assignments to workers. Regardless of how they are created, once they exist, the master needs to watch for changes in the children of /workers and /tasks:
-3. worker在/worker创建, 表示该wor就绪.
+3. worker在/worker创建, 表示该work就绪.
 4. worker在/assign/worker1创建watcher, 观察等待分配到这个目录的任务
 5. client创建/tasks/task-0000000000, 并watch
 6. master watch/tasks, 并分配/assign/worker1.example.com/task-0000000000, worker观察到, 并处理, 然后创建/tasks/task-0000000000/status "done"
 7. client观察到done, 表示处理成功
 
+# Zookeeper internal
+Client requests that change the state of ZooKeeper (create, delete, and setData) are forwarded to the leader.
+
+Let’s now look at a ZooKeeper example. Say that a client submits a setData request on a given znode /z. setData should change the data of the znode and bump up the version number. So, a transaction for this request contains two important fields: the new data of the znode and the new version number of the znode. When applying the transaction, a server simply replaces the data of /z with the data in the transaction and the version number with the value in the transaction, rather than bumping it up.
+
+A transaction is treated as a unit, in the sense that all changes it contains must be applied atomically. In the setData example, changing the data without an accompanying change to the version accordingly leads to trouble. Consequently, when a ZooKeeper ensemble applies transactions, it makes sure that all changes are applied atomically and there is no interference from other transactions. There is no rollback mechanism like with tra‐ ditional relational databases. Instead, ZooKeeper makes sure that the steps of transac‐ tions do not interfere with each other. For a long time, the design used a single thread in each server to apply transactions. Having a single thread guarantees that the trans‐ actions are applied sequentially without interference. Recently, ZooKeeper has added support for multiple threads to speed up the process of applying transactions.
+
+A transaction is also idempotent. That is, we can apply the same transaction twice and we will get the same result. We can even apply multiple transactions multiple times and get the same result, as long as we apply them in the same order every time. We take advantage of this idempotent property during recovery.
+
+When the leader generates a new transaction, it assigns to the transaction an identifier that we call a ZooKeeper transaction ID (zxid). Zxids identify transactions so that they are applied to the state of servers in the order established by the leader. Servers also exchange zxids when electing a new leader, so they can determine which nonfaulty server has received more transactions and can synchronize their states.
 # Zookeeper的工作方式
 * Zookeeper集群包含一个Leader, 多个Follower
 * 所有的Follower都可提供读服务
