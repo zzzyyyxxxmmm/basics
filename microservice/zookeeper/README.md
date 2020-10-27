@@ -98,6 +98,12 @@ A transaction is treated as a unit, in the sense that all changes it contains mu
 A transaction is also idempotent. That is, we can apply the same transaction twice and we will get the same result. We can even apply multiple transactions multiple times and get the same result, as long as we apply them in the same order every time. We take advantage of this idempotent property during recovery.
 
 When the leader generates a new transaction, it assigns to the transaction an identifier that we call a ZooKeeper transaction ID (zxid). Zxids identify transactions so that they are applied to the state of servers in the order established by the leader. Servers also exchange zxids when electing a new leader, so they can determine which nonfaulty server has received more transactions and can synchronize their states.
+
+# leader election 流程
+In short, the server that is most up to date wins, because it has the most recent zxid. We’ll see later that this simplifies the process of restarting a quorum when a leader dies. If multiple servers have the most recent zxid, the one with the highest sid wins.
+
+Once a server receives the same vote from a quorum of servers, the server declares the leader elected. If the elected leader is the server itself, it starts executing the leader role. Otherwise, it becomes a follower and tries to connect to the elected leader. Note that it is not guaranteed that the follower will be able to connect to the elected leader. The elected leader might have crashed, for example. Once it connects, the follower and the leader sync their state, and only after syncing can the follower start processing new requests.
+
 # Zookeeper的工作方式
 * Zookeeper集群包含一个Leader, 多个Follower
 * 所有的Follower都可提供读服务
