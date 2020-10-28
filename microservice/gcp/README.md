@@ -129,3 +129,7 @@ Cloud Firebase includes a Datastore mode, which enables applications written for
 6. Cloud DNS
 
 # Projects, Service Accounts, and Billing
+
+# Introduction to Computing in Google Cloud
+
+# Computing with Compute Engine Virtual Machines
