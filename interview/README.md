@@ -16,11 +16,6 @@ JSON (JavaScript Object Notation) is a lightweight data-interchange format and i
 
 XML (Extensible markup language) was designed to carry data, not to display data. It is a W3C recommendation. Extensible Markup Language (XML) is a markup language that defines a set of rules for encoding documents in a format that is both human-readable and machine-readable. The design goals of XML focus on simplicity, generality, and usability across the Internet. It is a textual data format with strong support via Unicode for different human languages. Although the design of XML focuses on documents, the language is widely used for the representation of arbitrary data structures such as those used in web services.
 
-# What is agile
-
-# AWS Experience
-# Spring Security
-
 ## Oauth
 
 ## CAS
@@ -30,3 +25,6 @@ XML (Extensible markup language) was designed to carry data, not to display data
 ### What is Stored Procedures, Functions, views, triggers.
 
 
+# 分布式
+
+## Introduce the distributed ID generator
