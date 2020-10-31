@@ -286,6 +286,10 @@ sudo ./main exec container2 sh
 
 # 容器网络
 <div align=center>
+<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/docker_net_04.png" width="700" height="500">
+</div>
+
+<div align=center>
 <img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/docker_net_1.png" width="500" height="300">
 </div>
 
