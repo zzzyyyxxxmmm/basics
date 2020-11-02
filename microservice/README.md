@@ -19,6 +19,12 @@ Microservice is an idea to devide the project into small services. The service e
 3. Take care dependency. Modify one module may influence other modules.
 4. hard to delopy. There so many small service to deploy. 一种自动化方案就是适用Paas, 例如AWS. 另一种就是kubernates
 
+Any changes to the application require redeploying the entire application, which can take longer than deploying microservices. Developers tended to bundle changes before releasing them.
+
+If a bundled release had a bug in a feature change, then all feature changes would be rolled back when the monolithic application was rolled back.
+
+It was difficult to coordinate changes when teams of developers had to work with a single file or a small number of files of source code.
+
 # CAP
 
 ### Consistency

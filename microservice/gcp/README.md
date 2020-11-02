@@ -5,7 +5,7 @@
 1. Virtual Machines
 2. Managed Kubernetes Clusters
 3. Serverless Computing
-Google Cloud Platform has two serverless computing options: App Engine and Cloud Functions. App Engine is used for applications and containers that run for extended peri- ods of time, such as a website backend, point-of-sale system, or custom business appli- cation. Cloud Functions is a platform for running code in response to an event, such as uploading a file or adding a message to a message queue. This serverless option works well when you need to respond to an event by running a short process coded in a function or by calling a longer-running application that might be running on a VM, managed cluster, or App Engine.
+Google Cloud Platform has two serverless computing options: App Engine and Cloud Functions. App Engine is used for applications and containers that run for extended periods of time, such as a website backend, point-of-sale system, or custom business appli- cation. Cloud Functions is a platform for running code in response to an event, such as uploading a file or adding a message to a message queue. This serverless option works well when you need to respond to an event by running a short process coded in a function or by calling a longer-running application that might be running on a VM, managed cluster, or App Engine.
 
 ## Storage
 1. Object Storage
@@ -133,3 +133,10 @@ Cloud Firebase includes a Datastore mode, which enables applications written for
 # Introduction to Computing in Google Cloud
 
 # Computing with Compute Engine Virtual Machines
+
+# APP ENGINE
+App Engine Standard applications consist of four components:
+* Application
+* Service 
+* Version 
+* Instance
