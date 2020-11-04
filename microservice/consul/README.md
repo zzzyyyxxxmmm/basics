@@ -1,244 +1,32 @@
-### Consul -h
-```
-Usage: consul [--version] [--help] <command> [<args>]
+https://medium.com/airbnb-engineering/smartstack-service-discovery-in-the-cloud-4b8a080de619#.m0x2ks9ja
 
-Available commands are:
-    acl            Interact with Consul's ACLs
-    agent          Runs a Consul agent
-    catalog        Interact with the catalog
-    config         Interact with Consul's Centralized Configurations
-    connect        Interact with Consul Connect
-    debug          Records a debugging archive for operators
-    event          Fire a new event
-    exec           Executes a command on Consul nodes
-    force-leave    Forces a member of the cluster to enter the "left" state
-    info           Provides debugging information for operators.
-    intention      Interact with Connect service intentions
-    join           Tell Consul agent to join cluster
-    keygen         Generates a new encryption key
-    keyring        Manages gossip layer encryption keys
-    kv             Interact with the key-value store
-    leave          Gracefully leaves the Consul cluster and shuts down
-    lock           Execute a command holding a lock
-    login          Login to Consul using an auth method
-    logout         Destroy a Consul token created with login
-    maint          Controls node or service maintenance mode
-    members        Lists the members of a Consul cluster
-    monitor        Stream logs from a Consul agent
-    operator       Provides cluster-level tools for Consul operators
-    reload         Triggers the agent to reload configuration files
-    rtt            Estimates network round trip time between nodes
-    services       Interact with services
-    snapshot       Saves, restores and inspects snapshots of Consul server state
-    tls            Builtin helpers for creating CAs and certificates
-    validate       Validate config files/directories
-    version        Prints the Consul version
-    watch          Watch for changes in Consul
-```
+# Solutions which don’t work
+Many commonly-used approaches to service discovery don’t actually work very well in practice. To understand why SmartStack works so well, it can be helpful to first understand why other solutions do not.
 
-### Consul agent -h
-```
-Usage: consul agent [options]
+## DNS
+The simplest solution to registration and discovery is to just put all of your backends behind a single DNS name. To address a service, you contact it by DNS name and the request should get to a random backend.
 
-  Starts the Consul agent and runs until an interrupt is received. The
-  agent represents a single node in a cluster.
+The registration component of this is fairly well-understood. On your own infrastructure, you can use dynamic DNS backends like BIND-DLZ for registration. In the cloud, with hosted DNS like Route53, simple API calls suffice. In AWS, if you use round-robin CNAME records you would even get split horizon for free, so the same records would work from both inside and outside AWS.
 
-HTTP API Options
+However, using DNS for service discovery is fraught with peril. First, consumers have to poll for all changes — there’s no way to push state. Also, DNS suffers from propagation delays; even after your monitoring detects a failure and issues a de-registration command to DNS, there will be at least a few seconds before this information gets to the consumers. Worse, because of the various layers of caching in the DNS infrastructure, the exact propagation delay is often non-deterministic.
 
-  -datacenter=<value>
-     Datacenter of the agent.
+When using the naive approach, in which you just address your service by name, there’s no way to determine which boxes get traffic. You get the equivalent of random routing, with loads chaotically piling up behind some backends while others are left idle.
+Worst of all, many applications cache DNS resolution once, at startup. For instance, Nginx will cache the results of the initial name resolution unless you use a configuration file hack. The same is true of HAProxy. Figuring out that your application is vulnerable can be costly, and fixing the problem harder still.
 
-Command Options
+Note that we are here referring to native use of DNS by client libraries. There are ways to use the DNS system more intelligently to do service discovery — where we use Zookeeper in SmartStack, we could use DNS too without losing too much functionality. But simply making an HTTP request to myservice.mydomain.com via an HTTP library does not work well.
+## Central load balancing
+If you’re convinced that DNS is the wrong approach for service discovery, you might decide to take the route of centralizing your service routing. In this approach, if service a wants to talk to service b, it should talk to a load balancer, which will properly route the request. All services are configured with the method of finding the load balancer, and the load balancer is the only thing that needs to know about all of the backends.
 
-  -advertise=<value>
-     Sets the advertise address to use.
+This approach sounds promising, but in reality it doesn’t buy you much. First, how do your services discover the load balancer? Often, the answer is DNS, but now you’ve introduced more problems over the DNS approach than you’ve solved — if your load balancer goes down, you are still faced with all of the problems of service discovery over DNS. Also, a centralized routing layer is a big fat point of failure. If that layer goes down, everything else goes with it. Reconfiguring the load balancer with new backends — a routine operation — becomes fraught with peril.
 
-  -advertise-wan=<value>
-     Sets address to advertise on WAN instead of -advertise address.
+Next, what load balancer do you choose? In a traditional data center, you might be tempted to reach for a couple of hardware devices like an F5. But in the cloud this is not an option. On AWS, you might be tempted to use ELB, but ELBs are terrible at internal load balancing because they only have public IPs. Traffic from one of your servers to another would have to leave your private network and re-enter it again. Besides introducing latency, it wreaks havoc on security groups. If you decide to run your own load balancing layer on EC2 instances, you will end up just pushing the problem of service discovery one layer up. Your load balancer is now no longer a special, hardened device; it’s just another instance, just as prone to failure but just especially critical to your operations.
 
-  -allow-write-http-from=<value>
-     Only allow write endpoint calls from given network. CIDR format,
-     can be specified multiple times.
+## In-app registration/discovery
+Given the problems of DNS and central load balancing, you might decide to just solve the problem with code. Instead of using DNS inside your app to discover a dependency, why not use some different, more specialized mechanism?
 
-  -alt-domain=<value>
-     Alternate domain to use for DNS interface.
+This is a popular approach, which is found in many software stacks. For instance, Airbnb initially used this model with our Twitter commons services. Our java services running on Twitter commons automatically registered themselves with zookeeper, a central point of configuration information which replaces DNS. Apps that wanted to talk to those services would ask Zookeeper for a list of available backends, with periodic refresh or a subscription via zookeeper watches to learn about changes in the list.
 
-  -bind=<value>
-     Sets the bind address for cluster communication.
+However, even this approach suffers from a number of limitations. First, it works best if you are running on a unified software stack. At Twitter, where most services run on the JVM, this is easy. However, at Airbnb, we had to implement our own zookeeper client pool in ruby in order to communicate with ZK-registered services. The final implementation was not well-hardened, and resulted in service outages whenever Zookeeper was down.
 
-  -bootstrap
-     Sets server to bootstrap mode.
-
-  -bootstrap-expect=<value>
-     Sets server to expect bootstrap mode.
-
-  -check_output_max_size=<value>
-     Sets the maximum output size for checks on this agent
-
-  -client=<value>
-     Sets the address to bind for client access. This includes RPC, DNS,
-     HTTP, HTTPS and gRPC (if configured).
-
-  -config-dir=<value>
-     Path to a directory to read configuration files from. This
-     will read every file ending in '.json' as configuration in this
-     directory in alphabetical order. Can be specified multiple times.
-
-  -config-file=<value>
-     Path to a file in JSON or HCL format with a matching file
-     extension. Can be specified multiple times.
-
-  -config-format=<value>
-     Config files are in this format irrespective of their extension.
-     Must be 'hcl' or 'json'
-
-  -data-dir=<value>
-     Path to a data directory to store agent state.
-
-  -dev
-     Starts the agent in development mode.
-
-  -disable-host-node-id
-     Setting this to true will prevent Consul from using information
-     from the host to generate a node ID, and will cause Consul to
-     generate a random node ID instead.
-
-  -disable-keyring-file
-     Disables the backing up of the keyring to a file.
-
-  -dns-port=<value>
-     DNS port to use.
-
-  -domain=<value>
-     Domain to use for DNS interface.
-
-  -enable-local-script-checks
-     Enables health check scripts from configuration file.
-
-  -enable-script-checks
-     Enables health check scripts.
-
-  -encrypt=<value>
-     Provides the gossip encryption key.
-
-  -grpc-port=<value>
-     Sets the gRPC API port to listen on (currently needed for Envoy xDS
-     only).
-
-  -hcl=<value>
-     hcl config fragment. Can be specified multiple times.
-
-  -http-port=<value>
-     Sets the HTTP API port to listen on.
-
-  -join=<value>
-     Address of an agent to join at start time. Can be specified
-     multiple times.
-
-  -join-wan=<value>
-     Address of an agent to join -wan at start time. Can be specified
-     multiple times.
-
-  -log-file=<value>
-     Path to the file the logs get written to
-
-  -log-level=<value>
-     Log level of the agent.
-
-  -log-rotate-bytes=<value>
-     Maximum number of bytes that should be written to a log file
-
-  -log-rotate-duration=<value>
-     Time after which log rotation needs to be performed
-
-  -log-rotate-max-files=<value>
-     Maximum number of log file archives to keep
-
-  -node=<value>
-     Name of this node. Must be unique in the cluster.
-
-  -node-id=<value>
-     A unique ID for this node across space and time. Defaults to a
-     randomly-generated ID that persists in the data-dir.
-
-  -node-meta=<key:value>
-     An arbitrary metadata key/value pair for this node, of the format
-     `key:value`. Can be specified multiple times.
-
-  -non-voting-server
-     (Enterprise-only) This flag is used to make the server not
-     participate in the Raft quorum, and have it only receive the data
-     replication stream. This can be used to add read scalability to
-     a cluster in cases where a high volume of reads to servers are
-     needed.
-
-  -pid-file=<value>
-     Path to file to store agent PID.
-
-  -protocol=<value>
-     Sets the protocol version. Defaults to latest.
-
-  -raft-protocol=<value>
-     Sets the Raft protocol version. Defaults to latest.
-
-  -recursor=<value>
-     Address of an upstream DNS server. Can be specified multiple times.
-
-  -rejoin
-     Ignores a previous leave and attempts to rejoin the cluster.
-
-  -retry-interval=<value>
-     Time to wait between join attempts.
-
-  -retry-interval-wan=<value>
-     Time to wait between join -wan attempts.
-
-  -retry-join=<value>
-     Address of an agent to join at start time with retries enabled. Can
-     be specified multiple times.
-
-  -retry-join-wan=<value>
-     Address of an agent to join -wan at start time with retries
-     enabled. Can be specified multiple times.
-
-  -retry-max=<value>
-     Maximum number of join attempts. Defaults to 0, which will retry
-     indefinitely.
-
-  -retry-max-wan=<value>
-     Maximum number of join -wan attempts. Defaults to 0, which will
-     retry indefinitely.
-
-  -segment=<value>
-     (Enterprise-only) Sets the network segment to join.
-
-  -serf-lan-bind=<value>
-     Address to bind Serf LAN listeners to.
-
-  -serf-lan-port=<value>
-     Sets the Serf LAN port to listen on.
-
-  -serf-wan-bind=<value>
-     Address to bind Serf WAN listeners to.
-
-  -serf-wan-port=<value>
-     Sets the Serf WAN port to listen on.
-
-  -server
-     Switches agent to server mode.
-
-  -server-port=<value>
-     Sets the server port to listen on.
-
-  -syslog
-     Enables logging to syslog.
-
-  -ui
-     Enables the built-in static web UI server.
-
-  -ui-content-path=<value>
-     Sets the external UI path to a string. Defaults to: /ui/
-
-  -ui-dir=<value>
-     Path to directory containing the web UI resources.
-```
+Worse, as we began to develop more services for stacks like Node.js, we foresaw ourselves being forced to implement the same registration and discovery logic in language after language. Sometimes, the lack or immaturity of relevant libraries would further hamper the effort. Finally, sometimes you would like to run apps which you did not write yourself but still have them consume your infrastructure: Nginx, a CI server, rsyslog or other systems software. In these cases, in-app discovery is completely impossible.
+Finally, this approach is very difficult operationally. Debugging an app that registers itself is impossible without stopping the app — we’ve had to resort to using iptables to block the Zookeeper port on machines we were investigating. Special provisions have to be made to examine the list of backends that a particular app instance is currently communicating with. And again, intelligent load balancing is complicated to implement.
