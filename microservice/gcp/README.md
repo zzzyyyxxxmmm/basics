@@ -140,3 +140,22 @@ App Engine Standard applications consist of four components:
 * Service 
 * Version 
 * Instance
+
+# Cloud Function
+There are some terms you need to know before going any further into Cloud Functions:
+* Events
+* Triggers 
+* Functions
+
+Events are a particular action that happens in Google Cloud, such as a file is uploaded to Cloud Storage or a message (called a topic) is written to a Pub/Sub message queue. There are different kinds of actions associated with each of the events. Currently, GCP supports events in five categories:
+
+* Cloud Storage 
+* Cloud 
+* Pub/Sub 
+* HTTP
+* Firebase
+* Stackdriver Logging
+
+Events in Cloud Storage include uploading, deleting, and archiving a file. Cloud Pub/Sub has an event for publishing a message. The HTTP type of event allows developers to invoke a function by making an HTTP request using POST, GET, PUT, DELETE, and OPTIONS calls. Firebase events are actions taken in the Firebase database, such as database triggers, remote configuration triggers, and authentication triggers. You can set up a function to respond to a change in Stackdriver Logging by forwarding log entries to a Pub/Sub topic and triggering a response from there.
+For each of the Cloud Functions–enabled events that can occur, you can define a trigger. A trigger is a way of responding to an event.
+Triggers have an associated function. The function is passed arguments with data about the event. The function executes in response to the event.

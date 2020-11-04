@@ -81,6 +81,12 @@
 1. Zookeeper
 2. GCP
 
+### Nov, 2020
+1. Service Discovery
+2. GCP
+3. 阅读一些blog
+4. 周末学习OS >>>>
+
 
 
 ### 待定
