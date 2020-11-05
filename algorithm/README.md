@@ -93,6 +93,8 @@ for(int i=0;i<n;i++){
 n-m+f= 2.
 2. Let G be a plane graph with n vertices, m edges, ffaces and k components. Then n - m + f = k + 1.
 
+# LCA
+[无任何算法的LCA](https://leetcode.com/problems/lowest-common-ancestor-of-a-binary-tree-ii/
 ## 二分图
 染色法判断, KM求最大匹配.
 
