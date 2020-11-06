@@ -16,6 +16,13 @@
 # 递推
 做递推不想递推表达式, 被自己蠢哭
 
+# 数据结构
+```c++
+priority_queue<int> top是最大的
+priority_queue<int, vector<int>, greater<int> > q; top是最小的
+
+```
+
 # 背包问题
 
 ### 01背包
