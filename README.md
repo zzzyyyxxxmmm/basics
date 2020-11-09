@@ -85,7 +85,7 @@
 1. Service Discovery
 2. GCP
 3. 阅读一些blog
-4. 周末学习OS >>>>
+4. 周末学习OS, 巩固多线程, 深入语言底层
 
 
 

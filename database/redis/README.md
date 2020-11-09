@@ -114,7 +114,8 @@ Redis 是一个使用 C 语言写成的，开源的 key-value 数据库。。和
 | ZINTERSTORE      | ZINTERSTORE dest-key key-count key [key ...] [WEIGHTS weight[weight...]][AGGREGATESUM|MIN|MAX]—Performs a SET-like intersection of the provided ZSETs |
 | ZUNIONSTORE      | ZUNIONSTORE dest-key key-count key [key ...] [WEIGHTS weight[weight...]][AGGREGATESUM|MIN|MAX]—Performs a SET-like union of the provided ZSETs        |
 
-
+# Redis数据迁移
+https://juejin.im/post/6844904127093440520
 
 # 使用redis实现分布式锁
 
