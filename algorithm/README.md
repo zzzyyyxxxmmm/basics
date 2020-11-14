@@ -23,6 +23,16 @@ priority_queue<int, vector<int>, greater<int> > q; top是最小的
 
 ```
 
+### deque
+[leetcode 239. Sliding Window Maximum](https://leetcode.com/problems/sliding-window-maximum/)
+
+### low_bound and upper_bound
+[leetcode 456. 132 Pattern](https://leetcode.com/problems/132-pattern/)
+找到第一个大于等于 和 第一个大于
+
+如果找到第一个小于等于的, 可以用upper_bound-1
+小于则是low_bound-1
+
 # 背包问题
 
 ### 01背包
@@ -125,15 +135,6 @@ n-m+f= 2.
 
 # STL
 
-### deque
-[leetcode 239. Sliding Window Maximum](https://leetcode.com/problems/sliding-window-maximum/)
-
-### low_bound and upper_bound
-[leetcode 456. 132 Pattern](https://leetcode.com/problems/132-pattern/)
-找到第一个大于等于 和 第一个大于
-
-如果找到第一个小于等于的, 可以用upper_bound-1
-小于则是low_bound-1
 
 # 我犯傻过的题
 1348. Tweet Counts Per Frequency 互相思考

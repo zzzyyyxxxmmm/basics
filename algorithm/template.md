@@ -1,3 +1,26 @@
+# BIT
+```c++
+vector<int> C;
+int lowbit(int x){
+    return x&(-x);
+}
+long long get(int x){
+    long long ans=0;
+    while(x>0){
+        ans+=C[x];
+        ans%=MOD;
+        x-=lowbit(x);
+    }
+    return ans;
+}
+
+void add(int x, int d){
+    while(x<=100000){
+        C[x]+=d;
+        x+=lowbit(x);
+    }
+}
+```
 # RMQ
 ```c++
 vector<vector<int> > d;
