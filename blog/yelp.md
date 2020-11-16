@@ -16,3 +16,8 @@ This post is part of a series covering Yelp's real-time streaming data infrastru
 通信format选择json, 会导致一旦json改变, downstream的服务全部会被影响
 
 Apache Avro, a data serialization system, has some really nice properties, and is ultimately what we selected. Avro is a space-efficient binary serialization format that integrates nicely with dynamic languages like Python, without requiring code generation. The killer feature of Avro, for our system, is that it supports schema evolution. That means that a reader application and a writer application can use different schema versions to consume and produce data, as long as the two are compatible. This decouples consumers and producers nicely - producers can iterate on their data format, without requiring changes in consumer applications.
+
+他们提供了一个Schematizer供用户注册schema
+
+### Streaming MySQL tables in real-time to Kafka
+
