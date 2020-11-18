@@ -177,7 +177,7 @@ A dirty read (aka uncommitted dependency) occurs when a transaction is allowed t
 A non-repeatable read occurs, when during the course of a transaction, a row is retrieved twice and the values within the row differ between reads.
 　　　　
 * Phantom reads
-A phantom read occurs when, in the course of a transaction, new rows are added or removed by another transaction to the records being read.
+A phantom read occurs when, in the course of a transaction, new rows are removed by another transaction to the records being read.
  
 现在来看看MySQL数据库为我们提供的四种隔离级别：
 1. Serializable (串行化)：可避免脏读、不可重复读、幻读的发生。 使用range lock
