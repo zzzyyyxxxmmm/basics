@@ -575,6 +575,11 @@ first pass to leaf are wasteful.
 
 MVCC是通过保存数据的多个版本来实现并发控制，当需要更新某条数据时，实现了MVCC的存储系统不会立即用新数据覆盖原始数据，而是创建该条记录的一个新的版本。对于多数数据库系统，存储会分为Data Part和Undo Log，Data Part用来存储事务已提交的数据，而Undo Log用来存储旧版本的数据。多版本的存在允许了读和写的分离，读操作是需要读取某个版本之前的数据即可，和写操作不冲突，大大提高了性能。
 
+[innoDB在RR下解决了幻读?]https://juejin.im/post/6844903799534911496
+[Innodb中的事务隔离级别和锁的关系](https://tech.meituan.com/2014/08/20/innodb-lock.html)
+
+innoDB主要是通过MVCC进行隔离的, 在RR下会用Next-Key Lock解决幻读, 在S下会直接写用排他锁, 读用共享锁, 在Next-key Lock里
+
 # sort and group by
 
 ## EXTERNAL MERGE SORT

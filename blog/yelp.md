@@ -25,3 +25,5 @@ In order for replication to work, events on the master database cluster are writ
 
 那么这里是如何保证consistency的呢
 
+### [Innodb中的事务隔离级别和锁的关系](https://tech.meituan.com/2014/08/20/innodb-lock.html)
+比较经典, 值得一读
