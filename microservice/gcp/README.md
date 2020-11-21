@@ -159,3 +159,80 @@ Events are a particular action that happens in Google Cloud, such as a file is u
 Events in Cloud Storage include uploading, deleting, and archiving a file. Cloud Pub/Sub has an event for publishing a message. The HTTP type of event allows developers to invoke a function by making an HTTP request using POST, GET, PUT, DELETE, and OPTIONS calls. Firebase events are actions taken in the Firebase database, such as database triggers, remote configuration triggers, and authentication triggers. You can set up a function to respond to a change in Stackdriver Logging by forwarding log entries to a Pub/Sub topic and triggering a response from there.
 For each of the Cloud Functions–enabled events that can occur, you can define a trigger. A trigger is a way of responding to an event.
 Triggers have an associated function. The function is passed arguments with data about the event. The function executes in response to the event.
+
+# 12 Deploying storage in google cloud platform
+
+### mysql
+```gcloud sql connect dsakjdsalk -user=root```
+
+1. create backup ```gcloud sql backup create --async --instance```
+2. auto backup ```gcloud sql instances patch sdisao -backup-start-time 12:30```
+
+### datastore
+GQL
+### big query
+--dry run allow to caculate the price
+
+```bq --location=us show -j dsadjsakldjsa```
+
+### cloud spanner
+
+### bigtable
+nosql
+
+1. gcloud components install cbt
+2. cbt createtable dasd
+
+### dataproc
+Spart PySpart SparkR
+
+```gloud dataproc jobs submit spark --clusterdsakdj --jar ```
+
+# 13 Loading Data into Storage
+
+### import and export: file
+1. create bucket
+```
+gsutil mb gs://
+```
+
+2. upload file and move
+```
+gsutil cp /home/dsad gs://dsadsa
+gsutil mv /home/dsad gs://dsadsa
+```
+
+### import and export: cloud SQL
+Export to csv and sql only
+
+1. check permission to write to bucket```gcloud sql instances describe ace-exam-mysql1```
+2. assign permission ```gsutil acl ch -u service_accout address:W gs://bucketname
+3. gcloud sql export sql|csv instance_name gs://dsadsa --database=database_name
+
+### Cloud Datastore command only
+```gcloud datastore export --namespace gs://```
+
+### import and export: bigquery
+export format: csv avro json
+
+```bq extract --destinatioon_fornat csv --compressioon GZIP 'dsadsa` gs://dsadsadsa ```
+
+import format: csv json avro parquet orc cloud datastore backup
+
+```bq load --autodetect --source_format=csv mysdask.table gs://```
+autodetect is used to detect the schema
+
+### cloud spanner
+dataflow
+
+### big table
+no console to do that, you have two options: java or HBase interface
+
+### cloud dataproc
+1. gcloud components install beta
+2. gcloud beta dataproc clusters export asdsadak --destination=gs://
+3. gcloud beta dataproc clusters import 
+
+### stream data to cloud pub/sub
+1. create topics ```gloud pubsub topics create```
+2. sub ```gcloud pubsub subscroptions create --topic ```
