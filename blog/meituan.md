@@ -2,6 +2,8 @@
 ### [MySQL索引原理及慢查询优化](https://tech.meituan.com/2014/06/30/mysql-index.html)
 
 
+# 正文
+
 ### 基于Flume的美团日志收集系统(一)架构和设计(https://tech.meituan.com/2013/12/09/meituan-flume-log-system-architecture-and-design.html)
 
 系统基于flume开发, 直接看架构图就明白了, 创新点在于DualChannel的使用, 根据流量大小可以使用不同的channel
@@ -44,4 +46,8 @@ Quartz的集群部署方案在架构上是分布式的，没有负责集中管�
 
 The SELECT FOR UPDATE statement is used to order transactions by controlling concurrent access to one or more rows of a table. It works by locking the rows returned by a selection query, such that other transactions trying to access those rows are forced to wait for the transaction that locked the rows to finish.
 
-[Presto实现原理和美团的使用实践](https://tech.meituan.com/2014/06/16/presto.html)
+### [Innodb中的事务隔离级别和锁的关系](https://tech.meituan.com/2014/08/20/innodb-lock.html)
+比较经典, 值得一读
+
+### [Presto实现原理和美团的使用实践](https://tech.meituan.com/2014/06/16/presto.html)
+介绍了presto查询原理, 暂时看不懂

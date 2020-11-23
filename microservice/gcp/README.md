@@ -180,6 +180,32 @@ big query: create data set before, it is designed for data warehousing and analy
 ### noSQL Datastore, Cloud firestore(for mobile), BigTable
 Bigtable columms多, Bigtable is designed for petabyte-scale databases. Both operational databases, like storing IoT data, and analytic processing, like data science applications, can effectively use Bigtable. This database is designed to provide consistent, low-millisecond latency. Bigtable runs in clusters and scales horizontally.
 
+# 11 Computing with Cloud Functions
+Events: Cloud Storage, Cloud Pub/Sub, HTTP, Firebase, Stackdriver Logging
+
+By default Cloud Functions can run for up to 1 minute before timing out, up  to 9min
+
+Google currently supports three runtime environments:
+
+* Python 3
+* Node.js 6
+* Node.js 8
+
+### Deploying a Cloud Function for Cloud Storage Events Using gcloud Commands
+
+* google.storage.object.finalize
+* google.storage.object.delete
+* google.storage.object.archive
+* google.storage.object.metadataUpdate
+
+```
+gcloud functions deploy cloud_storage_function_test \
+--runtime python37 \
+--trigger-resource gcp-ace-exam-test-bucket \
+--trigger-event google.storage.object.finalize
+```
+
+
 # 12 Deploying storage in google cloud platform
 
 ### mysql

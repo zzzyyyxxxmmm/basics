@@ -25,5 +25,10 @@ In order for replication to work, events on the master database cluster are writ
 
 那么这里是如何保证consistency的呢
 
-### [Innodb中的事务隔离级别和锁的关系](https://tech.meituan.com/2014/08/20/innodb-lock.html)
-比较经典, 值得一读
+### [More Than Just a Schema Store](https://engineeringblog.yelp.com/2016/08/more-than-just-a-schema-store.html)
+public到mq前, 先去Schema store注册, 基于avro, 然后才允许publish信息, 利用avro兼容特性, 可以允许field被修改, 如果不兼容, 则创建新的topic.
+
+将topic隐藏, consumer and producer don't need to be aware of which topic to pub/sub, Schema can handle it.
+
+Right now, Yelp’s main database data flows through the Data Pipeline via the MySQLStreamer. Let’s say that at some point we decide to add a column with a default value to the Business table. The MySQLStreamer will re-register the updated Business table schema with the Schematizer. Since such a schema change is a compatible change based on the resolution rules, the Schematizer will create a new Avro schema and assign the latest existing topic of the same namespace and source to it. Later, if someone decides to change one column type of the Business table from int to varchar, this will cause an incompatible schema change, and the Schematizer will create a new topic for the updated Business table schema.
+
