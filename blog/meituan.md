@@ -1,3 +1,7 @@
+# 以后再看
+### [MySQL索引原理及慢查询优化](https://tech.meituan.com/2014/06/30/mysql-index.html)
+
+
 ### 基于Flume的美团日志收集系统(一)架构和设计(https://tech.meituan.com/2013/12/09/meituan-flume-log-system-architecture-and-design.html)
 
 系统基于flume开发, 直接看架构图就明白了, 创新点在于DualChannel的使用, 根据流量大小可以使用不同的channel
@@ -39,3 +43,5 @@ Quartz的集群部署方案在架构上是分布式的，没有负责集中管�
 每当要进行与某种业务相关的数据库操作时，先去QRTZ_LOCKS表中查询操作相关的业务对象所需要的锁，在select语句之后加for update来实现. 当一个线程使用上述的SQL对表中的数据执行查询操作时，若查询结果中包含相关的行，数据库就对该行进行ROW LOCK；若此时，另外一个线程使用相同的SQL对表的数据进行查询，由于查询出的数据行已经被数据库锁住了，此时这个线程就只能等待，直到拥有该行锁的线程完成了相关的业务操作，执行了commit动作后，数据库才会释放了相关行的锁，这个线程才能继续执行。
 
 The SELECT FOR UPDATE statement is used to order transactions by controlling concurrent access to one or more rows of a table. It works by locking the rows returned by a selection query, such that other transactions trying to access those rows are forced to wait for the transaction that locked the rows to finish.
+
+[Presto实现原理和美团的使用实践](https://tech.meituan.com/2014/06/16/presto.html)

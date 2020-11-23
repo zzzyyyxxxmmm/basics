@@ -87,7 +87,11 @@
 3. 阅读一些blog
 4. 周末学习OS, 巩固多线程, 深入语言底层
 
+### Dec, 2020
+1. GCP证书
 
+### Jan, 2021
+1. 希望今年可以在知名开源软件上做出贡献
 
 ### 待定
 1. O'Reilly.High.Performance.MySQL.3rd.Edition.Mar.2012

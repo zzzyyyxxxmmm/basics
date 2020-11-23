@@ -160,6 +160,26 @@ Events in Cloud Storage include uploading, deleting, and archiving a file. Cloud
 For each of the Cloud Functions–enabled events that can occur, you can define a trigger. A trigger is a way of responding to an event.
 Triggers have an associated function. The function is passed arguments with data about the event. The function executes in response to the event.
 
+# 11 Planning Storage in the Cloud
+
+### persistent disk
+disk: standard & SSD persistent disk
+
+#### object storage
+store large volumes of data, files are stored in the system as atomic units, you can't read part of them
+
+nearline and coldline is used to storefiles which are access less than once per month and year
+
+version can be used to retrive history datas, 
+
+regional and multi-reginol can be configured when it create, 不能中途修改
+
+### relational database cloud SQL, Cloud Spanner, Big Query
+big query: create data set before, it is designed for data warehousing and analytics,
+
+### noSQL Datastore, Cloud firestore(for mobile), BigTable
+Bigtable columms多, Bigtable is designed for petabyte-scale databases. Both operational databases, like storing IoT data, and analytic processing, like data science applications, can effectively use Bigtable. This database is designed to provide consistent, low-millisecond latency. Bigtable runs in clusters and scales horizontally.
+
 # 12 Deploying storage in google cloud platform
 
 ### mysql
@@ -178,7 +198,7 @@ GQL
 ### cloud spanner
 
 ### bigtable
-nosql
+no sql
 
 1. gcloud components install cbt
 2. cbt createtable dasd
