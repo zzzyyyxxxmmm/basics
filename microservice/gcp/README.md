@@ -160,27 +160,61 @@ Events in Cloud Storage include uploading, deleting, and archiving a file. Cloud
 For each of the Cloud Functions–enabled events that can occur, you can define a trigger. A trigger is a way of responding to an event.
 Triggers have an associated function. The function is passed arguments with data about the event. The function executes in response to the event.
 
-# 11 Planning Storage in the Cloud
 
-### persistent disk
-disk: standard & SSD persistent disk
 
-#### object storage
-store large volumes of data, files are stored in the system as atomic units, you can't read part of them
+# 6 Managing Virtual Machines
+gcloud compute instances  start stop delete list
 
-nearline and coldline is used to storefiles which are access less than once per month and year
+Instance groups are sets of VMs that are managed as a single entity. Any gcloud or console command applied to an instance group is applied to all members of the instance group. Google provides two types of instance groups: managed and unmanaged.
 
-version can be used to retrive history datas, 
+Managed groups consist of groups of identical VMs. They are created using an instance template, which is a specification of a VM configuration, including machine type, boot disk image, zone, labels, and other properties of an instance. Managed instance groups can automatically scale the number of instances in a group and be used with load balancing to distribute workloads across the instance group. If an instance in a group crashes, it will be recreated automatically. Managed groups are the preferred type of instance group.
 
-regional and multi-reginol can be configured when it create, 不能中途修改
+Unmanaged groups should be used only when you need to work with different configurations within different VMs within the group.
 
-### relational database cloud SQL, Cloud Spanner, Big Query
-big query: create data set before, it is designed for data warehousing and analytics,
+gcloud compute instance-templates create INSTANCE
 
-### noSQL Datastore, Cloud firestore(for mobile), BigTable
-Bigtable columms多, Bigtable is designed for petabyte-scale databases. Both operational databases, like storing IoT data, and analytic processing, like data science applications, can effectively use Bigtable. This database is designed to provide consistent, low-millisecond latency. Bigtable runs in clusters and scales horizontally.
+GPU gpu library installed before, instance must be stopped while attaching GPU
 
-# 11 Computing with Cloud Functions
+# 7 Computing with Kubernetes 
+gcloud container clusters create ch07-cluster --num-nodes=3 --region=us-central1
+
+# 8 Managing Kubernetes Clusters
+gcloud container clusters list
+
+gcloud container clusters describe --zone us-central1-a standard-cluster-1
+
+To view the status of clusters from the command line, use the gcloud container commands, but to get information about Kubernetes managed objects, like nodes, pods, and containers, use the kubectl command.
+
+# 9 Computing with APP engine
+
+App Engine Standard applications consist of four components:
+
+* Application
+* Service
+* Version
+* Instance
+
+App Engine provides three ways to split traffic: by IP address, by HTTP cookie, and by random selection.
+
+The command to split traffic is gcloud app services set-traffic. Here’s an example:
+
+gcloud app services set-traffic serv1 --splits v1=.4,v2=.6
+
+This will split traffic with 40 percent going to version 1 of the service named serv1 and 60 percent going to version 2. If no service name is specified, then all services are split.
+
+The gcloud app services set-traffic command takes the following parameters:
+
+■ --migrate indicates that App Engine should migrate traffic from the previous version to the new version.
+
+■ --split-by specifies how to split traffic using either IP or cookies. Possible values are ip, cookie, and random.
+
+
+A project can support only one App Engine app, so option A is the right answer.
+
+App Engine applications are accessible from URLs that consist of the project name fol- lowed by appspot.com
+
+
+# 10 Computing with Cloud Functions
 Events: Cloud Storage, Cloud Pub/Sub, HTTP, Firebase, Stackdriver Logging
 
 By default Cloud Functions can run for up to 1 minute before timing out, up  to 9min
@@ -204,6 +238,28 @@ gcloud functions deploy cloud_storage_function_test \
 --trigger-resource gcp-ace-exam-test-bucket \
 --trigger-event google.storage.object.finalize
 ```
+
+
+# 11 Planning Storage in the Cloud
+
+### persistent disk
+disk: standard & SSD persistent disk
+
+#### object storage
+store large volumes of data, files are stored in the system as atomic units, you can't read part of them
+
+nearline and coldline is used to storefiles which are access less than once per month and year
+
+version can be used to retrive history datas, 
+
+regional and multi-reginol can be configured when it create, 不能中途修改
+
+### relational database cloud SQL, Cloud Spanner, Big Query
+big query: create data set before, it is designed for data warehousing and analytics,
+
+### noSQL Datastore, Cloud firestore(for mobile), BigTable
+Bigtable columms多, Bigtable is designed for petabyte-scale databases. Both operational databases, like storing IoT data, and analytic processing, like data science applications, can effectively use Bigtable. This database is designed to provide consistent, low-millisecond latency. Bigtable runs in clusters and scales horizontally.
+
 
 
 # 12 Deploying storage in google cloud platform
