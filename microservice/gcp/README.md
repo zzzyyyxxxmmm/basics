@@ -1,5 +1,7 @@
 # C1
 
+organization -> folder -> project
+
 ## Compute Resources
 
 1. Virtual Machines
@@ -160,7 +162,40 @@ Events in Cloud Storage include uploading, deleting, and archiving a file. Cloud
 For each of the Cloud Functions–enabled events that can occur, you can define a trigger. A trigger is a way of responding to an event.
 Triggers have an associated function. The function is passed arguments with data about the event. The function executes in response to the event.
 
+# 4 Introduction to Computing in Gooogle Cloud
+App Engine is a PaaS compute service that provides a managed platform for running applications. When you use App Engine, your focus is on your application and not on the VMs that run the application. Instead of configuring VMs, you specify some basic resource requirements along with your application code, and Google will manage the resources needed to run the code. This means that App Engine users have less to manage, but they also have less control over the compute resources that are used to execute the application.
 
+Like VM instances, applications in App Engine are created within a project.
+
+
+The standard environment is the original App Engine environment. It consists of a preconfigured, language-specific runtime. There are currently two generations of the standard environment. The second generation improves on the performance of the first generation and has fewer limitations.
+
+Currently, App Engine standard environment users can choose from the following supported languages:
+First Generation
+
+* Python 2.7
+* PHP 5.5
+* Go 1.9
+
+Second Generation
+
+* Java 8
+* Python 3.7 (beta)
+* PHP 7.2 (beta)
+* Node.js 8 (beta) and 10 (beta)
+* Go 1.11 (beta)
+
+App Engine Flexible Environment: Manage container, more like kubernetes
+
+The only states a Kubernetes deployment can be in are progressing, completed, and failed.
+
+# 5 Computing with Compute Engine Virtual Machines
+set up billing -> create proect -> create instances
+
+gcloud compute instances create --boot-disk-type
+gcloud compute project_info describe
+
+The two operations you can specify when using the book disk configuration are adding a new disk and attaching an existing disk,
 
 # 6 Managing Virtual Machines
 gcloud compute instances  start stop delete list
@@ -209,9 +244,9 @@ The gcloud app services set-traffic command takes the following parameters:
 ■ --split-by specifies how to split traffic using either IP or cookies. Possible values are ip, cookie, and random.
 
 
-A project can support only one App Engine app, so option A is the right answer.
+A project can support only one App Engine app
 
-App Engine applications are accessible from URLs that consist of the project name fol- lowed by appspot.com
+App Engine applications are accessible from URLs that consist of the project name followed by appspot.com
 
 
 # 10 Computing with Cloud Functions
