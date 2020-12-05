@@ -1,3 +1,10 @@
+# interview
+1. 说出OSI七层模型, 这些层上有哪些协议, socket作用在哪一层
+2. http和https端口号, 说出一个其他端口号
+3. 链路层的最小单位是什么, 大小, 通过什么方式传输
+4. 介绍一下ARP协议, 工作过程
+5. 说下IPv4的几个
+
 # OSI
 [seven layers](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/OSI.png)
 值得一提的是, socket是作用在application layer和transportation layer中间的一个抽象层
@@ -9,25 +16,24 @@ Sessions represent ongoing interactions between applications (e.g., when “cook
 ### presentation layer
 Above the session layer we find the presentation layer, which is responsible for format conversions and standard encodings for information. As we shall see, the Internet protocols do not include a formal session or presentation protocol layer, so these functions are implemented by applications if needed.
 
-### Multiplexing, Demultiplexing, and Encapsulation in Layered Implementations
-Multiplexing can occur at different layers, and at each layer a different sort of identifier is used for determining which protocol or stream of information belongs together. For example, at the link layer, most link technologies (such as Ethernet and Wi-Fi) include a protocol identifier field value in each packet to indicate which protocol is being carried in the link-layer frame (IP is one such protocol). When an object (packet, message, etc.), called a protocol data unit (PDU), at one layer is carried by a lower layer, it is said to be encapsulated (as opaque data) by the next layer down. Thus, multiple objects at layer N can be multiplexed together using encapsulation in layer N - 1.
-
-<div align=center>
-<img src="https://github.com/zzzyyyxxxmmm/basics/blob/master/image/network_layer.png" width="700" height="500">
-</div>
-
-Although we show only two hosts communicating, the link- and physical- layer networks (labeled as D and G) might have multiple hosts attached. If so, then communication is possible between any pair of systems that implement the appropriate higher-layer protocols. In Figure 1-4 we can differentiate between an end system (the two hosts on either side) and an intermediate system (the router in the middle) for a particular protocol suite. Layers above the network layer use end- to-end protocols. In our picture these layers are needed only on the end systems. The network layer, however, provides a hop-by-hop protocol and is used on the two end systems and every intermediate system. The switch or bridge is not ordinarily considered an intermediate system because it is not addressed using the internet- working protocol’s addressing format, and it operates in a fashion that is largely transparent to the network-layer protocol. From the point of view of the routers and end systems, the switch or bridge is essentially invisible.
-
-每一层的传输都有不同的抽象方法
-
 ### Port Number
-Standard port numbers are assigned by the Internet Assigned Numbers Authority (IANA). The set of numbers is divided into special ranges, including the well-known port numbers (0–1023), the registered port numbers (1024–49151), and the dynamic/private port numbers (49152–65535). Traditionally, servers wishing to bind to (i.e., offer service on) a well-known port require special privileges such as administrator or “root” access.
+* well-known port numbers (0–1023)
+* the registered port numbers (1024–49151)
+* the dynamic/private port numbers (49152–65535). 
 
-The range of well-known ports is used for identifying many well-known ser- vices such as the Secure Shell Protocol (SSH, port 22), FTP (ports 20 and 21), Telnet remote terminal protocol (port 23), e-mail/Simple Mail Transfer Protocol (SMTP, port 25), Domain Name System (DNS, port 53), the Hypertext Transfer Protocol or Web (HTTP and HTTPS, ports 80 and 443), Interactive Mail Access Protocol (IMAP and IMAPS, ports 143 and 993), Simple Network Management Protocol (SNMP, ports 161 and 162), Lightweight Directory Access Protocol (LDAP, port 389), and several others. Protocols with multiple ports (e.g., HTTP and HTTPS) often have different port numbers depending on whether Transport Layer Security (TLS) is being used with the base application-layer protocol (see Chapter 18).
-
+* **SSH, port 22**
+* FTP (ports 20 and 21) 
+* Telnet remote terminal protocol (port 23), 
+* e-mail/Simple Mail Transfer Protocol (SMTP, port 25)
+* Domain Name System (DNS, port 53), 
+* the Hypertext Transfer Protocol or Web (HTTP and HTTPS, ports 80 and 443), 
+* Interactive Mail Access Protocol (IMAP and IMAPS, ports 143 and 993), 
+* Simple Network Management Protocol (SNMP, ports 161 and 162), 
+* Lightweight Directory Access Protocol (LDAP, port 389)
 # Link Layer
 
 ### Frame
+链路层最小单位叫帧, 大小范围在64byte-2000byte
 This basic frame format includes 48-bit (6-byte) Destination (DST) and Source (SRC) Address fields. These addresses are sometimes known by other names such as “MAC address,” “link-layer address,” “802 address,” “hardware address,” or “physical address.” The destination address in an Ethernet frame is also allowed to address more than one station (called “broadcast” or “multicast”; . The broadcast capability is used by the ARP protocol and multicast capability is used by the ICMPv6 protocol to convert between network-layer and link-layer addresses.
 
 Following the source address is a Type field that doubles as a Length field. Ordi- narily, it identifies the type of data that follows the header. Popular values used with TCP/IP networks include IPv4 (0x0800), IPv6 (0x86DD), and ARP (0x0806).  The size of a basic Ethernet frame is **1518** bytes, but the more recent standard extended this size to 2000 bytes. The minimum is 64 bytes, requiring a minimum data area (payload) length of 48 bytes (no tags).  In order to send a larger message, multiple frames are required
@@ -36,22 +42,10 @@ Following the source address is a Type field that doubles as a Length field. Ord
 A basic shared Ethernet network consists of one or more stations (e.g., workstations, supercomputers) attached to a shared cable segment. Link-layer PDUs (frames) can be sent from one station to one or more others when the medium is determined to be free. If multiple stations send at the same time, possibly because of signal propagation delays, a collision occurs. Collisions can be detected, and they cause sending stations to wait a random amount of time before retrying. This common scheme is called carrier sense, multiple access with collision detection.
 
 # ARP
-Address resolution is the process of discovering the mapping from one address to another. For the TCP/IP protocol suite using IPv4, this is accomplished by run- ning the ARP. ARP is a generic protocol, in the sense that it is designed to sup- port mapping between a wide variety of address types. In practice, however, it is almost always used to map between 32-bit IPv4 addresses and Ethernet-style 48-bit MAC addresses. For this chapter, we shall use the terms Ethernet address and MAC address interchangeably.
-
-ARP provides a dynamic mapping from a network-layer address to a corre- sponding hardware address. We use the term dynamic because it happens auto- matically and adapts to changes over time without requiring reconfiguration by a system administrator. That is, if a host were to have its network interface card changed, thereby changing its hardware address (but retaining its assigned IP address), ARP would continue to operate properly after some delay. ARP operation is normally not a concern of either the application user or the system administrator.
+ARP是用来做地址转换的, 但大多数情况下用于IP到MAC的转化, ARP的配置是自动的, 如果物理地址变了, 但IP地址没变, ARP在一定延迟后会恢复正常
 
 ## Example
-In this section, we enumerate the steps taken in direct delivery, focusing on the operation of ARP. Direct delivery takes place when an IP datagram is sent to an IP address with the same IP prefix as the sender’s. It plays an important role in the general method of forwarding of IP datagrams (see Chapter 5). The following list captures the basic operation of direct delivery with IPv4, using the previous example:
-
-1. The application, in this case a Web browser, calls a special function to parse the URL to see if it contains a host name. Here it does not, so the application uses the 32-bit IPv4 address 10.0.0.1.
-2. The application asks the TCP protocol to establish a connection with 10.0.0.1.
-3. TCP attempts to send a connection request segment to the remote host by sending an IPv4 datagram to 10.0.0.1.
-4. Because we are assuming that the address 10.0.0.1 is using the same net- work prefix as our sending host, the datagram can be sent directly to that address without going through a router.
-5. Assuming that Ethernet-compatible addressing is being used on the IPv4 subnet, the sending host must convert the 32-bit IPv4 destination address into a 48-bit Ethernet-style address. Using the terminology from [RFC0826], a translation is required from the logical Internet address to its correspond- ing physical hardware address. This is the function of ARP. ARP works in its normal form only for broadcast networks, where the link layer is able to deliver a single message to all attached network devices. This is an important requirement imposed by the operation of ARP. On non-broadcast networks (sometimes called NBMA for non-broadcast multiple access), other, more complex mapping protocols may be required [RFC2332].
-6. ARP sends an Ethernet frame called an ARP request to every host on the shared link-layer segment. This is called a link-layer broadcast. We show the broadcast domain in Figure 4-1 with a crosshatched box. The ARP request contains the IPv4 address of the destination host (10.0.0.1) and seeks an answer to the following question: “If you are configured with IPv4 address 10.0.0.1 as one of your own, please respond to me with your MAC address.”
-7. With ARP, all systems in the same broadcast domain receive ARP requests. This includes systems that may not be running the IPv4 or IPv6 protocols at all but does not include systems on different VLANs, if they are supported (see Chapter 3 for details on VLANs). Provided there exists an attached sys- tem using the IPv4 address specified in the request, it alone responds with an ARP reply. This reply contains the IPv4 address (for matching with the request) and the corresponding MAC address. The reply does not ordinar- ily use broadcast but is directed only to the sender. The host receiving the ARP request also learns of the sender’s IPv4-to-MAC address mapping at this time and records it in memory for later use.
-8. The ARP reply is then received by the original sender of the request, and the datagram that forced the ARP request/reply to be exchanged can now be sent.
-9. The sender now sends the datagram directly to the destination host by encapsulating it in an Ethernet frame and using the Ethernet address learned by the ARP exchange as the destination Ethernet address. Because the Ethernet address refers only to the correct destination host, no other hosts or routers receive the datagram. Thus, when only direct delivery is used, no router is required.
+主机发送信息时将包含目标IP地址的ARP请求广播到局域网络上的所有主机，并接收返回消息，以此确定目标的物理地址；收到返回消息后将该IP地址和物理地址存入本机ARP缓存中并保留一定时间，下次请求时直接查询ARP缓存以节约资源。地址解析协议是建立在网络中各个主机互相信任的基础上的，局域网络上的主机可以自主发送ARP应答消息，其他主机收到应答报文时不会检测该报文的真实性就会将其记入本机ARP缓存；由此攻击者就可以向某一主机发送伪ARP应答报文，使其发送的信息无法到达预期的主机或到达错误的主机，这就构成了一个ARP欺骗。
 
 # IPv4
 [image](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/Ipv4.png)
