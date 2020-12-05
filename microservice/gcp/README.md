@@ -162,6 +162,17 @@ Events in Cloud Storage include uploading, deleting, and archiving a file. Cloud
 For each of the Cloud Functions–enabled events that can occur, you can define a trigger. A trigger is a way of responding to an event.
 Triggers have an associated function. The function is passed arguments with data about the event. The function executes in response to the event.
 
+# 3 Projects, Service Accouts, and Billing
+* Organization 
+* Folder
+* Project
+
+For example, you may have an application that needs to access a database, but you do not want to allow users of the application to access the database directly. Instead, all user requests to the database should go through the application. A service account can be created that has access to the database. That service account can be assigned to the application so the application can execute queries on behalf of users without having to grant database access to those users.
+
+Large enterprises should use invoicing when incurring large charges, which makes option D the right answer. A self-service account is appropriate only for amounts that are within the credit limits of credit cards. 
+
+When a service account is created, Google generates encrypted keys for authentication,
+
 # 4 Introduction to Computing in Gooogle Cloud
 App Engine is a PaaS compute service that provides a managed platform for running applications. When you use App Engine, your focus is on your application and not on the VMs that run the application. Instead of configuring VMs, you specify some basic resource requirements along with your application code, and Google will manage the resources needed to run the code. This means that App Engine users have less to manage, but they also have less control over the compute resources that are used to execute the application.
 
@@ -292,6 +303,7 @@ regional and multi-reginol can be configured when it create, 不能中途修改
 ### relational database cloud SQL, Cloud Spanner, Big Query
 big query: create data set before, it is designed for data warehousing and analytics,
 
+Cloud Spanner is Google’s globally distributed relational database that combines the key benefits of relational databases, such as strong consistency and transactions, with the ability to scale horizontally like a NoSQL database. Spanner is a high availability database with a 99.999 percent availability Service Level Agreements (SLA), making it a good option for enterprise applications that demand scalable, highly available relational database services.
 ### noSQL Datastore, Cloud firestore(for mobile), BigTable
 Bigtable columms多, Bigtable is designed for petabyte-scale databases. Both operational databases, like storing IoT data, and analytic processing, like data science applications, can effectively use Bigtable. This database is designed to provide consistent, low-millisecond latency. Bigtable runs in clusters and scales horizontally.
 

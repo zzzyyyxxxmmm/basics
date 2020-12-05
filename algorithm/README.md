@@ -8,6 +8,15 @@
 
 ## [leetcode 84 monotonous stack](https://leetcode.com/problems/largest-rectangle-in-histogram/)
 
+## [LRU Cache] (https://leetcode.com/problems/lru-cache/)
+
+## [leetcode 239. Sliding Window Maximum deque](https://leetcode.com/problems/sliding-window-maximum/)
+
+## low_bound and upper_bound [leetcode 456. 132 Pattern](https://leetcode.com/problems/132-pattern/)
+找到第一个大于等于 和 第一个大于
+
+如果找到第一个小于等于的, 可以用upper_bound-1
+小于则是low_bound-1
 # 基础
 # 构造问题
 2. 思考如何自己check
@@ -22,17 +31,6 @@ priority_queue<int> top是最大的
 priority_queue<int, vector<int>, greater<int> > q; top是最小的
 
 ```
-
-### deque
-[leetcode 239. Sliding Window Maximum](https://leetcode.com/problems/sliding-window-maximum/)
-
-### low_bound and upper_bound
-[leetcode 456. 132 Pattern](https://leetcode.com/problems/132-pattern/)
-找到第一个大于等于 和 第一个大于
-
-如果找到第一个小于等于的, 可以用upper_bound-1
-小于则是low_bound-1
-
 # 背包问题
 
 ### 01背包

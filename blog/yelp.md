@@ -23,7 +23,23 @@ Apache Avro, a data serialization system, has some really nice properties, and i
 mysql主从复制原理:
 In order for replication to work, events on the master database cluster are written to a special log called the binary log. When a replica connects to its master, this binary log is read by the replica to complete or continue the process of replication, depending on the replication hierarchy. This process is bolstered by two threads running on the replica, an IO thread and a SQL thread. This is visualized in the figure below. The IO thread is primarily responsible for reading the binary log events from master, as they arrive, and copying them over to a local relay log in the replica. The SQL thread then reads these events and replays them in the same order that they arrived in.
 
-那么这里是如何保证consistency的呢
+那么这里是如何保证consistency的呢: 无法保证
+
+**Type of MySQL replication**
+
+There are two ways of replicating a MySQL database:
+
+* Statement-based replication (SBR)
+* Row-based replication (RBR)
+
+In statement-based replication, SQL statements are written to the binary log by master and the slave’s SQL thread then replays these statements on the slave. There are a few disadvantages of using statement-based replication. One important disadvantage is the possibility of data inconsistency between master and the slave. This is because the SQL thread in the slave is simply responsible for replaying log statements copied over from the master, but there could be instances where the statements generate non-deterministic outputs. 
+
+This is a scenario where you want to SELECT certain rows and INSERT them into another table. In this case, selecting multiple rows without an ORDER BY clause would result in rows returned–but the order of those rows may not be the same if the statement was to be replayed multiple times. Also, if a column had an AUTO_INCREMENT associated with it, the rows might end up with different ranks each time the statement is executed. Another example would be using the RAND() or the NOW() methods which would end up generating different results when played on different hosts in the replication topology. Due to these limitations, we use row-based replication in the database required by the MySQLStreamer. In row-based replication, each event shows how the individual rows of a table have been modified. UPDATE and DELETE statements contain the original state of the row before it was modified. Hence, replaying these row changes will keep the data consistent.
+
+怎样stream到kafka:
+基于DML (Data Manipulation Language) statements, which manipulate data within schema objects. 不过用了类似于version的形式比较之前row和之后的row
+
+之后就是通过schematizer发送到kafka
 
 ### [More Than Just a Schema Store](https://engineeringblog.yelp.com/2016/08/more-than-just-a-schema-store.html)
 public到mq前, 先去Schema store注册, 基于avro, 然后才允许publish信息, 利用avro兼容特性, 可以允许field被修改, 如果不兼容, 则创建新的topic.
