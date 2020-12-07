@@ -333,7 +333,7 @@ no sql
 2. cbt createtable dasd
 
 ### dataproc
-Spart PySpart SparkR
+Spark PySpart SparkR
 
 ```gloud dataproc jobs submit spark --clusterdsakdj --jar ```
 
@@ -385,3 +385,5 @@ no console to do that, you have two options: java or HBase interface
 ### stream data to cloud pub/sub
 1. create topics ```gloud pubsub topics create```
 2. sub ```gcloud pubsub subscroptions create --topic ```
+
+# 14 Networking in the Cloud

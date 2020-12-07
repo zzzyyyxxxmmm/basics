@@ -3,7 +3,7 @@
 2. http和https端口号, 说出一个其他端口号
 3. 链路层的最小单位是什么, 大小, 通过什么方式传输
 4. 介绍一下ARP协议, 工作过程
-5. 说下IPv4的几个
+5. 说下IPv4的几个重要header
 
 # OSI
 [seven layers](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/OSI.png)

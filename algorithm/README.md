@@ -158,3 +158,4 @@ n-m+f= 2.
 
 # 待做
 [1632. Rank Transform of a Matrix](https://leetcode.com/problems/rank-transform-of-a-matrix/)
+[1674. Minimum Moves to Make Array Complementary 数学题, 没意思](https://leetcode.com/problems/minimum-moves-to-make-array-complementary/)
