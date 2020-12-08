@@ -4,6 +4,10 @@
 3. 链路层的最小单位是什么, 大小, 通过什么方式传输
 4. 介绍一下ARP协议, 工作过程
 5. 说下IPv4的几个重要header
+6. 说出几种路由算法
+7. 说一下DHCP的过程
+8. ICMP介绍
+9. 说一下DNS流程
 
 # OSI
 [seven layers](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/OSI.png)

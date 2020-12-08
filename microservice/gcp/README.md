@@ -387,3 +387,104 @@ no console to do that, you have two options: java or HBase interface
 2. sub ```gcloud pubsub subscroptions create --topic ```
 
 # 14 Networking in the Cloud
+
+gcloud compute networks create ace-exam-vpc1 --subnet-mode=custom
+
+Firewall rules consist of several components:
+
+■ Direction: Either ingress or egress.
+
+■ Priority: Highest-priority rules are applied; any rule with a lower priority that matches are not applied. Priority is specified by an integer from 0 to 65535. 0 is the highest priority, and 65535 is lowest.
+
+■ Action: Either allow or deny. Only one can be chosen.
+
+■ Target: An instance to which the rule applies. Targets can be all instances in a network, instances with particular network tags, or instances using a specific service account.
+
+■ Source/destination: Source applies to ingress rules and specifies source IP ranges, instances with particular network tags, or instances using a particular service account. You can also use combinations of source IP ranges and network tags and combinations of source IP ranges and service accounts used by instances. The IP address 0.0.0.0/0 indicates any IP address. The Destination parameter uses only IP ranges.
+
+■ Protocol and port: A network protocol such as TCP, UDP, or ICMP and a port number. If no protocol is specified, then the rule applies to all protocols.
+
+■ Enforcement status: Firewall rules are either enabled or disabled. Disabled rules are not applied even if they match. Disabling is sometimes used to troubleshoot problems with traffic getting through when it should not or not getting through when it should.
+
+All VPCs start with two implied rules: One allows egress traffic to all destinations (IP address 0.0.0.0/0), and one denies all incoming traffic from any source (IP address 0.0.0.0/0). Both implied rules have priority 65535, so you can create other rules with higher deny or allow traffic as you need. You cannot delete an implied rule.
+
+When a VPC is automatically created, the default network is created with four network rules. These rules allow the following:
+
+■ Incoming traffic from any VM instance on the same network
+
+■ Incoming TCP traffic on port 22, allowing SSH
+
+■ Incoming TCP traffic on port 3389, allowing Microsoft Remote Desktop Protocol (RDP)
+
+■ Incoming Internet Control Message Protocol (ICMP) from any source on the network
+
+The default rules all have priority 65534.
+
+oganization folder
+
+0-65535lowest
+
+The autonomous system number (ASN) is a number used to identify a cloud router on a network,
+
+VPN在Hybrid里创建
+
+
+* You are using gcloud to create a firewall rule. Which parameter would you use to specify the subnet it should apply to?
+
+A. ––subnet
+
+B. **––network **
+
+C. ––destination
+
+D. ––source-ranges
+
+
+
+* You are using Cloud Console to create a VPN. You want to configure the GCP end of the VPN. What section of the Create VPN form would you use?
+
+A. Tunnels
+
+B. Routing Options
+
+C. Google Compute Engine VPN
+
+D. IKE Version
+
+C. The Google Compute Engine VPN is where you specify information about the Google Cloud end of the VPN connection, so option C is correct. You specify name, descrip- tion, network, region, and IP address. Option A is incorrect because tunnels are about the connections between the cloud and the remote network. Option B is incorrect; Routing Options is about how to configure routers. Option D is incorrect; IKE Version is about exchanging secret keys.
+
+# 15 Networking in the Cloud: DNS, Load Balancing, and IP addressing
+
+for example, an A record maps a hostname to IP addresses in IPv4. AAAA records are used in IPv6 to map names to IPv6 addresses. CNAME records hold the canonical name, which contains alias names of a domain.
+
+Types of Load Balancers
+
+Load balancers can distribute load within a single region or across multiple regions. The several load balancers offered by GCP are characterized by three features:
+
+■ Global versus regional load balancing
+
+■ External versus internal load balancing
+
+■ Traffic type, such as HTTP and TCP 368
+
+Global load balancers are used when an application is globally distributed. Regional load balancers are used when resources providing an application are in a single region. There are three global load balancers:
+
+■ HTTP(S), which balances HTTP and HTTPS load across a set of backend instances
+
+■ SSL Proxy, which terminates SSL/TLS connections, which are secure socket layer connections. This type is used for non-HTTPS traffic.
+
+■ TCP Proxy, which terminates TCP sessions at the load balancer and then forwards traffic to backend servers.
+
+The regional load balancers are as follows:
+
+■ Internal TCP/UDP, which balances TCP/UDP traffic on private networks hosting internal VMs
+
+■ Network TCP/UDP, which enables balancing based on IP protocol, address, and port. This load balancer is used for SSL and TCP traffic not supported by the SSL Proxy and TCP Proxy load balancers, respectively.
+
+External load balancers distribute traffic from the Internet, while internal load balancers distribute traffic that originates within GCP. The Internal TCP/UDP load balancer is the only internal load balancer. The HTTP(S), SSL Proxy, TCP Proxy, and Network TCP/UDP load balancers are all external.
+
+You will need to consider the traffic type too when choosing a load balancer. HTTP and HTTPS traffic needs to use external global load balancing. TCP traffic can use external global, external regional, or internal regional load balancers. UDP traffic can use either external regional or internal regional load balancing.
+
+gcloud compute networks subnets expand-ip-range ace-exam-subnet1 --prefix-length 16
+
+gcloud beta compute addresses create ace-exam-reserved-static1 --region=us-west2 --network-tier=PREMIUM
