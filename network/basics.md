@@ -8,6 +8,9 @@
 7. 说一下DHCP的过程
 8. ICMP介绍
 9. 说一下DNS流程
+10. TCP和UDP区别
+11. 三种TCP传递方式
+12. 什么是Accumulated Acknowledgement和Fast Retransmit
 
 # OSI
 [seven layers](https://github.com/zzzyyyxxxmmm/basics/blob/master/image/OSI.png)
@@ -182,37 +185,16 @@ The DNS servers that together implement the DNS distributed database store resou
 
 TTL is the time to live of the resource record
 
-# TCP vs UDP
-
-### Reliable Data Transfer
-One important service that a transport-layer protocol can potentially provide to an application is process-to-process reliable data transfer. When a transport protocol provides this service, the sending process can just pass its data into the socket and know with complete confidence that the data will arrive without errors at the receiving process.
-
-When a transport-layer protocol doesn’t provide reliable data transfer, some of the data sent by the sending process may never arrive at the receiving process. This may be acceptable for loss-tolerant applications, most notably multimedia applica- tions such as conversational audio/video that can tolerate some amount of data loss. In these multimedia applications, lost data might result in a small glitch in the audio/video—not a crucial impairment.
-
-### Throughput
-In Chapter 1 we introduced the concept of available throughput, which, in the con- text of a communication session between two processes along a network path, is the rate at which the sending process can deliver bits to the receiving process. Because other sessions will be sharing the bandwidth along the network path, and because these other sessions will be coming and going, the available throughput can fluctuate with time. These observations lead to another natural service that a transport-layer protocol could provide, namely, guaranteed available throughput at some specified rate. With such a service, the application could request a guaranteed throughput of r bits/sec, and the transport protocol would then ensure that the available throughput is always at least r bits/sec. Such a guaranteed through- put service would appeal to many applications. For example, if an Internet teleph- ony application encodes voice at 32 kbps, it needs to send data into the network and have data delivered to the receiving application at this rate. If the transport protocol cannot provide this throughput, the application would need to encode at a lower rate (and receive enough throughput to sustain this lower coding rate) or may have to give up, since receiving, say, half of the needed throughput is of little or no use to this Internet telephony application. Applications that have throughput requirements are said to be **bandwidth-sensitive applications**. Many current multimedia applications are bandwidth sensitive, although some multimedia applications may use adaptive coding techniques to encode digitized voice or video at a rate that matches the currently available throughput.
-
-While bandwidth-sensitive applications have specific throughput requirements, **elastic applications** can make use of as much, or as little, throughput as happens to be available. Electronic mail, file transfer, and Web transfers are all elastic applications. Of course, the more throughput, the better. There’s an adage that says that one cannot be too rich, too thin, or have too much throughput!
-
-### Security
-Finally, a transport protocol can provide an application with one or more security services. For example, in the sending host, a transport protocol can encrypt all data transmitted by the sending process, and in the receiving host, the transport-layer protocol can decrypt the data before delivering the data to the receiving process.
-
-### Timing
-A transport-layer protocol can also provide timing guarantees. Such a service would be appealing to interactive real-time applications, such as Internet telephony.
-
-| Application                            | Data Loss     | Throughput                                  | Time-Sensitive    |
-|----------------------------------------|---------------|---------------------------------------------|-------------------|
-| File transfer/download                 | No loss       | Elastic                                     | No                |
-| E-mail                                 | No loss       | Elastic                                     | No                |
-| Web documents                          | No loss       | Elastic (few kbps)                          | No                |
-| Internet telephony/ Video conferencing | Loss-tolerant | Audio: few kbps–1Mbps Video: 10 kbps–5 Mbps | Yes: 100s of msec |
-| Streaming stored audio/video           | Loss-tolerant | Same as above                               | Yes: few seconds  |
-| Interactive games                      | Loss-tolerant | Few kbps–10 kbps                            | Yes: 100s of msec |
-| Instant messaging                      | No loss       | Elastic                                     | Yes and no        |
-
-
-
 # TCP
+
+TCP与UDP区别总结：
+1. TCP面向连接（如打电话要先拨号建立连接）;UDP是无连接的，即发送数据之前不需要建立连接
+2. TCP提供可靠的服务。也就是说，通过TCP连接传送的数据，无差错，不丢失，不重复，且按序到达;UDP尽最大努力交付，即不保   证可靠交付
+3. TCP面向字节流，实际上是TCP把数据看成一连串无结构的字节流;UDP是面向报文的
+  UDP没有拥塞控制，因此网络出现拥塞不会使源主机的发送速率降低（对实时应用很有用，如IP电话，实时视频会议等）
+4. 每一条TCP连接只能是点到点的;UDP支持一对一，一对多，多对一和多对多的交互通信
+5. TCP首部开销20字节;UDP的首部开销小，只有8个字节
+
 
 ## TCP三大特点
 **Connection-oriented service**

@@ -153,7 +153,7 @@ n-m+f= 2.
 [780. Reaching Points](https://leetcode.com/problems/reaching-points/)
 [1593. Split a String Into the Max Number of Unique Substrings](https://leetcode.com/contest/weekly-contest-207/problems/split-a-string-into-the-max-number-of-unique-substrings/)
 [1594. Maximum Non Negative Product in a Matrix](https://leetcode.com/contest/weekly-contest-207/problems/maximum-non-negative-product-in-a-matrix/)
-
+[1681. Minimum Incompatibility 数位dp](https://leetcode.com/problems/minimum-incompatibility/)
 
 
 # 待做

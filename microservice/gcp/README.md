@@ -488,3 +488,33 @@ You will need to consider the traffic type too when choosing a load balancer. HT
 gcloud compute networks subnets expand-ip-range ace-exam-subnet1 --prefix-length 16
 
 gcloud beta compute addresses create ace-exam-reserved-static1 --region=us-west2 --network-tier=PREMIUM
+
+# 16 Deployinig Applicatioons with Cloud Launcher and Deployment Manager
+
+gcloud deployment-manager deployments create quickstart-deployment --config vm.yaml
+
+jinja is for simple templates and python is for compliated templates
+
+# 17 Configuring Access and Security
+
+You can also see a list of users and roles assigned across a project using the command gcloud projects get-iam-policy. For example, to list roles assigned to users in a project with the project ID ace-exam-project, use this:
+
+gcloud projects get-iam-policy ace-exam-project
+
+Predefi ned roles are grouped by service. For example, App Engine has five roles:
+
+■ App Engine Admin, which grants read, write, and modify permission to application and configuration settings. The role name used in gcloud commands is roles/appengine.appAdmin.
+
+■ App Engine Service Admin, which grants read-only access to configuration settings and write access to module-level and version-level settings. The role name used in gcloud commands is roles/appengine.serviceAdmin.
+
+■ App Engine Deployer, which grants read-only access to application configuration and settings and write access to create new versions. Users with only the App Engine Deployer role cannot modify or delete existing versions. The role name used in gcloud commands is roles/appengine.deployer.
+
+■ App Engine Viewer, which grants read-only access to application configuration and settings. The role name used in gcloud commands is roles/appengine.appViewer.
+
+■ App Engine Code Viewer, which grants read-only access to all application configurations, settings, and deployed source code. The role name used in gcloud commands is roles/appengine.codeViewer.
+
+gcloud iam roles describe
+
+gcloud projects add-iam-policy-binding ace-exam-project --member user:jane@ aceexam.com --role roles/appengine.deployer
+
+gcloud compute instances set-service-account ace-instance --service-account examadmin@ace-exam-project.iam.gserviceaccount.com --scopes compute-rw,storage-ro
