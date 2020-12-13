@@ -518,3 +518,5 @@ gcloud iam roles describe
 gcloud projects add-iam-policy-binding ace-exam-project --member user:jane@ aceexam.com --role roles/appengine.deployer
 
 gcloud compute instances set-service-account ace-instance --service-account examadmin@ace-exam-project.iam.gserviceaccount.com --scopes compute-rw,storage-ro
+
+# Monitor Logging, and Cost Estimating
