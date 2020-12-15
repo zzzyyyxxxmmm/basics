@@ -44,7 +44,7 @@ Compute Engine is a service that allows users to create VMs, attach persistent s
 ### Kubernetes Engine
 
 ### App Engine
-App Engine is GCP’s compute PaaS offering. With App Engine, developers and applica- tion administrators don’t need to concern themselves with configuring VMs or specifying Kubernetes clusters. Instead, developers create applications in a popular programming lan- guage such as Java, Go, Python, or Node.js and deploy that code to a serverless application environment.
+App Engine is GCP’s compute PaaS offering. With App Engine, developers and application administrators don’t need to concern themselves with configuring VMs or specifying Kubernetes clusters. Instead, developers create applications in a popular programming lan- guage such as Java, Go, Python, or Node.js and deploy that code to a serverless application environment.
 App Engine manages the underlying computing and network infrastructure. There is no need to configure VMs or harden networks to protect your application. App Engine is well suited for web and mobile backend applications.
 App Engine is available in two types: standard and flexible.
 
