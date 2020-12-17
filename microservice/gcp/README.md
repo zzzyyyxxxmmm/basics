@@ -285,7 +285,6 @@ gcloud functions deploy cloud_storage_function_test \
 --trigger-event google.storage.object.finalize
 ```
 
-
 # 11 Planning Storage in the Cloud
 
 ### persistent disk
@@ -304,6 +303,7 @@ regional and multi-reginol can be configured when it create, 不能中途修改
 big query: create data set before, it is designed for data warehousing and analytics,
 
 Cloud Spanner is Google’s globally distributed relational database that combines the key benefits of relational databases, such as strong consistency and transactions, with the ability to scale horizontally like a NoSQL database. Spanner is a high availability database with a 99.999 percent availability Service Level Agreements (SLA), making it a good option for enterprise applications that demand scalable, highly available relational database services.
+
 ### noSQL Datastore, Cloud firestore(for mobile), BigTable
 Bigtable columms多, Bigtable is designed for petabyte-scale databases. Both operational databases, like storing IoT data, and analytic processing, like data science applications, can effectively use Bigtable. This database is designed to provide consistent, low-millisecond latency. Bigtable runs in clusters and scales horizontally.
 
@@ -451,7 +451,7 @@ C. Google Compute Engine VPN
 
 D. IKE Version
 
-C. The Google Compute Engine VPN is where you specify information about the Google Cloud end of the VPN connection, so option C is correct. You specify name, descrip- tion, network, region, and IP address. Option A is incorrect because tunnels are about the connections between the cloud and the remote network. Option B is incorrect; Routing Options is about how to configure routers. Option D is incorrect; IKE Version is about exchanging secret keys.
+C. The Google Compute Engine VPN is where you specify information about the Google Cloud end of the VPN connection, so option C is correct. You specify name, description, network, region, and IP address. Option A is incorrect because tunnels are about the connections between the cloud and the remote network. Option B is incorrect; Routing Options is about how to configure routers. Option D is incorrect; IKE Version is about exchanging secret keys.
 
 # 15 Networking in the Cloud: DNS, Load Balancing, and IP addressing
 
