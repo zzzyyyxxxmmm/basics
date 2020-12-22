@@ -109,7 +109,9 @@ Cloud Spanner supports ANSI 2011 standard SQL.
 Cloud Datastore is a NoSQL document database. This kind of database uses the concept of a document, or collection of key-value pairs, as the basic building block. Documents allow for flexible schemas. For example, a document about a book may have key-value pairs list- ing author, title, and date of publication. Some books may also have information about companion websites and translations into other languages. The set of keys that may be included does not have to be defined prior to use in document databases. This is especially helpful when applications must accommodate a range of attributes, some of which may not be known at design time.
 Cloud Datastore is accessed via a REST API that can be used from applications running in Compute Engine, Kubernetes Engine, or App Engine. This database will scale automati- cally based on load. It will also shard, or partition, data as needed to maintain perfor- mance. Since Cloud Datastore is a managed service, it takes care of replication, backups, and other database administration tasks.
 Although it is a NoSQL database, Cloud Datastore supports transactions, indexes, and SQL-like queries.
-Cloud Datastore is well suited to applications that demand high scalability and struc- tured data and do not always need strong consistency when reading data. Product catalogs, user profiles, and user navigation history are examples of the kinds of applications that use Cloud Datastore.
+Cloud Datastore is well suited to applications that demand high scalability and struc- tured data and do not always need strong consistency when reading data. Product catalogs, user profiles, and user navigation history are examples of the kinds of applications that use Cloud Datastore. it offers SQL-like queries.
+
+Cloud Datastore actually stores structured objects.
 
 ### Cloud Memorystore
 Cloud Memorystore is an in-memory cache service. Other databases offered in GCP
@@ -501,6 +503,7 @@ You can also see a list of users and roles assigned across a project using the c
 
 gcloud projects get-iam-policy ace-exam-project
 
+
 Predefi ned roles are grouped by service. For example, App Engine has five roles:
 
 ■ App Engine Admin, which grants read, write, and modify permission to application and configuration settings. The role name used in gcloud commands is roles/appengine.appAdmin.
@@ -518,5 +521,9 @@ gcloud iam roles describe
 gcloud projects add-iam-policy-binding ace-exam-project --member user:jane@ aceexam.com --role roles/appengine.deployer
 
 gcloud compute instances set-service-account ace-instance --service-account examadmin@ace-exam-project.iam.gserviceaccount.com --scopes compute-rw,storage-ro
+
+Second, custom roles can only be used at the project or organization levels. 
+
+if a policy applied at the project level gives you Owner permissions, your access to an individual resource in that project might be restricted to View permission if someone applies a more restrictive policy directly to that resource.
 
 # Monitor Logging, and Cost Estimating
