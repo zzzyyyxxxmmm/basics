@@ -1,5 +1,90 @@
 # Dijstra
+```c++
+#define INF 0x3f3f3f3
+int n;
+struct qnode{
+    int v;
+    int c;
+    qnode(int _v=0,int _c=0):v(_v),c(_c){} bool operator <(const qnode &r)const{
+        return c>r.c; }
+};
+struct Edge{
+int v,cost;
+Edge(int _v=0,int _cost=0):v(_v),cost(_cost){} 
+};
 
+void Dijkstra(int n,int start, vector<int> &dist, vector<bool> &vis, vector<vector<Edge>>E){
+   
+    for(int i=0;i<=n;i++){
+        vis[i]=false;
+    }
+    for(int i=1;i<=n;i++)   dist[i]=INF; 
+    priority_queue<qnode>que; 
+    while(!que.empty())que.pop();
+    dist[start]=0; 
+    que.push(qnode(start,0));
+    qnode tmp; 
+    while(!que.empty()){
+        tmp=que.top();
+        que.pop();
+        int u=tmp.v; 
+        if(vis[u]) continue; 
+        vis[u]=true;
+        for(int i=0;i<E[u].size();i++){
+            int v=E[tmp.v][i].v;
+            int cost=E[u][i].cost; 
+            if(!vis[v]&&dist[v]>dist[u]+cost){
+                dist[v]=dist[u]+cost;
+                que.push(qnode(v,dist[v]));
+            }
+        } 
+    }
+}
+void addedge(int u,int v,int w, vector<vector<Edge> >& E){
+    E[u].push_back(Edge(v,w));
+}
+
+class Solution {
+public:
+    vector<bool> distanceLimitedPathsExist(int nn, vector<vector<int>>& edgeList, vector<vector<int>>& queries) {
+         n=nn;
+        vector<vector<Edge> >E(n+2);
+        vector<vector<int> > vc(n+1, vector<int>(n+1, INF));
+        for(int i=0;i<edgeList.size();i++){
+            int u=edgeList[i][0]+1;
+            int v=edgeList[i][1]+1;
+            int d=edgeList[i][2];
+            vc[u][v] = min(vc[u][v], d);
+            vc[v][u]=min(vc[v][u], d);
+        }
+
+        for(int i=0;i<edgeList.size();i++){
+            int u=edgeList[i][0]+1;
+            int v=edgeList[i][1]+1;
+            addedge(u, v, vc[u][v], E);
+            addedge(v, u, vc[v][u], E);
+        }
+
+        vector<bool> ans;
+
+        for(int i=0;i<queries.size();i++){
+           int u=queries[i][0]+1;
+            int v=queries[i][1]+1;
+            int d=queries[i][2]; 
+            
+            vector<int> dist(n+1);
+            vector<bool> vis(n+1);
+            Dijkstra(n, u, dist,vis,  E); 
+            int dis=dist[v];
+            cout<<dis<<endl;
+            ans.push_back(dis<d);
+        }
+
+        return ans;
+        
+    }
+};
+```
 
 
 
