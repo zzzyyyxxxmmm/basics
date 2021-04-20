@@ -156,6 +156,8 @@ n-m+f= 2.
 [1681. Minimum Incompatibility 数位dp](https://leetcode.com/problems/minimum-incompatibility/)
 [1692. Count Ways to Distribute Candies Button up 和Top Down区别](https://leetcode.com/problems/count-ways-to-distribute-candies/)
 [1687. Delivering Boxes from Storage to Ports 根据方程简化dp式](https://leetcode.com/problems/delivering-boxes-from-storage-to-ports/)
+[224. Basic Calculator](https://leetcode.com/problems/basic-calculator/)
+[295. Find Median from Data Stream](https://leetcode.com/problems/find-median-from-data-stream/)
 
 # 待做
 [1632. Rank Transform of a Matrix](https://leetcode.com/problems/rank-transform-of-a-matrix/)

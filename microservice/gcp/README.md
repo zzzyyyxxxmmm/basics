@@ -261,6 +261,9 @@ A project can support only one App Engine app
 
 App Engine applications are accessible from URLs that consist of the project name followed by appspot.com
 
+```
+gcloud app create --project=$DEVSHELL_PROJECT_ID
+```
 
 # 10 Computing with Cloud Functions
 Events: Cloud Storage, Cloud Pub/Sub, HTTP, Firebase, Stackdriver Logging
