@@ -10,6 +10,13 @@
 
 Flume uses a transactional approach to guarantee the reliable delivery of the events. 
 
+4.1.1 Agent死掉
+Agent死掉分为两种情况：机器死机或者Agent进程死掉。
+
+对于机器死机的情况来说，由于产生日志的进程也同样会死掉，所以不会再产生新的日志，不存在不提供服务的情况。
+
+对于Agent进程死掉的情况来说，确实会降低系统的可用性。对此，我们有下面三种方式来提高系统的可用性。首先，所有的Agent在supervise的方式下启动，如果进程死掉会被系统立即重启，以提供服务。其次，对所有的Agent进行存活监控，发现Agent死掉立即报警。最后，对于非常重要的日志，建议应用直接将日志写磁盘，Agent使用spooldir的方式获得最新的日志。
+
 ### [基于Flume的美团日志收集系统(二)改进和优化](https://tech.meituan.com/2013/12/09/meituan-flume-log-system-optimization.html)
 调优经验还是比较值得一看的, 基本上都是因地制宜, 结合实际情况进行调优
 

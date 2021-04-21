@@ -93,6 +93,10 @@
 ### Jan, 2021
 1. 希望今年可以在知名开源软件上做出贡献
 
+### Apri, 2021
+工作稳定了, 接下来需要在专业上更加深入
+1. PostgreSQL: Up and Running
+
 ### 待定
 1. O'Reilly.High.Performance.MySQL.3rd.Edition.Mar.2012
 2. https://github.com/Meituan-Dianping/Leaf
