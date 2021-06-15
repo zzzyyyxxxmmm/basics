@@ -65,7 +65,7 @@ public class CDPlayerConfig {
 }
 ```
 
-With no further configuration, @ComponentScan will default to scanning the same package as the configuration class. Therefore, because CDPlayerConfig is in the soundsystem package, Spring will scan that package and any subpackages underneath it, looking for classes that are annotated with @Component. It should find the Compact- Disc class and automatically create a bean for it in Spring.
+With no further configuration, @ComponentScan will default to scanning the same package as the configuration class. Therefore, because CDPlayerConfig is in the soundsystem package, Spring will scan that package and any subpackages underneath it, looking for classes that are annotated with @Component. It should find the CompactDisc class and automatically create a bean for it in Spring.
 
 If you’d rather turn on component scanning via XML configuration, then you can use the <context:component-scan> element from Spring’s context namespace. Here is a minimal XML configuration to enable component scanning.
 
